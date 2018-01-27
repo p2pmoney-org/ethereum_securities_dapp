@@ -1,0 +1,421 @@
+/* bands */
+
+.top-band {
+  font-size: 4rem;
+  text-align: center;
+  padding-top: 48px;
+  padding-bottom: 48px;
+  margin-bottom: 30px;
+  color: inherit;
+  background-color: #eee;
+  box-sizing: border-box;
+}
+
+.headtitle { 
+  font-size: 4rem; 
+  text-align: center; 
+ }
+ 
+ .messagezone { 
+   font-size: 2rem; 
+   text-align: center;
+}
+
+
+.breadcrumb-band {
+}
+
+.form-band {
+}
+
+.view-band {
+}
+
+.band-separator {
+ clear: left;
+}
+
+.band-separator hr{
+  height: 5px;
+}
+
+/* top container */
+
+.div-breadcrumbs-container{
+	font-family: Georgia, serif;
+}
+
+.div-form-container {
+  font-family: Georgia, serif;
+}
+
+.div-form-container span{
+  display:inline-block;
+  margin: 10px;
+}
+
+.div-form-container label{
+  display: block;
+  text-align: left";
+}
+
+.div-form-container input{
+}
+
+.div-view-container {
+  font-family: Georgia, serif;
+}
+
+
+
+
+/********************/
+/* Breadcrumbs band */
+/********************/
+
+.div-breadcrumbs {
+  font-family: Courier;
+  display: inline-block;
+}
+
+.div-breadcrumbs span
+{
+  font-size: 120%; 
+  margin-top: 10px; 
+  margin-left: 15px; 
+  margin-bottom: 20px;
+  margin-right: 10px;
+ }
+
+.div-identity
+{
+  float: right;
+  display: inline-block;
+}
+
+.div-identity span
+{
+  font-size: 120%; 
+  margin-top: 10px; 
+  margin-left: 10px; 
+  margin-bottom: 20px;
+  margin-right: 15px;
+}
+
+
+
+/*************/
+/* Form band */
+/*************/
+
+.div-form-tabs {
+  font-size: 110%;
+}
+
+.div-form-tabs span{
+  margin: 10px;
+}
+
+
+.div-form-tab{
+  float: left;
+  background-color: #f3e7e7;
+}
+
+.div-form-selected-tab{
+  float: left;
+  background-color: #d8caca;
+}
+
+.div-form {
+  clear: left;
+}
+
+.form-textbox {
+  width: 500px;
+}
+
+.form-select {
+  width: 500px;
+}
+
+
+
+.form-button {
+  width: 100px;
+}
+
+.form-button:disabled {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+
+.btn-add_address {
+  width: 100px;
+}
+
+.div-form-cue {
+  font-size: 120%;
+}
+
+
+
+/* contract list */
+
+
+/* contract's form */
+
+
+
+/*************/
+/* View band */
+/*************/
+
+.div-view-tabs{
+  font-size: 110%;
+}
+
+.div-view-tabs span{
+  margin: 10px;
+}
+
+
+.div-view-tab{
+  float: left;
+  background-color: #f3e7e7;
+}
+
+.div-view-selected-tab{
+  float: left;
+  background-color: #d8caca;
+}
+
+.div-view{
+  clear: left;
+}
+
+/* contract list */
+
+.div-refresh-list{
+	float: right; 
+	padding: 10px;
+	padding-right: 35px;
+}
+
+
+.table-contract-list{
+  width:1100px;
+}
+
+.table-contract-list td {
+  padding: 10px;
+}
+
+.table-contract-list-action-td {
+  padding: 10px;
+  font-size: 80%;
+}
+
+.table-contract-list-action-td a {
+  color: red;
+}
+
+
+.table-contract-list tr:first-child{
+  font-weight:bold;
+  background-color:#a2a2a2;
+}
+
+.table-contract-list-tr-local-odd{
+  background-color: #f6f6f7;
+}
+
+.table-contract-list-tr-local-even{
+  background-color: #ececea;
+}
+
+.table-contract-list-tr-chain-odd{
+  background-color: #2a292b33;
+}
+
+.table-contract-list-tr-chain-even{
+  background-color: #7e7c8233;
+}
+
+
+/* contract view */
+
+.table-contract{
+  width:500px;
+}
+
+
+.tr-local{
+  background-color:#f6f6f7;
+}
+
+.tr-chain{
+  background-color:#7e7c8233;
+}
+
+.td-label{
+  padding: 10px;
+  font-weight:bold;
+}
+
+.td-value{
+  padding: 10px;
+}
+
+/* stakeholder list */
+
+
+.table-stakeholder-list{
+  width:1100px;
+}
+
+.table-stakeholder-list td {
+  padding: 10px;
+}
+
+
+.table-stakeholder-list-action-td {
+  padding: 10px;
+  font-size: 80%;
+}
+
+.table-stakeholder-list-action-td a {
+  color: red;
+}
+
+
+.table-stakeholder-list tr:first-child{
+  font-weight:bold;
+  background-color:#a2a2a2;
+}
+
+
+.table-stakeholder-list-tr-local-odd{
+  background-color: #f6f6f7;
+}
+
+.table-stakeholder-list-tr-local-even{
+  background-color: #ececea;
+}
+
+.table-stakeholder-list-tr-chain-odd{
+  background-color: #2a292b33;
+}
+
+.table-stakeholder-list-tr-chain-even{
+  background-color: #7e7c8233;
+}
+
+/* stakeholder view */
+
+.table-stakeholder{
+  width:500px;
+}
+
+/* issuance list */
+
+
+.table-issuance-list{
+  width:1100px;
+}
+
+.table-issuance-list td {
+  padding: 10px;
+}
+
+
+.table-issuance-list-action-td {
+  padding: 10px;
+  font-size: 80%;
+}
+
+.table-issuance-list-action-td a {
+  color: red;
+}
+
+
+.table-issuance-list tr:first-child{
+  font-weight:bold;
+  background-color:#a2a2a2;
+}
+
+
+.table-issuance-list-tr-local-odd{
+  background-color: #f6f6f7;
+}
+
+.table-issuance-list-tr-local-even{
+  background-color: #ececea;
+}
+
+.table-issuance-list-tr-chain-odd{
+  background-color: #2a292b33;
+}
+
+.table-issuance-list-tr-chain-even{
+  background-color: #7e7c8233;
+}
+
+/* issuance view */
+
+.table-issuance {
+  width:500px;
+}
+
+/* transaction list */
+
+
+.table-transaction-list{
+  width:1100px;
+}
+
+.table-transaction-list td {
+  padding: 10px;
+}
+
+
+.table-transaction-list-action-td {
+  padding: 10px;
+  font-size: 80%;
+}
+
+.table-transaction-list-action-td a {
+  color: red;
+}
+
+
+.table-transaction-list tr:first-child{
+  font-weight:bold;
+  background-color:#a2a2a2;
+}
+
+
+.table-transaction-list-tr-local-odd{
+  background-color: #f6f6f7;
+}
+
+.table-transaction-list-tr-local-even{
+  background-color: #ececea;
+}
+
+.table-transaction-list-tr-chain-odd{
+  background-color: #2a292b33;
+}
+
+.table-transaction-list-tr-chain-even{
+  background-color: #7e7c8233;
+}
+
+/* transaction view */
+
+.table-transaction {
+  width:500px;
+}
+
+

@@ -1,0 +1,9 @@
+{
+	"files" : "./app/**/*.{js, html, css}",
+	"server" : { "baseDir" : ["./app", "./build"] },
+	"browser" : ["google chrome", "firefox"],
+	"port": 8000,
+	"ui": {
+		"port": 8001
+	}
+}
