@@ -6,45 +6,60 @@ App = {
 	init: function() {
 		console.log("Initializing app");
 	  
-		console.log("Cheking call from localhost browser");
-	  
-		var href = window.location.href;
-		var hostname = window.location.hostname;
-	  
-		console.log("hostname is " + hostname);
-	  
-		if ((hostname != 'localhost') && (hostname != '127.0.0.1')) {
-			console.log("remote access forbidden");
-			window.alert("For security reasons, this app only allows localhost access.");
-			window.location = "error.html";
-			
-			return;
-		}
 		
 		return App.initGlobal();
 		
 	},
 	
-	initGlobal() {
+	initGlobal: function() {
 		// initializing web3 connection
 		console.log("Initializing global object");
 		// global objects
 		//App.global = window.global;
 		var global = this.getGlobalObject(); // do the creation
 		
-		return App.initWeb3();
+		return App.initAuthorizationAccess();
 		
+	},
+	
+	initAuthorizationAccess: function() {
+		console.log("Cheking call from localhost browser");
+		  
+		var href = window.location.href;
+		var hostname = window.location.hostname;
+	  
+		console.log("hostname is " + hostname);
+	  
+		if ((hostname != 'localhost') && (hostname != '127.0.0.1')) {
+			var returnerror = true;
+			
+			if (window.Config) {
+				// we check if we overloaded this security
+				var allow_remote_access = window.Config.getXtraValue('allow_remote_access');
+				console.log("allow_remote_access is " + allow_remote_access);
+				console.log("xtraconfig keys " + Object.keys(window.Config.XtraConfig));
+				
+				if (allow_remote_access == 'enabled') {
+					returnerror = false;
+				}
+			}
+			
+			if (returnerror) {
+				console.log("remote access forbidden");
+				window.alert("For security reasons, this app only allows localhost access.");
+				window.location = "error.html";
+				
+				return;
+				
+			}
+		}
+		
+		return App.initWeb3();
 	},
   
 	initWeb3: function() {
 		// initializing web3 connection
 		console.log("Initializing web3 connection");
-		/*var web3provider = window.Config.getWeb3ProviderUrl();
-  
-		console.log("Web3 provider is " + web3provider);
-		App.web3Provider = new Web3.providers.HttpProvider(web3provider);
-  
-		web3 = new Web3(App.web3Provider);*/
 		
 		var global = this.getGlobalObject();
 		
@@ -69,6 +84,25 @@ App = {
 		return App.refreshDisplay();
 	},
 	
+	// scripts
+	include: function(file, callback)
+	{
+
+	  var script  = document.createElement('script');
+	  script.src  = file;
+	  script.type = 'text/javascript';
+	  script.defer = true;
+	  script.onload = function(){
+	        console.log('script ' + file + ' is now loaded');
+	        if (callback)
+	        	callback(null, script);
+	        };
+
+	  document.getElementsByTagName('head').item(0).appendChild(script);
+
+	},
+	
+	// control
 	eventhandlers: [],
 
 	bindEvent: function(event, selector, handler) {
@@ -91,6 +125,7 @@ App = {
 
 		$(document).off(event).on(event, selector, handler);
 	},
+	
 	// top band
 	setMessage: function(message) {
 		var messageZone = document.getElementById("message-zone")

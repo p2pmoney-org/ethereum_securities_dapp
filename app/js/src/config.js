@@ -35,6 +35,22 @@ class Config {
 		return Config.need_to_unlock_accounts;
 	}
 	
+	static getXtraValue(key) {
+		if (!key)
+			return;
+		
+		if ( typeof Config.XtraConfig !== 'undefined' && Config.XtraConfig) {
+			if (!Config.XtraConfig.instance)
+				Config.XtraConfig.instance = new Config.XtraConfig();
+			
+			if (Config.XtraConfig.instance[key])
+			return Config.XtraConfig.instance[key];
+		}
+		else {
+			console.log('Config.XtraConfig not defined')
+		}
+	}
+	
 };
 
 

@@ -149,7 +149,7 @@ class BreadCrumbs {
 		
 		breadcrumbcontainerdiv.appendChild(identitydiv);
 		
-		var handler_display_identification_box = controllers.handleDisplayIdentificationBox;
+		var handler_display_identification_box = controllers.handleIdentificationSwitch;
 
 		var identity = (session.isAnonymous() ? 'Anonymous' : session.getSessionAccountAddress());
 		var message = (session.isAnonymous() ? 'Identify with your private key' : 'Check your details');

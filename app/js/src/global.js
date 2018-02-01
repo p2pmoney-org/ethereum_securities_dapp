@@ -77,6 +77,7 @@ class Global {
 		this.session = null;
 		
 		this.globalscope = null;
+		this.initialized = false;
 		this.initGlobalScope();
 		
 	}
@@ -90,6 +91,9 @@ class Global {
 			Global.TruffleContract = TruffleContract;
 			Global.ethereumjs = ethereumjs;
 			Global.keythereum = keythereum;
+			
+			Global.EthereumNodeAccess = EthereumNodeAccess;
+			
 		}
 		else {
 			// node js (e.g. truffle migrate)
@@ -97,8 +101,15 @@ class Global {
 			
 			Global.Web3 = require('web3');
 			Global.TruffleContract = require('truffle-contract');
+			
 			Global.ethereumjs = require('ethereum.js');
+			Global.ethereumjs.Util = require('ethereumjs-util');
+			Global.ethereumjs.Wallet = require('ethereumjs-wallet');
+			
 			Global.keythereum = require('keythereum');
+			
+			Global.EthereumNodeAccess = require('../lib/ethereum-node-access.js');
+
 			
 			Global.Session = require('./model/session.js');
 			Global.Account = require('./model/account.js');
@@ -108,7 +119,58 @@ class Global {
 			Global.StockIssuance = require('./model/stockissuance.js');
 			Global.StockLedger = require('./model/stockledger.js');
 			Global.StockTransaction = require('./model/stocktransaction.js');
-		}		
+		}
+	}
+	
+	finalizeGlobalScopeInit(callback) {
+		console.log('Global.finalizeGlobalScopeInit called');
+		
+		if (this.initialized) {
+			if (callback)
+				callback(true);
+			
+			return;
+		}
+		
+		var self = this;
+		
+		var promises = [];
+		var promise;
+		
+		if ( typeof window !== 'undefined' && window ) {
+			var ethereum_node_access_path = self.globalscope.Config.getXtraValue('ethereum_node_access_path');
+			
+			if (ethereum_node_access_path) {
+				console.log("overloading EthereumNodeAccess facade with " + ethereum_node_access_path);
+				
+				var promise = new Promise(function(resolve, reject) {
+					self.app.include(ethereum_node_access_path, function(err, res) {
+						if (!err) {
+							Global.EthereumNodeAccess = window.Xtra_EthereumNodeAccess;
+							
+							// in case session object already requested, reapply
+							Global.Session.EthereumNodeAccess = Global.EthereumNodeAccess;
+						}
+						
+						return resolve(true);
+					});
+					
+					
+				});
+				promises.push(promise);
+			}
+
+		}
+		
+		Promise.all(promises).then(function(arr) {
+			console.log("Global.finalizeGlobalScopeInit resolved");
+			
+			self.initialized = true;
+			
+			if (callback)
+				callback(true);
+		});
+		
 	}
 	
 	// state
@@ -301,11 +363,14 @@ class Global {
 
 		// set in the Session global object classes used in the model
 		
+		Global.Session.Config = this.globalscope.Config;
+		
 		// libs
 		Global.Session.Web3 = Global.Web3;
 		Global.Session.TruffleContract = Global.TruffleContract;
 		Global.Session.ethereumjs = Global.ethereumjs;
 		Global.Session.keythereum = Global.keythereum;
+		Global.Session.EthereumNodeAccess = Global.EthereumNodeAccess;
 		
 		// model classes
 		Global.Session.Contracts = Global.Contracts;
@@ -447,7 +512,12 @@ class Global {
 			return GlobalObject;
 		
 		GlobalObject = new Global(app);
-		
+
+		// spawning potential asynchronous operations
+		GlobalObject.finalizeGlobalScopeInit(function(res) {
+			console.log("Global object is now up and ready!");
+		});
+
 		return GlobalObject;
 		
 	}

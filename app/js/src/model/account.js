@@ -78,6 +78,10 @@ class Account{
 		this.public_key = pubkey;
 	}
 	
+	getPrivateKey() {
+		return this.private_key;
+	}
+	
 	setPrivateKey(privkey) {
 		this.private_key = privkey;
 		
@@ -170,10 +174,9 @@ class Account{
 	}
 	
 	getBalance() {
-		var web3 = this.session.getWeb3Instance();
-		var balance = web3.eth.getBalance(this.address);
+		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
 		
-		return balance;
+		return EthereumNodeAccess.web3_getBalance(this.address);
 	}
 	
 	// encryption
@@ -408,35 +411,9 @@ class Account{
 	
 	// chain async
 	getChainBalance(callback) {
-		var self = this;
+		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
 		
-		var promise = new Promise(function (resolve, reject) {
-			try {
-				var web3 = self.session.getWeb3Instance();
-				
-				return web3.eth.getBalance(self.address, function(err, balance) {
-					if (!err) {
-						if (callback)
-							callback(null, balance);
-						
-						return resolve(balance);
-						
-					}
-					else {
-						reject('web3 error: ' + err);
-					}
-				
-				});
-				
-				
-			}
-			catch(e) {
-				reject('web3 exception: ' + e);
-			}
-			
-		});
-		
-		return promise
+		return EthereumNodeAccess.web3_getBalance(this.address, callback);
 	}
 	
 	

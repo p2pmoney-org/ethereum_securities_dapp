@@ -524,11 +524,14 @@ class StockLedger {
 		var self = this;
 		
 		//var loadpromise = $.getJSON('./contracts/StockLedger.json', function(data) {
-		var loadpromise = session.loadArtifact('./contracts/StockLedger.json', function(data) {
+		//var loadpromise = session.loadArtifact('./contracts/StockLedger.json', function(data) {
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+		var loadpromise = EthereumNodeAccess.truffle_loadArtifact('./contracts/StockLedger.json', function(data) {
 			// Get the necessary contract artifact file and instantiate it with truffle-contract
 			var StockLedgerArtifact = data;
 			
-			self.trufflecontract = session.getTruffleContractObject(StockLedgerArtifact);
+			self.trufflecontract = EthereumNodeAccess.truffle_loadContract(StockLedgerArtifact);
+			//self.trufflecontract = session.getTruffleContractObject(StockLedgerArtifact);
 			  
 			//finished = true;
 			console.log('contract json file read ');
@@ -568,9 +571,11 @@ class StockLedger {
 		
 		// contract instance promised
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var handleaccept = function (instance) {
-			console.log('truffle contract instantiation done for ' + self.address);
+			console.log('handleaccept: truffle contract instantiation done for ' + self.address);
 			
 			
 			if (!instance) {
@@ -589,15 +594,15 @@ class StockLedger {
 		
 		var handlereject = function (err) {
 			if (err) {
-				console.log('error within promise: ' + err);
+				console.log('handlereject: error within promise: ' + err);
 				self.trufflecontractinstantexists = false;
 			}
 			else {
-				console.log('error within promise');
+				console.log('handlereject: error within promise');
 			}
 
 			if (callback)
-			callback('error within promise: ' + err, null);
+			callback('handlereject: error within promise: ' + err, null);
 			
 		};
 
@@ -695,11 +700,11 @@ class StockLedger {
 		
 		
 		if (this.trufflecontractinstancepromise) {
-			console.log('truffle contract instantiation promise already created, but not resolved yet');
+			console.log('StockLedger.getTruffleContractObject truffle contract instantiation promise already created, but not resolved yet');
 			
-			console.log('returning promise');
+			console.log('StockLedger.getTruffleContractObject returning promise');
 
-			return this.trufflecontractinstancepromise;l
+			return this.trufflecontractinstancepromise;
 		}
 		else {
 			this.loadtrufflecontractpromise = this.loadTruffleContract(function(err, res) {
@@ -708,34 +713,46 @@ class StockLedger {
 			});
 			
 			this.trufflecontractinstancepromise = this.loadtrufflecontractpromise.then(function(trufflecontract) {
+				console.log('StockLedger.getTruffleContractObject load truffle contract resolved');
 				//console.log('load truffle contract resolved ' + JSON.stringify(trufflecontract));
 				//console.log('load truffle contract resolved ' + JSON.stringify(self.trufflecontract));
 				try {
-					console.log('calling trufflecontract.at()');
-					return self.trufflecontract.at(self.address);
+					console.log('StockLedger.getTruffleContractObject calling trufflecontract.at()');
+					return EthereumNodeAccess.truffle_contract_at(self.trufflecontract, self.address);
+					//return self.trufflecontract.at(self.address);
 				}
 				catch(e) {
-					console.log('error in trufflecontract.at(): ' + e);
+					console.log('StockLedger.getTruffleContractObject error in trufflecontract.at(): ' + e);
 					self.trufflecontractinstantexists = false;
 					return Promise.resolve(null);
 				}
 			})
 			.then(handleaccept)
 			.then(function(res) {
-				console.log('calling trufflecontract.at() resolved');
-				return res.then(handleaccept);
+				console.log('StockLedger.getTruffleContractObject calling trufflecontract.at() resolved');
+				console.log('StockLedger.getTruffleContractObject adding post treatment to instantiation promise');
+				
+				if (res) {
+					if (res.then)
+					return res.then(handleaccept);
+					
+					if (res.catch)
+					res.catch(handlereject);
+				} 
+				else
+					return Promise.resolve(null);
 			})
 			.then(function(res) {
-				res.catch(handlereject);
-				console.log('trufflecontract instantiation completed');
 				
+				console.log('StockLedger.getTruffleContractObject trufflecontract instantiation completed');
+
 				if (callback)
 					callback(null, self.trufflecontractinstance);
-				
+				 				
 				return self.trufflecontractinstance;
 			});
 			
-			console.log('truffle instantiation promise created for ' + self.address);
+			console.log('StockLedger.getTruffleContractObject truffle instantiation promise created for ' + self.address);
 			
 			return this.trufflecontractinstancepromise;
 		}
@@ -747,6 +764,8 @@ class StockLedger {
 	deploy(payingaccount, owningaccount, gas, gasPrice, callback) {
 		var self = this;
 		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+
 		var fromaddress = payingaccount.getAddress();
 		
 		console.log('StockLedger.deploy called for ' + this.localledgerdescription + " from " + fromaddress + " with gas limit " + gas + " and gasPrice " + gasPrice);
@@ -788,31 +807,45 @@ class StockLedger {
 
 				console.log('load finished, trying to deploy contract ' + self.localledgerdescription + ' with owner ' + contractowner + ' ledgername ' + ledgername + ' crypted owneridentifier ' + cryptedowneridentifier + ' crypted ledgerdescription ' + cryptedledgerdescription);
 				
-				var promise2 = _contract.new(contractowner, 		
+				
+				/*var promise2 = _contract.new(contractowner, 
 							contractownerpublkey,
 							cryptedowneridentifier,
 							ledgername,
 							cryptedledgerdescription,
-							{from: fromaddress, gas: gas, gasPrice: gasPrice}).then(instance => {
+							{from: fromaddress, gas: gas, gasPrice: gasPrice})*/
+				var promise2 = EthereumNodeAccess.truffle_contract_new(_contract,
+							[contractowner, 
+							contractownerpublkey,
+							cryptedowneridentifier,
+							ledgername,
+							cryptedledgerdescription,
+							{from: fromaddress, gas: gas, gasPrice: gasPrice}])
+							.then(instance => {
 				    
 					var contractaddress = instance.address;
 					
 					self.setAddress(instance.address);
 					
-					console.log('contract has been deployed at  ' + contractaddress);
+					console.log('StockLedger.deploy contract has been deployed at  ' + contractaddress);
 				    
 				    if (callback)
 				    callback(null, contractaddress);
 				    
-				    return self;
+				    return Promise.resolve(self);
 				}).catch(err => {
 				    console.log('error', err);
 				});
+				
+				return promise2;
 			}
 		
 			if (self.trufflecontract)
 			return callfunc(self.trufflecontract);
 			
+			
+		}).then(function(res) {
+			console.log('StockLedger.deploy promise of deployment should be resolved')
 		});
 		
 		return promise;
@@ -821,6 +854,9 @@ class StockLedger {
 
 	registerStakeHolder(payingaccount, gas, gasPrice, stakeholder, callback) {
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+
 		var fromaddress = payingaccount.getAddress();
 		
 		var stakeholderidentifier = stakeholder.getLocalIdentifier();
@@ -862,13 +898,22 @@ class StockLedger {
 				console.log('registering a shareholder with address ' + _shldr_address + ' public key ' + _shldr_pubkey + ' crypted private key ' + _cocrypted_shldr_privkey + ' crypted identifier ' + _cocrypted_shldr_identifier + ' registration date ' + _registration_date);
 
 				//var promise2 = contractInstance.registerShareHolder.call(_shldr_address, 
-				var promise2 = contractInstance.registerShareHolder.sendTransaction(_shldr_address, 
+				/*var promise2 = contractInstance.registerShareHolder.sendTransaction(_shldr_address, 
 																		_shldr_pubkey,
 																		_cocrypted_shldr_privkey, 
 																		_cocrypted_shldr_identifier, 
 																		_registration_date,
 																		{from: fromaddress, gas: gas, gasPrice: gasPrice}
-																		).then(function(res) {
+																		)*/
+				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerShareHolder",
+																		[_shldr_address, 
+																		_shldr_pubkey,
+																		_cocrypted_shldr_privkey, 
+																		_cocrypted_shldr_identifier, 
+																		_registration_date,
+																		{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																		)
+																		.then(function(res) {
 			    	
 			    	console.log('returning from registerShareHolder with return ' + res);
 			    	
@@ -896,6 +941,7 @@ class StockLedger {
 	registerIssuance(payingaccount, gas, gasPrice, issuance, callback) {
 		var self = this;
 		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var fromaddress = payingaccount.getAddress();
 		
@@ -936,14 +982,24 @@ class StockLedger {
 				
 				console.log('registering an issuance with name ' + _name + ' description ' + localdescription + ' number of shares ' + _numberofshares + ' percent of capital ' + _percentofcapital + ' registration date ' + _registration_date);
 
-				var promise2 = contractInstance.registerIssuance.sendTransaction(_name, 
+				/*var promise2 = contractInstance.registerIssuance.sendTransaction(_name, 
 																	_cocrypted_issuance_description,
 																	_numberofshares, 
 																	_percentofcapital, 
 																	_registration_date,
 																	_orderid,
-																		{from: fromaddress, gas: gas, gasPrice: gasPrice}
-																		).then(function(res) {
+																	{from: fromaddress, gas: gas, gasPrice: gasPrice}
+																	)*/
+				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerIssuance",
+																	[_name, 
+																	_cocrypted_issuance_description,
+																	_numberofshares, 
+																	_percentofcapital, 
+																	_registration_date,
+																	_orderid,
+																	{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																	)
+																	.then(function(res) {
 			    	
 			    	console.log('returning from registerIssuance with return ' + res);
 			    	
@@ -970,6 +1026,7 @@ class StockLedger {
 	registerTransaction(payingaccount, gas, gasPrice, stocktransaction, callback) {
 		var self = this;
 		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var fromaddress = payingaccount.getAddress();
 		
@@ -1042,7 +1099,7 @@ class StockLedger {
 				
 				console.log('registering a transaction from ' + _from + ' to ' + _to + ' of nature ' + _nature + ' for issuance ' + _issuancenumber + ' number of shares ' + _numberofshares + ' consideration ' + _consideration + ' ' + _currency + ' registration date ' + _registration_date);
 
-				var promise2 = contractInstance.registerTransaction.sendTransaction(_numberofshares, 
+				/*var promise2 = contractInstance.registerTransaction.sendTransaction(_numberofshares, 
 																				_from, 
 																				_to, 
 																				_nature, 
@@ -1052,7 +1109,20 @@ class StockLedger {
 																				_consideration, 
 																				_currency,
 																		{from: fromaddress, gas: gas, gasPrice: gasPrice}
-																		).then(function(res) {
+																		)*/
+				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerTransaction",
+																				[_numberofshares, 
+																				_from, 
+																				_to, 
+																				_nature, 
+																				_issuancenumber, 
+																				_orderid, 
+																				_registration_date, 
+																				_consideration, 
+																				_currency,
+																				{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																				)
+																				.then(function(res) {
 			    	
 			    	console.log('returning from registerTransaction with return ' + res);
 			    	
@@ -1134,6 +1204,8 @@ class StockLedger {
 		}
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promises = []
 		
@@ -1150,7 +1222,8 @@ class StockLedger {
 		var promiseowner = promiseinstance.then(function (trufflecontractinstance) {
 
 			if (trufflecontractinstance)
-			return trufflecontractinstance.owner.call();
+			//return trufflecontractinstance.owner.call();
+			return EthereumNodeAccess.truffle_method_call(trufflecontractinstance, "owner", [])
 		
 		}).then(function(res) {
 	    	
@@ -1164,7 +1237,8 @@ class StockLedger {
 		var promiseownerpubkey = promiseinstance.then(function (trufflecontractinstance) {
 			
 			if (trufflecontractinstance)
-			return trufflecontractinstance.owner_pubkey.call();
+			//return trufflecontractinstance.owner_pubkey.call();
+			return EthereumNodeAccess.truffle_method_call(trufflecontractinstance, "owner_pubkey", [])
 			
 		}).then(function(res) {
 	    	
@@ -1200,6 +1274,8 @@ class StockLedger {
 		console.log('StockLedger.getChainLedgerName called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1212,8 +1288,10 @@ class StockLedger {
 		}).then(function (trufflecontractinstance) {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
+				
 
-				var promise2 = contractInstance.ledger_name.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "ledger_name", []).then(function(res) {
+				//var promise2 = contractInstance.ledger_name.call().then(function(res) {
 			    	
 			    	console.log('returning from ledger_name with return ' + res);
 			    	
@@ -1244,6 +1322,8 @@ class StockLedger {
 		console.log('StockLedger.getChainCoCryptedLedgerDescription called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1257,7 +1337,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.cocrypted_ledger_description.call().then(function(res) {
+				//var promise2 = contractInstance.cocrypted_ledger_description.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "cocrypted_ledger_description", []).then(function(res) {
 			    	
 			    	console.log('returning from cocrypted_ledger_description with return ' + res);
 			    	
@@ -1286,6 +1367,8 @@ class StockLedger {
 		console.log('StockLedger.getChainOwner called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1300,7 +1383,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.owner.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "owner", []).then(function(res) {
+				//var promise2 = contractInstance.owner.call().then(function(res) {
 			    	
 			    	console.log('returning from owner with return ' + res);
 			    	
@@ -1328,6 +1412,8 @@ class StockLedger {
 		console.log('StockLedger.getChainOwnerPublicKey called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1342,7 +1428,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.owner_pubkey.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "owner_pubkey", []).then(function(res) {
+				//var promise2 = contractInstance.owner_pubkey.call().then(function(res) {
 			    	
 			    	console.log('returning from owner_pubkey with return ' + res);
 			    	
@@ -1370,6 +1457,8 @@ class StockLedger {
 		console.log('StockLedger.getChainContractName called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1384,7 +1473,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.contract_name.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "contract_name", []).then(function(res) {
+				//var promise2 = contractInstance.contract_name.call().then(function(res) {
 			    	
 			    	console.log('returning from contract_name with return ' + res);
 			    	
@@ -1412,6 +1502,8 @@ class StockLedger {
 		console.log('StockLedger.getChainContractVersion called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.getTruffleContractObject(function (err, res) {
 			var trufflecontractinstance = res;
@@ -1424,7 +1516,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.contract_version.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "contract_version", []).then(function(res) {
+				//var promise2 = contractInstance.contract_version.call().then(function(res) {
 			    	
 			    	console.log('returning from contract_version with return ' + res);
 			    	
@@ -1453,17 +1546,9 @@ class StockLedger {
 		console.log('StockLedger.getChainStakeHolderCount called for ' + this.address);
 		
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		})*/
-				
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
@@ -1474,7 +1559,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getShareHolderCount.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getShareHolderCount", []).then(function(res) {
+				//var promise2 = contractInstance.getShareHolderCount.call().then(function(res) {
 			    	
 			    	console.log('returning from getShareHolderCount with return ' + res);
 			    	
@@ -1501,20 +1587,12 @@ class StockLedger {
 	getChainStakeHolderAt(index, callback) {
 		console.log('StockLedger.getChainStakeHolderAt called for ' + this.address + ' at index ' + index);
 		
-		var session = this.session;
 		var self = this;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+
 		var owner = this.localowner;
 		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
@@ -1525,7 +1603,9 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getShareHolderAt.call(index);
+				var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getShareHolderAt", [index]);
+				//var promise2 = contractInstance.getShareHolderAt.call(index);
 			    
 				return promise2;
 			 };
@@ -1568,17 +1648,8 @@ class StockLedger {
 		console.log('StockLedger.getChainStakeHolderList called for ' + this.address);
 		
 		var self = this;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1622,19 +1693,11 @@ class StockLedger {
 	getChainIssuanceAt(index, callback) {
 		console.log('StockLedger.getChainIssuanceAt called for ' + this.address + ' at index ' + index);
 		
-		var session = this.session;
 		var self = this;
-		var owner = this.localowner;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var owner = this.localowner;
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1646,7 +1709,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getIssuanceAt.call(index).then( function(res_array) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getIssuanceAt", [index]).then(function(res_array) {
+				//var promise2 = contractInstance.getIssuanceAt.call(index).then( function(res_array) {
 			    	
 					console.log('returning from getChainIssuanceAt with return ' + res_array);
 					
@@ -1695,17 +1759,8 @@ class StockLedger {
 		console.log('StockLedger.getChainIssuanceCount called for ' + this.address);
 		
 		var self = this;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1717,7 +1772,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getIssuanceCount.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getIssuanceCount", []).then(function(res) {
+				//var promise2 = contractInstance.getIssuanceCount.call().then(function(res) {
 			    	
 			    	console.log('returning from getIssuanceCount with return ' + res);
 			    	
@@ -1744,17 +1800,8 @@ class StockLedger {
 		console.log('StockLedger.getChainIssuanceList called for ' + this.address);
 		
 		var self = this;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1798,20 +1845,11 @@ class StockLedger {
 	getChainTransactionAt(index, callback) {
 		console.log('StockLedger.getChainTransactionAt called for ' + this.address + ' at index ' + index);
 		
-		var session = this.session;
 		var self = this;
-		var owner = this.localowner;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var owner = this.localowner;
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1823,7 +1861,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getTransactionAt.call(index).then( function(res_array) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getTransactionAt", [index]).then(function(res_array) {
+				//var promise2 = contractInstance.getTransactionAt.call(index).then( function(res_array) {
 			    	
 					console.log('returning from getChainTransactionAt with return ' + res_array);
 					
@@ -1883,17 +1922,8 @@ class StockLedger {
 		console.log('StockLedger.getChainTransactionCount called for ' + this.address);
 		
 		var self = this;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-				
-		}).*/
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
@@ -1905,7 +1935,8 @@ class StockLedger {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 
-				var promise2 = contractInstance.getTransactionCount.call().then(function(res) {
+				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, "getTransactionCount", []).then(function(res) {
+				//var promise2 = contractInstance.getTransactionCount.call().then(function(res) {
 			    	
 			    	console.log('returning from getTransactionCount with return ' + res);
 			    	
@@ -1932,17 +1963,8 @@ class StockLedger {
 		console.log('StockLedger.getChainTransactionList called for ' + this.address);
 		
 		var self = this;
-		
-		/*var promise = this.getTruffleContractObject(function (err, res) {
-			var trufflecontractinstance = res;
-			var numberofshares;
-
-			if (!trufflecontractinstance)
-				return callback("contract instance is null", null);
-			
-			return trufflecontractinstance;
-			
-		}).*/
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)

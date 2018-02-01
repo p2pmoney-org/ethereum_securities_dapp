@@ -356,7 +356,34 @@ class Controllers {
 	handleDisplayIdentificationBox() {
 		console.log("Controllers.handleDisplayIdentificationBox called");
 
+		// watch-out, 'this' is defined as the context
+		// of the calling object from event listener
 		var global = Controllers.getGlobalClass().getGlobalObject();
+		var app = global.getAppObject();
+		var session = global.getSessionObject();
+
+		var privatekey = prompt("Please enter your private key. It will be kept in memory until a refresh in your browser.", "");
+
+		if (privatekey != null) {
+			
+			var sessionaccount = global.createBlankAccountObject();
+			
+			sessionaccount.setPrivateKey(privatekey);
+			
+			session.impersonateAccount(sessionaccount);
+			
+			app.refreshDisplay();
+		}	
+		
+	}
+	
+	handleIdentificationSwitch() {
+		console.log("Controllers.handleDisplayIdentificationBox called");
+
+		// watch-out, 'this' is defined as the context
+		// of the calling object from event listener
+		var global = Controllers.getGlobalClass().getGlobalObject();
+		var controllers = global.getControllersObject();
 		var app = global.getAppObject();
 		var session = global.getSessionObject();
 		
@@ -373,19 +400,7 @@ class Controllers {
 			}			
 		}
 		else {
-			var privatekey = prompt("Please enter your private key. It will be kept in memory until a refresh in your browser.", "");
-
-			if (privatekey != null) {
-				
-				var sessionaccount = global.createBlankAccountObject();
-				
-				sessionaccount.setPrivateKey(privatekey);
-				
-				session.impersonateAccount(sessionaccount);
-				
-				app.refreshDisplay();
-			}	
-			
+			controllers.handleDisplayIdentificationBox()
 		}
 
 	}

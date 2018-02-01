@@ -39,7 +39,7 @@ class Session {
 		this.nodejs = choice;
 	}
 	
-	getSesssionUUID() {
+	getSessionUUID() {
 		if (this.sessionuuid)
 			return this.sessionuuid;
 		
@@ -68,6 +68,11 @@ class Session {
 	
 	addClass(classname, theclass) {
 		this.classmap[classname] = theclass;
+	}
+	
+	// config
+	getXtraConfigValue(key) {
+		return Session.Config.getXtraValue(key);
 	}
 	
 	// web 3
@@ -105,6 +110,10 @@ class Session {
 	
 	getKeythereumInstance() {
 		return Session.keythereum;
+	}
+	
+	getEthereumNodeAccessInstance() {
+		return new Session.EthereumNodeAccess(this);
 	}
 	
 
@@ -226,6 +235,9 @@ class Session {
 	}
 
 	getAccountObject(address) {
+		if (!address)
+			return;
+		
 		var key = address.toString();
 		var mapvalue = this.accountmap.getAccount(key);
 		

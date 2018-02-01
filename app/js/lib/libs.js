@@ -17,3 +17,5 @@ include('./js/lib/truffle-contract.js');
 include('./js/lib/ethereumjs-all-2017-10-31.min.js');
 include('./js/lib/keythereum.min.js');
 
+include('./js/lib/ethereum-node-access.js');
+

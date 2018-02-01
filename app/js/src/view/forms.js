@@ -2876,7 +2876,7 @@ class Forms {
 		return link;
 	}
 	
-	static getEtherStringFromWei(wei, decimal) {
+	static getEtherStringFromWei(wei, decimal=2) {
 		var ether = GlobalClass.getEtherFromwei(wei);
 		return ether.toFixed(decimal);
 	}
