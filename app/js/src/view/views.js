@@ -664,6 +664,9 @@ class Views {
 			var isLocalOnly = stakeholder.isLocalOnly();
 			var ownsContract = session.ownsContract(contract);
 			
+			var stakeholderaddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stakeholderaddress)
+			
 			tr = document.createElement('tr'); 
 
 			// set line class
@@ -680,7 +683,7 @@ class Views {
 					tr.classList.add('table-stakeholder-list-tr-chain-odd');
 			}
 			
-			var chainidentifier = ( ownsContract ? session.getSessionAccountObject().aesDecryptString(stakeholder.getChainCocryptedIdentifier()) : 'crypted');
+			var chainidentifier = ( ownsContract ? session.getSessionAccountObject().aesDecryptString(stakeholder.getChainCocryptedIdentifier()) : (isYou ? 'You' : 'crypted'));
 			
 		    td = document.createElement('td');
 			text = (isLocalOnly ? stakeholder.getLocalIdentifier() : chainidentifier);
@@ -966,8 +969,11 @@ class Views {
 		    //
 		    var isLocalOnly = stakeholder.isLocalOnly();
 		    var ownsContract = session.ownsContract(contract); 
+			
+			var stakeholderaddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stakeholderaddress)
 		    
-			var chainidentifier = (ownsContract ? session.getSessionAccountObject().aesDecryptString(stakeholder.getChainCocryptedIdentifier()) : 'crypted');
+			var chainidentifier = (ownsContract ? session.getSessionAccountObject().aesDecryptString(stakeholder.getChainCocryptedIdentifier()) : (isYou ? 'You' : 'crypted'));
 		    var identifier = (isLocalOnly ? stakeholder.getLocalIdentifier() : chainidentifier);
 
 		    // identifier
@@ -1895,7 +1901,9 @@ class Views {
 		viewcontainer.appendChild(view);
 
 		if ((contract) && (transaction)){
+			var global = this.global;
 			var session = this.global.getSessionObject();
+
 			var controllers = this.global.getControllersObject();
 			
 			
@@ -1910,12 +1918,14 @@ class Views {
 		    var link;
 		    
 		    // heading
+		    var isLocalOnly = transaction.isLocalOnly();
+			var ownsContract = session.ownsContract(contract);
+		    
 		    
 		    //
 		    // local data
 		    //
-		    var isLocalOnly = transaction.isLocalOnly();
-		    
+			
 		    var localfrom = (isLocalOnly ? transaction.getLocalFrom() : 'deployed');
 		    var localto = (isLocalOnly ? transaction.getLocalTo() : 'deployed');
 		    var localissuancenumber = (isLocalOnly ? transaction.getLocalIssuanceNumber() : 'deployed');
@@ -2032,11 +2042,11 @@ class Views {
 		    // chain data
 		    //
 		    
-		    var chainfrom = (isLocalOnly ? 'local only' : transaction.getChainFrom());
-		    chainfrom = ((!isLocalOnly) && (session.isSessionAccountAddress(chainfrom)) ? 'You' : chainfrom);
-		    
-		    var chainto = (isLocalOnly ? 'local only' : transaction.getChainTo());
-		    chainto = ((!isLocalOnly) && (session.isSessionAccountAddress(chainto)) ? 'You' : chainto);
+		    var chainfrom = (isLocalOnly ? transaction.getLocalFrom() : transaction.getChainFrom());
+		    var chainfromdisplay = (isLocalOnly ? 'local only' : global.getStakeholderDisplayName(chainfrom, contract));
+			    
+		    var chainto = (isLocalOnly ? transaction.getLocalTo() : transaction.getChainTo());
+		    var chaintodisplay = (isLocalOnly ? 'local only' : global.getStakeholderDisplayName(chainto, contract));
 		    
 		    var chainnature = (isLocalOnly ? 'local only' : transaction.getChainNature());
 		    
@@ -2065,7 +2075,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainfrom);
+		    text =  document.createTextNode(chainfromdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2082,7 +2092,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainto);
+		    text =  document.createTextNode(chaintodisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 

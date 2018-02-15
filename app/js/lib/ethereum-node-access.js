@@ -64,8 +64,8 @@ class EthereumNodeAccess {
 		return trufflecontract.at(address);
 	}
 
-	truffle_contract_new(constractinstance, params) {
-		return constractinstance.new(...params);
+	truffle_contract_new(trufflecontract, params) {
+		return trufflecontract.new(...params);
 	}
 
 	truffle_method_call(constractinstance, methodname, params) {

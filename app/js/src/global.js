@@ -331,6 +331,14 @@ class Global {
 	}
 	
 	
+	getDefaultGasLimit() {
+		return this.globalscope.Config.getDefaultGasLimit();
+	}
+	
+	getDefaultGasPrice() {
+		return this.globalscope.Config.getDefaultGasPrice();
+	}
+	
 	// wallet
 	useWalletAccount() {
 		var wallletaccount = this.globalscope.Config.getWalletAccountAddress();

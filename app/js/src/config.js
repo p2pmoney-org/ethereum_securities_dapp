@@ -23,6 +23,14 @@ class Config {
 		return Config.web3provider_network_id;
 	}
 	
+	static getDefaultGasLimit() {
+		return Config.defaultGasLimit;
+	}
+	
+	static getDefaultGasPrice() {
+		return Config.defaultGasPrice;
+	}
+	
 	static getWalletAccountAddress() {
 		return Config.wallet_account;
 	}
@@ -59,7 +67,10 @@ class Config {
 /********************/ 
 
 Config.web3provider_protocol = 'http://';
-Config.web3provider_host = 'localhost';
+Config.web3provider_host = '192.168.1.81';
+
+Config.defaultGasLimit = 4712388;
+Config.defaultGasPrice = 100000000000;
 
 // default
 // Config.web3provider_port = 8545;
@@ -69,17 +80,17 @@ Config.web3provider_host = 'localhost';
 
 
 // Ganache
-Config.web3provider_port = 9547;
+/*Config.web3provider_port = 9547;
 Config.need_to_unlock_accounts = false;
 Config.wallet_account_challenge = true;
-Config.wallet_account = '0x6330A553Fc93768F612722BB8c2eC78aC90B3bbc';
+Config.wallet_account = '0x6330A553Fc93768F612722BB8c2eC78aC90B3bbc';*/
 
 
 // Geth
-/*Config.web3provider_port = 8545;
+Config.web3provider_port = 8545;
 Config.need_to_unlock_accounts = true; 
 Config.wallet_account_challenge = true; 
-Config.wallet_account = '0x00add2103FC5817a61838be0B34A77fB6063fE60';*/
+Config.wallet_account = '0xeF1cbd797Bf7D7aeC3fC53eA3905fe43e774c16c';
 
 
 Config.web3provider_network_id = '*' // Match any network id

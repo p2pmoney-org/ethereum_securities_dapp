@@ -1446,7 +1446,7 @@ class Controllers {
 		var contracts = global.getContractsObject();
 
 		var contractindex = this.getAttribute("param0");
-		var issuanceindex = this.getAttribute("param1");
+		var transactionindex = this.getAttribute("param1");
 
 		var contracts = global.getContractsObject();
 		
@@ -1456,9 +1456,9 @@ class Controllers {
 		
 
 		if (contract) {
-			var issuance = contract.getIssuanceFromKey(issuanceindex);
+			var transaction = contract.getTransactionFromKey(transactionindex);
 			
-			contract.removeIssuanceObject(issuance);
+			contract.removeTransactionObject(transaction);
 
 			global.saveContractObjects(contracts);
 

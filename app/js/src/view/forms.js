@@ -471,12 +471,13 @@ class Forms {
 			var contractindex = contract.getContractIndex();
 			var localdescription = contract.getLocalDescription();
 			
-			var gaslimit = 4712388;
-			var gasPrice = 100000000000;
+			var global = this.global;
+
+			var gaslimit = global.getDefaultGasLimit();
+			var gasPrice = global.getDefaultGasPrice();
 			
 			var walletaddress = null;
 			
-			var global = this.global;
 			var isLocalOnly = contract.isLocalOnly();
 			
 			if (global.useWalletAccount()) {
@@ -1031,12 +1032,12 @@ class Forms {
 			//
 			// wallet
 			//
-			var gaslimit = 4712388;
-			var gasPrice = 100000000000;
+			var global = this.global;
+			
+			var gaslimit = global.getDefaultGasLimit();
+			var gasPrice = global.getDefaultGasPrice();
 			
 			var walletaddress = null;
-			
-			var global = this.global;
 			
 			if (global.useWalletAccount()) {
 				// do we pay everything from a single wallet
@@ -1712,12 +1713,12 @@ class Forms {
 			//
 			// wallet
 			//
-			var gaslimit = 4712388;
-			var gasPrice = 100000000000;
+			var global = this.global;
+			
+			var gaslimit = global.getDefaultGasLimit();
+			var gasPrice = global.getDefaultGasPrice();
 			
 			var walletaddress = null;
-			
-			var global = this.global;
 			
 			if (global.useWalletAccount()) {
 				// do we pay everything from a single wallet
@@ -2711,12 +2712,12 @@ class Forms {
 			//
 			// wallet
 			//
-			var gaslimit = 4712388;
-			var gasPrice = 100000000000;
+			var global = this.global;
+			
+			var gaslimit = global.getDefaultGasLimit();
+			var gasPrice = global.getDefaultGasPrice();
 			
 			var walletaddress = null;
-			
-			var global = this.global;
 			
 			if (global.useWalletAccount()) {
 				// do we pay everything from a single wallet

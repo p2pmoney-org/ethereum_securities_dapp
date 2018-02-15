@@ -166,7 +166,7 @@ class StockLedger {
 				}
 			}
 			
-			console.log('returning ' + jsonarray.length + ' local stakeholders');
+			//console.log('returning ' + jsonarray.length + ' local stakeholders');
 			json['stakeholders'] = jsonarray;
 		}
 		
@@ -184,7 +184,7 @@ class StockLedger {
 				}
 			}
 			
-			console.log('returning ' + jsonarray.length + ' local issuances');
+			//console.log('returning ' + jsonarray.length + ' local issuances');
 			json['issuances'] = jsonarray;
 		}
 		
@@ -202,7 +202,7 @@ class StockLedger {
 				}
 			}
 			
-			console.log('returning ' + jsonarray.length + ' local transactions');
+			//console.log('returning ' + jsonarray.length + ' local transactions');
 			json['transactions'] = jsonarray;
 		}
 		
@@ -402,20 +402,24 @@ class StockLedger {
 	}
 	
 	removeTransactionObject(transaction) {
-		if (!tx)
+		if (!transaction)
 			return;
 		
 		var key = transaction.getTransactionIndex();
 		var i;
 		var tx;
 		
+		console.log("looking for transaction with key " + key);
+		
 		if (transaction.isLocalOnly()) {
 			// local
 			for (i = 0; i < this.localstocktransactionarray.length; i++) {
 				tx = this.localstocktransactionarray[i];
+				console.log("transaction at ' + i + ' has key " + tx.getTransactionIndex());
 				
 				if ((tx) && (tx.getTransactionIndex() == key))
 					this.localstocktransactionarray.splice(i, 1);
+
 			}
 		}
 		else {
