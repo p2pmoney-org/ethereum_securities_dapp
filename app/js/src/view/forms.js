@@ -228,7 +228,7 @@ class Forms {
 
 		// owner address text box
 		var labelowner = document.createElement("Label");
-		labelowner.innerHTML = "Enter address of owner, or leave blank:";
+		labelowner.innerHTML = "Enter address of owner:";
 		labelowner.setAttribute('for',"owneraddress");
 		
 		var textboxowner = document.createElement("input"); //input element, text
@@ -317,6 +317,8 @@ class Forms {
 	}
 	
 	displayModifyContractForm(contract) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -376,7 +378,7 @@ class Forms {
 				
 				// owner address text box
 				var labelowner = document.createElement("Label");
-				labelowner.innerHTML = "Enter address of owner, or leave blank:";
+				labelowner.innerHTML = "Enter address of owner:";
 				labelowner.setAttribute('for',"owneraddress");
 				
 				var textboxowner = document.createElement("input"); //input element, text
@@ -432,7 +434,6 @@ class Forms {
 			button.classList.add('btn-modify_contract');
 			
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleModifyContract;
 			
@@ -444,14 +445,14 @@ class Forms {
 		
 		
 		// and this form in the form band
-		var app = this.global.getAppObject();
-
 		app.addForm(formcontainer);
 		
 		return true;
 	}
 	
 	displayDeployContractForm(contract) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -601,7 +602,6 @@ class Forms {
 			}
 			
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleDeployContract;
 			
@@ -613,8 +613,292 @@ class Forms {
 		
 		
 		// and this form in the form band
-		var app = this.global.getAppObject();
+		app.addForm(formcontainer);
+		
+		return true;
+	}
+	
+	
+	//
+	// Accounts
+	//
+	getAccountListFormTabs() {
+		var tabs = document.createElement("div");
+		tabs.classList.add('div-form-tabs');
+		
+		var tabs = document.createElement("div");
+		tabs.classList.add('div-form-tabs');
 
+		var divtab1 = document.createElement("div");
+		
+		tabs.appendChild(divtab1);
+		
+		var span1 = document.createElement("span");
+		
+		divtab1.appendChild(span1);
+
+		var global = this.global;
+		var controllers = this.global.getControllersObject();
+		
+		var handler_select_form = controllers.handleSelectContractForm;
+
+		var tab1;
+		
+		var tabtext1 = "Deploy account";
+		
+		var Global = global.getGlobalClass();
+		
+		if (global.currentformband == Global.FORM_DEPLOY_ACCOUNT) {
+			tab1 = document.createTextNode(tabtext1);
+			divtab1.classList.add('div-form-selected-tab');
+
+		}
+		else {
+			// default
+			tab1 = document.createTextNode(tabtext1);
+			divtab1.classList.add('div-form-selected-tab');
+		}
+
+		span1.appendChild(tab1);
+		
+		return tabs;
+	}
+	
+	displayDeployAccountForm(contract) {
+		var app = this.global.getAppObject();
+		var session = this.global.getSessionObject();
+
+
+		// container (direct child of band)
+		var formcontainer = document.createElement("div");
+		formcontainer.classList.add('div-form-container');
+		
+		// tabs
+		var tabs = this.getAccountListFormTabs();
+		formcontainer.appendChild(tabs);
+		
+		// core of the form
+		var form = document.createElement("div");
+		form.classList.add('div-form');
+		
+		formcontainer.appendChild(form);
+		
+		var span;
+		var label;
+		var textbox;
+		
+		if (contract) {
+			var contractindex = contract.getContractIndex();
+			
+			// contract index hidden field
+			var fieldcontractindex = document.createElement("input"); //input element, text
+			fieldcontractindex.setAttribute('type',"hidden");
+			fieldcontractindex.setAttribute('name',"contractindex");
+			fieldcontractindex.value = contractindex;
+			
+			form.appendChild(fieldcontractindex);
+			
+			
+			// control inputs
+			var account = session.createBlankAccountObject();
+			
+			var privkey = session.generatePrivateKey();
+			
+			account.setPrivateKey(privkey);
+				
+			var accountaddress = account.getAddress();
+				
+			// account address text box
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Account address:";
+			label.setAttribute('for',"acctaddress");
+			
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"text");
+			textbox.setAttribute('name',"acctaddress");
+			textbox.setAttribute('readonly',"readonly");
+			
+			textbox.classList.add('form-textbox');
+			textbox.value = accountaddress;
+			
+			span.appendChild(textbox);
+
+			// private key text box
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Copy private key before registering this account:";
+			label.setAttribute('for',"acctprivkey");
+			
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"text");
+			textbox.setAttribute('name',"acctprivkey");
+			textbox.setAttribute('readonly',"readonly");
+
+			textbox.classList.add('form-textbox');
+			textbox.value = privkey;
+			
+			span.appendChild(textbox);
+			
+			
+			// button
+			var spanbutton = document.createElement("span");
+			form.appendChild(spanbutton);
+
+			var button = document.createElement("input"); //input element, Submit button
+			button.setAttribute('type',"submit");
+			button.setAttribute('value',"Generate new key");
+			button.style = "width: 180px;";
+			button.classList.add('form-button');
+			button.classList.add('btn-generate_new_key');
+
+			// event handler
+			var controllers = this.global.getControllersObject();
+			var handler = controllers.handleGotoAccountListPage;
+			
+			app.bindEvent('click', '.btn-generate_new_key', handler);
+			
+			
+			spanbutton.appendChild(button);
+			
+			
+			//
+			// wallet
+			//
+			var global = this.global;
+			
+			var gaslimit = global.getDefaultGasLimit();
+			var gasPrice = global.getDefaultGasPrice();
+			
+			var walletaddress = null;
+			
+			if (global.useWalletAccount()) {
+				// do we pay everything from a single wallet
+				walletaddress = global.getWalletAccountAddress();
+			}
+			else {
+				// or from the wallet of the owner of the contract
+				walletaddress = contract.getLocalOwner();
+			}
+			
+			if (walletaddress) {
+				// we display the balance
+				var wallet = global.getAccountObject(walletaddress);
+				
+				var divbalance = document.createElement("div");
+				divbalance.classList.add('div-form-cue');
+				
+				Forms.writebalance(wallet, divbalance);
+				
+				formcontainer.appendChild(divbalance);
+			}
+
+			// account wallet used
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Wallet used:";
+			label.setAttribute('for',"wallet");
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"text");
+			textbox.setAttribute('name',"wallet");
+			textbox.classList.add('form-textbox');
+			textbox.value = walletaddress;
+
+			span.appendChild(textbox);
+
+			// account wallet password
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Password:";
+			label.setAttribute('for',"password");
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"password");
+			textbox.setAttribute('name',"password");
+			textbox.classList.add('form-textbox');
+
+			span.appendChild(textbox);
+
+			// gas limit text box
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Gas limit:";
+			label.setAttribute('for',"gaslimit");
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"text");
+			textbox.setAttribute('name',"gaslimit");
+			textbox.classList.add('form-textbox');
+			textbox.style = "width: 100px;";
+			textbox.value = gaslimit;
+
+			span.appendChild(textbox);
+			
+			// gas price text box
+			span = document.createElement("span");
+			form.appendChild(span);
+
+			label = document.createElement("Label");
+			label.innerHTML = "Gas price:";
+			label.setAttribute('for',"gasPrice");
+			span.appendChild(label);
+			
+			textbox = document.createElement("input"); //input element, text
+			textbox.setAttribute('type',"text");
+			textbox.setAttribute('name',"gasPrice");
+			textbox.classList.add('form-textbox');
+			textbox.style = "width: 100px;";
+			textbox.value = gasPrice;
+
+			span.appendChild(textbox);
+			
+			// button
+			var spanbutton = document.createElement("span");
+			form.appendChild(spanbutton);
+
+			var button = document.createElement("input"); //input element, Submit button
+			button.setAttribute('type',"submit");
+			button.setAttribute('value',"Deploy");
+			button.classList.add('form-button');
+			button.classList.add('btn-deploy_account');
+
+			// event handler
+			var controllers = this.global.getControllersObject();
+			var handler = controllers.handleDeployAccount;
+			
+			app.bindEvent('click', '.btn-deploy_account', handler);
+			
+			
+			spanbutton.appendChild(button);
+
+			
+			// and this form in the form band
+
+			// set top level message
+			app.setMessage('please save the elements that will be deployed on the blockchain.');
+			
+		}
+
+		
+		// and add this form in the form band
 		app.addForm(formcontainer);
 		
 		return true;
@@ -723,6 +1007,8 @@ class Forms {
 	}
 	
 	displayCreateStakeHolderForm(contract) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -783,7 +1069,6 @@ class Forms {
 			button.classList.add('btn-create_stakeholder');
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleCreateStakeHolder;
 			
@@ -805,6 +1090,8 @@ class Forms {
 	}
 
 	displayModifyStakeHolderForm(contract, stakeholder) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -885,7 +1172,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleModifyStakeHolder;
 			
@@ -904,18 +1190,12 @@ class Forms {
 		app.addForm(formcontainer);
 		
 		return true;
-		
-		// and this form in the form band
-		var app = this.global.getAppObject();
-	
-		app.addForm(formcontainer);
-		
-		return true;
-		
 	}
 	
 
 	displayDeployStakeHolderForm(contract, stakeholder) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -978,11 +1258,11 @@ class Forms {
 			span.appendChild(textbox);
 
 			// shareholder address text box
-/*			span = document.createElement("span");
+			span = document.createElement("span");
 			form.appendChild(span);
 
 			label = document.createElement("Label");
-			label.innerHTML = "Enter address of shareholder, or leave blank:";
+			label.innerHTML = "Enter address of a registered account, or leave blank:";
 			label.setAttribute('for',"shldraddress");
 			
 			span.appendChild(label);
@@ -993,7 +1273,7 @@ class Forms {
 			textbox.classList.add('form-textbox');
 			
 			span.appendChild(textbox);
-
+			/*
 			// public key text box
 			span = document.createElement("span");
 			form.appendChild(span);
@@ -1009,7 +1289,7 @@ class Forms {
 			textbox.setAttribute('name',"shldrpubkey");
 			textbox.classList.add('form-textbox');
 			
-			span.appendChild(textbox);*/
+			span.appendChild(textbox);
 
 
 			// private key text box
@@ -1027,7 +1307,7 @@ class Forms {
 			textbox.setAttribute('name',"shldrprivkey");
 			textbox.classList.add('form-textbox');
 			
-			span.appendChild(textbox);
+			span.appendChild(textbox);*/
 			
 			//
 			// wallet
@@ -1152,7 +1432,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleDeployStakeHolder;
 			
@@ -1279,6 +1558,8 @@ class Forms {
 	}
 	
 	displayCreateIssuanceForm(contract) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -1390,7 +1671,6 @@ class Forms {
 			button.classList.add('btn-create_issuance');
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleCreateIssuance;
 			
@@ -1412,6 +1692,8 @@ class Forms {
 	}
 	
 	displayModifyIssuanceForm(contract, issuance) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -1554,7 +1836,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleModifyIssuance;
 			
@@ -1575,16 +1856,15 @@ class Forms {
 		return true;
 		
 		// and this form in the form band
-		var app = this.global.getAppObject();
-	
 		app.addForm(formcontainer);
 		
 		return true;
-		
 	}
 	
 
 	displayDeployIssuanceForm(contract, issuance) {
+		var app = this.global.getAppObject();
+
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
 		formcontainer.classList.add('div-form-container');
@@ -1833,7 +2113,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleDeployIssuance;
 			
@@ -1961,6 +2240,7 @@ class Forms {
 	
 	displayCreateTransactionForm(contract) {
 		var global = this.global;
+		var app = this.global.getAppObject();
 		
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
@@ -2167,7 +2447,6 @@ class Forms {
 			button.classList.add('btn-create_transaction');
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleCreateTransaction;
 			
@@ -2189,8 +2468,8 @@ class Forms {
 	}
 	
 	displayModifyTransactionForm(contract, transaction) {
-		
 		var global = this.global;
+		var app = this.global.getAppObject();
 		
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
@@ -2441,7 +2720,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleModifyTransaction;
 			
@@ -2460,19 +2738,12 @@ class Forms {
 		app.addForm(formcontainer);
 		
 		return true;
-		
-		// and this form in the form band
-		var app = this.global.getAppObject();
-	
-		app.addForm(formcontainer);
-		
-		return true;
-		
 	}
 	
 
 	displayDeployTransactionForm(contract, transaction) {
 		var global = this.global;
+		var app = this.global.getAppObject();
 		
 		// container (direct child of band)
 		var formcontainer = document.createElement("div");
@@ -2832,7 +3103,6 @@ class Forms {
 			}
 
 			// event handler
-			var app = this.global.getAppObject();
 			var controllers = this.global.getControllersObject();
 			var handler = controllers.handleDeployTransaction;
 			

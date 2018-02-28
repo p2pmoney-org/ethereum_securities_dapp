@@ -43,9 +43,11 @@ promise_include('./js/src/config.js')
 .then(promise_include('./js/src/model/contracts.js'))
 .then(promise_include('./js/src/model/account.js'))
 .then(promise_include('./js/src/model/stakeholder.js'))
-.then(promise_include('./js/src/model/stocktransaction.js'))
-.then(promise_include('./js/src/model/stockissuance.js'))
-.then(promise_include('./js/src/model/stockledger.js'))
+
+.then(promise_include('./js/src/model/stockledger/stocktransaction.js'))
+.then(promise_include('./js/src/model/stockledger/stockissuance.js'))
+.then(promise_include('./js/src/model/stockledger/stockholder.js'))
+.then(promise_include('./js/src/model/stockledger/stockledger.js'))
 
 .then(promise_include('./js/src/model/session.js')); // should be last
 

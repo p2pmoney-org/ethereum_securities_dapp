@@ -1,5 +1,5 @@
 # ethereum_securities_dapp
-An implementation of a contract to manager a share ledger on the blockchain (StockLedger.sol) and a browser application in javascript to offer a reference implementation the deployment and interaction with contracts on the ethereum blockchain.
+An implementation of a contract to manage a share ledger on the blockchain (StockLedger.sol) and a browser application in javascript to offer a reference implementation the deployment and interaction with contracts on the ethereum blockchain.
 
 ## Getting Started
 
@@ -31,4 +31,11 @@ If you are using another browser, you can enter directly the following address:
 
 ```
 http://localhost:8000
+```
+
+### Online demo
+You can find all the elements and links to an online demo at 
+
+```
+http://wordpress.p2pmoney.org/index.php/instructions-for-testing-stockledger-contract/
 ```

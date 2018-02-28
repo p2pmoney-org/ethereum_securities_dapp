@@ -268,6 +268,51 @@
   padding: 10px;
 }
 
+/* account list */
+
+
+.table-account-list{
+  width:1100px;
+}
+
+.table-account-list td {
+  padding: 10px;
+}
+
+
+.table-account-list-action-td {
+  padding: 10px;
+  font-size: 80%;
+}
+
+.table-account-list-action-td a {
+  color: red;
+}
+
+
+.table-account-list tr:first-child{
+  font-weight:bold;
+  background-color:#a2a2a2;
+}
+
+
+.table-account-list-tr-local-odd{
+  background-color: #f6f6f7;
+}
+
+.table-account-list-tr-local-even{
+  background-color: #ececea;
+}
+
+.table-account-list-tr-chain-odd{
+  background-color: #2a292b33;
+}
+
+.table-account-list-tr-chain-even{
+  background-color: #7e7c8233;
+}
+
+
 /* stakeholder list */
 
 

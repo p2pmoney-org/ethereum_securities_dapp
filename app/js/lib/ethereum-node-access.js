@@ -3,13 +3,48 @@
 class EthereumNodeAccess {
 	constructor(session) {
 		this.session = session;
+		
+		this.web3providerurl = null;
+		this.web3instance = null;
 	}
 	
 	//
 	// Web3
 	//
+	getWeb3Class() {
+		if ( typeof window !== 'undefined' && window ) {
+			return Web3;
+		}
+		else {
+			return require('web3');
+		}
+	}
+	
+	getWeb3Provider() {
+		var Web3 = this.getWeb3Class();
+
+		var web3providerurl = this.session.getWeb3ProviderUrl();
+		var web3Provider = new Web3.providers.HttpProvider(web3providerurl);
+
+		return web3Provider;
+	}
+	
+	getWeb3Instance() {
+		if (this.web3instance)
+			return this.web3instance;
+		
+		var Web3 = this.getWeb3Class();
+		var web3Provider = this.getWeb3Provider();
+		  
+		this.web3instance = new Web3(web3Provider);		
+		
+		console.log("web3 instance created");
+		
+		return this.web3instance;
+	}
+	
 	web3_getBalance(address) {
-		var web3 = this.session.getWeb3Instance();
+		var web3 = this.getWeb3Instance();
 		var balance = web3.eth.getBalance(address);
 		
 		return balance;
@@ -21,7 +56,7 @@ class EthereumNodeAccess {
 
 		var promise = new Promise(function (resolve, reject) {
 			try {
-				var web3 = session.getWeb3Instance();
+				var web3 = self.getWeb3Instance();
 				
 				return web3.eth.getBalance(address, function(err, balance) {
 					if (!err) {
@@ -51,13 +86,33 @@ class EthereumNodeAccess {
 	//
 	// Truffle
 	//
+	getTruffleContractClass() {
+		if ( typeof window !== 'undefined' && window ) {
+			return TruffleContract;
+		}
+		else {
+			return require('truffle-contract');
+		}
+	}
+	
+	getTruffleContractObject(contractartifact) {
+		
+		var TruffleContract = this.getTruffleContractClass();
+		
+		var trufflecontract = TruffleContract(contractartifact);
+	  
+		trufflecontract.setProvider(this.getWeb3Provider());
+		
+		return trufflecontract;
+	}
+	
 	truffle_loadArtifact(artifactpath, callback) {
 		return this.session.loadArtifact(artifactpath, callback);
 
 	}
 	
 	truffle_loadContract(artifact) {
-		return this.session.getTruffleContractObject(artifact);
+		return this.getTruffleContractObject(artifact);
 	}
 	
 	truffle_contract_at(trufflecontract, address) {
@@ -81,6 +136,18 @@ class EthereumNodeAccess {
 		
 		return funcname.sendTransaction(...params);
 	}
+	
+	// uuid
+	guid() {
+		  function s4() {
+		    return Math.floor((1 + Math.random()) * 0x10000)
+		      .toString(16)
+		      .substring(1);
+		  }
+		  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+		    s4() + '-' + s4() + s4() + s4();
+	}
+
 	
 }
 

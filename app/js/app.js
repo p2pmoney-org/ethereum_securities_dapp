@@ -65,9 +65,9 @@ App = {
 		
 		console.log('web3 provider is  ' + global.getWeb3ProviderUrl());
 		
-		var web3Provider = global.getWeb3Instance();
+/*		var web3Provider = global.getWeb3Instance();
 
-		web3 = global.getWeb3Instance();
+		web3 = global.getWeb3Instance();*/
   
 	    return App.initContracts();
 	},
@@ -127,17 +127,33 @@ App = {
 	},
 	
 	// top band
+	currentmessage: null,
+	
 	setMessage: function(message) {
-		var messageZone = document.getElementById("message-zone")
+		this.currentmessage = message;
 		
-		messageZone.innerHTML = message;
+	},
+	
+	clearMessage() {
+		this.currentmessage = null;
+		
+		this.clearMessageZone();
+	},
+	
+	displayMessageZone() {
+		var messageZone = document.getElementById("message-zone");
+		
+		if (this.currentmessage)
+			messageZone.innerHTML = this.currentmessage;
+		else 
+			messageZone.innerHTML = "&nbsp;";
 		
 	},
 	
 	clearMessageZone: function() {
 		var messageZone = document.getElementById("message-zone")
 		
-		messageZone.innerHTML = "";
+		messageZone.innerHTML = "&nbsp;";
 		
 	},
 	

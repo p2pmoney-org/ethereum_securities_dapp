@@ -12,10 +12,16 @@ function include(file)
 
 // include all necessary lib js files here 
 include('./js/lib/bootstrap.min.js');
+
 include('./js/lib/web3.min.js');
 include('./js/lib/truffle-contract.js');
+
 include('./js/lib/ethereumjs-all-2017-10-31.min.js');
 include('./js/lib/keythereum.min.js');
+include('./js/lib/bitcore.min.js');
+include('./js/lib/bitcore-ecies.min.js');
 
+// interfaces to abstract the previous libs
 include('./js/lib/ethereum-node-access.js');
+include('./js/lib/account-encryption.js');
 

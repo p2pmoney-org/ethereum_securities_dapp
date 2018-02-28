@@ -9,34 +9,57 @@ contract StockLedger {
 
 	// company
 	address public owner;
-	string public owner_pubkey;
+	string public owner_pubkey; // asymmetric public key (rsa)
 
 	string public ledger_name;
 	string public cocrypted_ledger_description;
 	
-	uint creation_date; // unix time
-	uint creation_block_date; // now in block number
+	uint public creation_date; // unix time
+	uint public creation_block_date; // now in block number
 	
 	address public replaced_by;
-	uint replacement_date; // unix time
-	uint replacement_block_date; // now in block number
+	uint public replacement_date; // unix time
+	uint public replacement_block_date; // now in block number
+	
+	string public next_orderid;
+	
+	// account list (key pairs created for this contract)
+	Account[] accounts;
+	
+	struct Account {
+	    address acct_address;
+	    
+	    string rsa_pubkey;
+	    string ece_pubkey;
+	    
+	    string cocrypted_acct_privkey; 
+	}
 
- 	// shareholders list
+ 	// shareholder list
 	ShareHolder[] shareholders;
 	
 	struct ShareHolder {
 	    address shldr_address;
-	    string shldr_pubkey;
+	    string shldr_pubkey; // asymmetric public key (rsa)
 	    
-	    string cocrypted_shldr_privkey;
-	    string cocrypted_shldr_identifier;
+	    string cocrypted_shldr_privkey; //  asymmetric encryption with owner's public key
+	    string cocrypted_shldr_identifier; // string that can uniquely identify shareholder (e.g. email)
 	    
 	    uint registration_date; // unix time
 	    uint block_date; // now in block number
 	    
-		address replaced_by;
-		uint replacement_date; // unix time
-		uint replacement_block_date; // now in block number
+		address replacing; // in case, shareholder's private key is compromised or shareholder is registered after inscription by seller
+	    
+	    address creator; // can be owner, or a seller of shares
+
+	    string crtcrypted_shldr_description_string; // symmetric encryption with creator's private key
+	    string crtcrypted_shldr_identifier;
+		
+	    string shldrcrypted_shldr_description_string; // asymmetric encryption with shareholder's public key
+	    string shldrcrypted_shldr_identifier;
+		
+		string orderid; // unique, provided by contract next_orderid
+        string signature; // signature of orderid with creator's private key
 	}
 
     // issuances
@@ -50,10 +73,17 @@ contract StockLedger {
 	    uint block_date; // now in block number
 	    
 	    string name;
-	    string cocrypted_description;
+	    string cocrypted_description; // symmetric encryption with owner's private key
+	    
+	    string issuance_type; // type of shares, options,..
+	    string code; // code for issuance, could be ISIN code
 	    
 	    uint cancel_date; // unix time
 	    uint cancel_block_date; // now in block number
+	    
+		string orderid; // unique, provided by contract next_orderid
+        string signature; // signature of orderid with owner' address's private ke
+        
 	}
 	
     // stock transactions
@@ -66,18 +96,23 @@ contract StockLedger {
 		uint transactiondate; // unix time
 		uint block_date; 
 		
-		uint8 nature; // 0 creation, 1 registered transfer, 2 signed endorsement, 3 withdrawal/repurchase
+		uint8 nature; // 0 creation, 1 registered transfer (reserved to owner), 2 destruction, above 10 freely defined (e.g. 11 signed endorsement, 12 withdrawal/repurchase,..)
 		
 		uint issuanceindex; // issuance number is 1 based
-		string orderid; // unique, provided by caller
-
+        
 		uint numberofshares;
 		
 		uint consideration;
 		string currency;
+		
+		address creator;
+		
+		string orderid; // unique, provided by contract next_orderid
+        string signature; // signature of orderid with from' address's private key
 	}
 
-	function StockLedger(address _owner, string _owner_pubkey, string _cocrypted_owner_identifier, string _ledger_name, string _cocrypted_ledger_description) public {
+	// constructor
+	function StockLedger(address _owner, string _owner_pubkey, string _crtcrypted_owner_identifier, string _ledger_name, string _cocrypted_ledger_description) public {
 		contract_name = "stockledger";
 		contract_version = 20180101;
 		
@@ -91,24 +126,118 @@ contract StockLedger {
 		
 		shareholders.length = 1; // company as initial holder of shares
 		
-        ShareHolder storage shldr = shareholders[0] ;
+        ShareHolder storage __shldr = shareholders[0] ;
         
-        shldr.shldr_address = _owner;
-        shldr.shldr_pubkey = _owner_pubkey;
-        shldr.cocrypted_shldr_privkey = "0x"; // we do not store owner's private key
-        shldr.cocrypted_shldr_identifier = _cocrypted_owner_identifier;
+        __shldr.shldr_address = _owner;
+        __shldr.shldr_pubkey = _owner_pubkey;
+        __shldr.cocrypted_shldr_privkey = "0x"; // we do not store owner's private key
+        __shldr.cocrypted_shldr_identifier = "0x";
         
+        __shldr.replacing = 0x0;
+        
+        __shldr.creator = _owner;
+        __shldr.crtcrypted_shldr_description_string = "0x"; 
+        __shldr.crtcrypted_shldr_identifier = _crtcrypted_owner_identifier;
+        
+        __shldr.shldrcrypted_shldr_description_string = "0x";
+        __shldr.shldrcrypted_shldr_identifier = "0x";
+		
+        __shldr.orderid = "1";
+ 		__shldr.signature = "0x";
+
 		issuances.length = 0;
 		
         stocktransactions.length = 0;
+        
+		next_orderid = newNextOrderId();
 	}
 	
-	function registerShareHolder(address _shldr_address, string _shldr_pubkey, string _cocrypted_shldr_privkey, string _cocrypted_shldr_identifier, uint _registration_date) public payable returns (uint _shldrindex) {
+	// contract life cycle
+	function reclaimContractBalance() public payable returns (bool success) {
+	    // if balance is positive, send ethers to owner
+	    if (this.balance > 0) {
+	        owner.transfer(this.balance);
+	        
+	        return true;
+	    }
+	    
+	    return false;
+	}
+	
+
+	// registered accounts (self registration)
+	function registerAccount(address _acct_address, string _rsa_pubkey, string _ece_pubkey, string _cocrypted_acct_privkey) public payable returns (uint _acctindex) {
+	    int _acct_number = this.findAccountNumber(_acct_address);
+	    require(_acct_number == -1); // not already in the list
+
+	    uint __current_number_of_accounts = accounts.length;
+
+	    accounts.length = __current_number_of_accounts + 1; // grow the list
+	    
+        Account storage __acct = accounts[__current_number_of_accounts];
+       
+        __acct.acct_address = _acct_address;
+        __acct.rsa_pubkey = _rsa_pubkey;
+        __acct.ece_pubkey = _ece_pubkey;
+        __acct.cocrypted_acct_privkey = _cocrypted_acct_privkey;
+       
+ 	    _acctindex = __current_number_of_accounts;
+	}
+
+	function getAccountCount() public view returns (uint _count) {
+	    _count = accounts.length;
+	}
+	
+	function getAccountAt(uint _index) public view returns (address _acct_address, string _rsa_pubkey, string _ece_pubkey, string _cocrypted_acct_privkey) {
+	    uint __current_number_of_accounts = accounts.length;
+	    
+	    require((_index >= 0) && (_index < __current_number_of_accounts));
+	    
+	    Account storage __acct = accounts[_index];
+	    
+        _acct_address = __acct.acct_address;
+        _rsa_pubkey = __acct.rsa_pubkey;
+        _ece_pubkey = __acct.ece_pubkey;
+        _cocrypted_acct_privkey = __acct.cocrypted_acct_privkey;
+    }
+	
+	function findAccountNumber(address _acct_address) public view returns (int _number) {
+	    _number = -1;
+	    
+	    for (uint i = 0; i < accounts.length; i++) {
+	        Account storage __acct = accounts[i];
+	        
+	        if (__acct.acct_address == _acct_address) {
+	             _number = int(i);
+	             
+	             break;
+	        }
+	    }
+	}
+	
+	// registered shareholders (registration by owner or sellers)
+	function registerShareHolder(address _shldr_address, string _shldr_pubkey, 
+								string _cocrypted_shldr_privkey, string _cocrypted_shldr_identifier, uint _registration_date, 
+								address _creator, string _crtcrypted_shldr_description_string, string _crtcrypted_shldr_identifier, 
+								string _orderid, string _signature,
+								string _shldrcrypted_shldr_string, string _shldrcrypted_shldr_identifier) public payable returns (uint _shldrindex) {
+	    // done by the owner of the ledger, or a shareholder selling their shares
+
+	    require(stringsEqual(next_orderid, _orderid));
+	    next_orderid = newNextOrderId();
+	    
 	    uint __current_number_of_shareholders = shareholders.length;
 	    
-	    int _shldr_number = this.findShareHolderNumber(_shldr_address);
+	    /*
+	    // COMPILER PROBLEMS 'stack is too deep'
+	    int _acct_number = this.findAccountNumber(_shldr_address);
+	    require(_acct_number != -1); // already in account list
 	    
+	    Account storage __acct = accounts[uint(_acct_number)];
+
+	    int _shldr_number = this.findShareHolderNumber(_shldr_address);
 	    require(_shldr_number == -1); // not already in the list
+	    */
 	    
 	    shareholders.length = __current_number_of_shareholders + 1; // grow the list
 	    
@@ -119,9 +248,23 @@ contract StockLedger {
         
         __shldr.cocrypted_shldr_privkey = _cocrypted_shldr_privkey;
         __shldr.cocrypted_shldr_identifier = _cocrypted_shldr_identifier;
-        
+
+       
         __shldr.registration_date = _registration_date;
         __shldr.block_date = now;
+        
+        __shldr.replacing = 0x0;
+        
+        __shldr.creator = _creator;
+        __shldr.crtcrypted_shldr_description_string = _crtcrypted_shldr_description_string;
+        __shldr.crtcrypted_shldr_identifier = _crtcrypted_shldr_identifier;
+		
+        __shldr.orderid = _orderid;
+        __shldr.signature = _signature;
+        
+         
+        __shldr.shldrcrypted_shldr_description_string = _shldrcrypted_shldr_string;
+        __shldr.shldrcrypted_shldr_identifier = _shldrcrypted_shldr_identifier;
         
         _shldrindex = __current_number_of_shareholders;
 	}
@@ -130,7 +273,8 @@ contract StockLedger {
 	    _count = shareholders.length;
 	}
 	
-	function getShareHolderAt(uint _index) public view returns (address _shldr_address, string _shldr_pubkey, string _cocrypted_shldr_privkey, string _cocrypted_shldr_identifier, uint _registration_date, uint _block_date, address _replaced_by, uint _replacement_date, uint _replacement_block_date) {
+	function getShareHolderAt(uint _index) public view returns (address _shldr_address, string _shldr_pubkey, string _cocrypted_shldr_privkey, string _cocrypted_shldr_identifier, uint _registration_date, uint _block_date, 
+	                                                            address _replacing) {
 	    uint __current_number_of_shareholders = shareholders.length;
 	    
 	    require((_index >= 0) && (_index < __current_number_of_shareholders));
@@ -146,22 +290,51 @@ contract StockLedger {
 	    _registration_date = __shldr.registration_date; // unix time
 	    _block_date = __shldr.block_date; // now in block number
 	    
-		_replaced_by = __shldr.replaced_by;
-		_replacement_date = __shldr.replacement_date; // unix time
-		_replacement_block_date = __shldr.replacement_block_date; // now in block number
+		_replacing = __shldr.replacing;
+
 	}
 	
-	function registerShareHolderReplacementAt(uint _index, address _shldr_address, string _shldr_pubkey, string _shldr_cocrypted_shldr_key, string _shldr_cocrypted_shldr_identifier, uint _shldr_registration_date) public payable returns (uint _shldrindex) {
-	    // replace a shareholder entry by a linked entry (e.g. in case shareholder has lost their key or key has been stolen)
-	    _shldrindex = registerShareHolder(_shldr_address, _shldr_pubkey, _shldr_cocrypted_shldr_key, _shldr_cocrypted_shldr_identifier, _shldr_registration_date);
+	function getShareHolderExtraAt(uint _index) public view returns (address _creator, string _crtcrypted_shldr_description_string, string _crtcrypted_shldr_identifier, string _orderid, string _signature, string _shldrcrypted_shldr_description_string, string _shldrcrypted_shldr_identifier) {
+	   // because of "Stack too deep, try using less variables."
+	    uint __current_number_of_shareholders = shareholders.length;
+	    
+	    require((_index >= 0) && (_index < __current_number_of_shareholders));
 	    
 	    ShareHolder storage __shldr = shareholders[_index];
 	    
-	    __shldr.replaced_by = _shldr_address;
-	    __shldr.replacement_date = _shldr_registration_date;
-	    __shldr.replacement_block_date = now;
-	    
+         _creator = __shldr.creator;
+        _crtcrypted_shldr_description_string = __shldr.crtcrypted_shldr_description_string;
+        _crtcrypted_shldr_identifier = __shldr.crtcrypted_shldr_identifier;
+
+        _shldrcrypted_shldr_description_string = __shldr.shldrcrypted_shldr_description_string;
+        _shldrcrypted_shldr_identifier = __shldr.shldrcrypted_shldr_identifier;
+		
+		_orderid = __shldr.orderid;
+		_signature = __shldr.signature;
 	}
+	
+	/*function registerShareHolderReplacementAt(uint _index, address _shldr_address, string _shldr_pubkey, string _cocrypted_shldr_string,
+											 string _cocrypted_shldr_identifier, 
+											 uint _shldr_registration_date, address _creator, string _crtcrypted_shldr_description_string, string _crtcrypted_shldr_identifier, 
+											 string _orderid, string _signature,
+											 string _shldrcrypted_shldr_string, string _shldrcrypted_shldr_identifier) public payable returns (uint _shldrindex) {
+	    // replace a shareholder entry by a linked entry (e.g. in case shareholder has lost their key or key has been stolen)
+	    
+	    require(stringsEqual(next_orderid, _orderid));
+	    next_orderid = newNextOrderId();
+	    
+	    // COMPILER PROBLEMS 'stack is too deep'
+	    ShareHolder storage __shldr = shareholders[_index];
+	    
+	    require((__shldr.creator == _creator) || (_creator == owner)); // can only by creator of original shareholder, or by owner
+	    
+	    _shldrindex = registerShareHolder(_shldr_address, _shldr_pubkey, _cocrypted_shldr_string, _cocrypted_shldr_identifier, _shldr_registration_date, _creator, _crtcrypted_shldr_description_string, _crtcrypted_shldr_identifier, _orderid, _signature, _shldrcrypted_shldr_string, _shldrcrypted_shldr_identifier);
+	    
+	    
+	    ShareHolder storage __newshldr = shareholders[_shldrindex];
+	    __shldr.replacing = __shldr.shldr_address;
+
+	}*/
 	
 	function findShareHolderNumber(address _shldr_address) public view returns (int _number) {
 	    _number = -1;
@@ -176,10 +349,17 @@ contract StockLedger {
 	        }
 	    }
 	}
+	
 
-	function registerIssuance(string _name, string _cocrypted_description, uint _numberofshares, uint _percentofcapital, uint _issuance_unixtime, string _orderid) payable public returns (uint _issuancenumber) {
-	    //require(msg.sender == owner);
+	// issuances (registered by owner)
+	function registerIssuance(string _name, string _cocrypted_description, uint _numberofshares, uint _percentofcapital, 
+	                            uint _issuance_unixtime, string _orderid, string _signature,
+	                            string _issuance_type, string _code) payable public returns (uint _issuancenumber) {
+	    // done by the owner of the ledger
 
+	    require(stringsEqual(next_orderid, _orderid));
+	    next_orderid = newNextOrderId();
+	    
 	    uint __numberofissuances = issuances.length;
 	    
    	    // add a new issuance
@@ -193,10 +373,16 @@ contract StockLedger {
 		__issu.numberofshares = _numberofshares;
 		__issu.percentofcapital = _percentofcapital;
 		
+		__issu.issuance_type = _issuance_type;
+		__issu.code = _code;
+		
 		__issu.issuance_date = _issuance_unixtime;
 		__issu.block_date = now;
 
-        // initial creation of shares
+        __issu.orderid = _orderid;
+        __issu.signature = _signature;
+
+       // initial creation of shares
         uint __numberoftransactions = stocktransactions.length;
         stocktransactions.length = __numberoftransactions + 1;
         
@@ -211,8 +397,12 @@ contract StockLedger {
         __txn.block_date = now;
         
         __txn.issuanceindex = __numberofissuances;
-        __txn.orderid = _orderid;
         
+        __txn.creator = owner;
+ 
+        __txn.orderid = _orderid;
+        __txn.signature = _signature;
+       
         __txn.numberofshares = _numberofshares;
         
         __txn.consideration = 0;
@@ -221,8 +411,11 @@ contract StockLedger {
         _issuancenumber = __numberofissuances + 1;
 	}
 	
-	function registerIssuanceResize(uint _issuancenumber, uint _newnumberofshares, string _orderid, uint _transactiondate) payable public returns (uint _txnumber) {
-	    //require(msg.sender == owner);
+	function registerIssuanceResize(uint _issuancenumber, uint _newnumberofshares, string _orderid, uint _transactiondate, string _signature) payable public returns (uint _txnumber) {
+	    // done by the owner of the ledger
+	    
+ 	    require(stringsEqual(next_orderid, _orderid));
+	    next_orderid = newNextOrderId();
 	    
         uint __issuanceindex = _issuancenumber -1; // 1 based
  
@@ -249,7 +442,7 @@ contract StockLedger {
             
             __txn = stocktransactions[__numberoftransactions];
             
-            __txn.nature = 3;
+            __txn.nature = 2; // destruction
             
             __txn.from = owner;
             __txn.to = owner;
@@ -257,8 +450,12 @@ contract StockLedger {
             __txn.transactiondate = _transactiondate;
             __txn.block_date = now;
             
-            __txn.issuanceindex = __issuanceindex; 
+            __txn.issuanceindex = __issuanceindex;
+            
+            __txn.creator = owner;
+            
             __txn.orderid = _orderid;
+            __txn.signature = _signature;
             
             __txn.numberofshares = __current_numberofshares - _newnumberofshares;
             
@@ -283,7 +480,11 @@ contract StockLedger {
             __txn.block_date = now;
             
             __txn.issuanceindex = __issuanceindex; 
+            
+            __txn.creator = owner;
+            
             __txn.orderid = _orderid;
+            __txn.signature = _signature;
             
             __txn.numberofshares = _newnumberofshares - __current_numberofshares;
             
@@ -295,7 +496,8 @@ contract StockLedger {
 	    
 	}
 	
-	function getIssuanceAt(uint _index) public view returns (uint _numberofshares, uint _percentofcapital, uint _issuance_date,  uint _block_date, string _name, string _cocrypted_description, uint _cancel_date, uint _cancel_block_date) {
+	function getIssuanceAt(uint _index) public view returns (uint _numberofshares, uint _percentofcapital, uint _issuance_date,  uint _block_date, 
+	                            string _name, string _cocrypted_description, uint _cancel_date, uint _cancel_block_date, string _orderid, string _signature) {
 	    uint __current_number_of_issuances = issuances.length;
 	    
 	    require((_index >= 0) && (_index < __current_number_of_issuances));
@@ -313,8 +515,23 @@ contract StockLedger {
 	    
 	    _cancel_date = __issu.cancel_date; // unix time
 	    _cancel_block_date = __issu.cancel_block_date; // now in block number
+	    
+	    _orderid = __issu.orderid;
+	    _signature = __issu.signature;
 	}
 	
+	function getIssuanceExtraAt(uint _index) public view returns (string _issuance_type, string _code) {
+	    uint __current_number_of_issuances = issuances.length;
+
+	    require((_index >= 0) && (_index < __current_number_of_issuances));
+	    
+	    Issuance storage __issu = issuances[_index];
+	    
+		_issuance_type = __issu.issuance_type;
+		_code = __issu.code;
+		
+	 }
+	                            
 	function getIssuanceCount() public view returns (uint _count) {
 	    _count = issuances.length;
 	}
@@ -346,30 +563,31 @@ contract StockLedger {
     	            }
 	                
 	            }
-	            else if (__txn.nature == 2) {
-  	                // shares are committed in a recorded transaction
-  	                if (__txn.from == _shldr_address) {
-    	                _position = _position - __txn.numberofshares;
-    	            }
-   	             
-    	            if (__txn.to == _shldr_address) {
-    	                _position = _position + __txn.numberofshares;
-    	            }
-	            }
-	            else if (__txn.nature == 3) {
-   	                if ((_shldr_address == owner) && (__txn.to == _shldr_address)) {
-    	                _position = _position + __txn.numberofshares;
-    	            }
-	                
-	            }
-	            
+
 	        }
 	    }
 	    
 	}
 	
-	function registerTransaction(uint _numberofshares, address _from, address _to, uint8 _nature, uint _issuancenumber, string _orderid, uint _transaction_unixtime, uint _consideration, string _currency) payable public returns (uint _txnumber) {
-	    //require(msg.sender == owner);
+	function registerTransaction(uint _numberofshares, address _from, address _to, uint8 _nature, uint _issuancenumber, string _orderid, uint _transaction_unixtime, uint _consideration, string _currency, address _creator, string _signature) payable public returns (uint _txnumber) {
+	    //require(tx.origin == owner); // done by the owner of the ledger
+	    
+	    require(stringsEqual(next_orderid, _orderid));
+	    next_orderid = newNextOrderId();
+	    
+	    if (_nature <= 10) {
+	        // 1 to 10 (creation, registered transfers, desctruction,..) reserved to owner
+	        require(_creator == owner);
+	        
+	        // contract does not control position
+	        // because it can not check authentication of transactions
+ 	    }
+ 	    else {
+	        require(_creator == _from);
+	        
+	        // contract does not control short selling
+	        // because it can not check authentication of  transactions
+  	    }
 	    
         uint __numberoftransactions = stocktransactions.length;
         stocktransactions.length = __numberoftransactions + 1;
@@ -388,11 +606,11 @@ contract StockLedger {
         
         require(__issuanceindex < issuances.length); 
         __txn.issuanceindex = __issuanceindex; 
-        __txn.orderid = _orderid;
         
-        // check sender has enough share of this issuance
-        uint __shldr_position = getShareHolderPosition(_from, _issuancenumber);
-        require (__shldr_position >= _numberofshares);
+        __txn.creator = _creator;
+        
+        __txn.orderid = _orderid;
+        __txn.signature= _signature;
         
         __txn.numberofshares = _numberofshares;
         
@@ -401,82 +619,6 @@ contract StockLedger {
 
 	    _txnumber = __numberoftransactions + 1;
 	}
-	
-	function recordTransfer(uint _numberofshares, address _from, address _to, uint _issuancenumber, string _orderid, uint _transaction_unixtime, uint _consideration, string _currency) payable public returns (uint _txnumber) {
-	    //require(msg.sender == _from); // done by the owner of the shares
-	    
-        uint __numberoftransactions = stocktransactions.length;
-        stocktransactions.length = __numberoftransactions + 1;
-
-        StockTransaction storage __txn = stocktransactions[__numberoftransactions];
-        
-        __txn.nature = 2; // endorsement
-        
-        __txn.from = _from;
-        __txn.to = _to;
-        
-        __txn.transactiondate = _transaction_unixtime;
-        __txn.block_date = now;
-        
-         uint __issuanceindex = _issuancenumber -1; // 1 based
-        
-        
-        require(__issuanceindex < issuances.length); 
-        __txn.issuanceindex = __issuanceindex; 
-        __txn.orderid = _orderid;
-        
-        // check sender has enough share of this issuance
-        uint __shldr_position = getShareHolderPosition(_from, _issuancenumber);
-        require (__shldr_position >= _numberofshares);
-        
-        __txn.numberofshares = _numberofshares;
-        
-        __txn.consideration = _consideration;
-        __txn.currency = _currency;
-
-	    _txnumber = __numberoftransactions + 1;
-	}
-	
-	function registerTransfer(uint _tranfertxnnumber, string _orderid, uint _transaction_unixtime) payable public returns (uint _txnumber) {
-	    //require(msg.sender == owner); // done by the owner of the ledger
-	    
-        uint __numberoftransactions = stocktransactions.length;
-	   
-	    require((_tranfertxnnumber >= 0) && (_tranfertxnnumber < __numberoftransactions));
-	    
-	    StockTransaction storage __recordedtx = stocktransactions[_tranfertxnnumber];
-	    
-	    require(__recordedtx.nature == 2);
-	    
-         // check sender has still enough share of this issuance
-        uint __shldr_position = getShareHolderPosition(__recordedtx.from, __recordedtx.issuanceindex);
-        require (__shldr_position >= __recordedtx.numberofshares);
-        
-        // grow array
-        stocktransactions.length = __numberoftransactions + 1;
-
-        StockTransaction storage __txn = stocktransactions[__numberoftransactions];
-        
-        __txn.nature = 1;
-        
-        __txn.from = __recordedtx.from;
-        __txn.to = __recordedtx.to;
-        
-        __txn.transactiondate = _transaction_unixtime;
-        __txn.block_date = now;
-        
-        
-        __txn.issuanceindex = __recordedtx.issuanceindex; 
-        __txn.orderid = _orderid;
-        
-        __txn.numberofshares = __recordedtx.numberofshares;
-        
-        __txn.consideration = __recordedtx.consideration;
-        __txn.currency = __recordedtx.currency;
-
-	    _txnumber = __numberoftransactions + 1;
-	}
- 
 	
 	function findTransaction(string _orderid) public view returns (int _txindex) {
 	    _txindex = -1;
@@ -493,7 +635,7 @@ contract StockLedger {
 	    
 	}
 	
-	function getTransactionAt(uint _index) public view returns (address _from, address _to,	uint _transactiondate, uint _block_date, uint8 _nature, uint _issuancenumber, string _orderid, uint _numberofshares, uint _consideration, string _currency) {
+	function getTransactionAt(uint _index) public view returns (address _from, address _to,	uint _transactiondate, uint _block_date, uint8 _nature, uint _issuancenumber, string _orderid, uint _numberofshares, uint _consideration, string _currency, address _creator, string _signature) {
 	    uint __current_number_of_transactions = stocktransactions.length;
 	    
 	    require((_index >= 0) && (_index <  __current_number_of_transactions));
@@ -509,7 +651,11 @@ contract StockLedger {
 		_nature = __txn.nature; // 0 creation, 1 transfer, 2 pledge, 3 redeem
 		
 		_issuancenumber = __txn.issuanceindex + 1; // number is 1 based
+		
+		
+		_creator = __txn.creator; 
 		_orderid = __txn.orderid; // unique, provided by caller
+		_signature = __txn.signature;
 
 		_numberofshares = __txn.numberofshares;
 		
@@ -519,6 +665,20 @@ contract StockLedger {
 	
 	function getTransactionCount() public view returns (uint _count) {
 	    _count = stocktransactions.length;
+	}
+	
+	function newNextOrderId() internal view returns (string) {
+	    string memory __time_string = uintToString (now);
+	    
+        uint __current_number_of_shareholders = shareholders.length;
+        uint __numberofissuances = issuances.length;
+        uint __numberoftransactions = stocktransactions.length;
+	    
+	    string memory __shldr_string = uintToString(__current_number_of_shareholders);
+	    string memory __issu_string = uintToString(__numberofissuances);
+	    string memory __txn_string = uintToString(__numberoftransactions);
+	    
+	    return strConcat(__time_string, "-", __shldr_string,__issu_string, __txn_string);
 	}
 	
 
@@ -534,6 +694,54 @@ contract StockLedger {
 				return false;
 		return true;
 	}
+	
+	function strConcat(string _a, string _b, string _c, string _d, string _e) internal pure returns (string){
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
+    
+    function uintToString (uint _ui) internal pure returns (string) {
+         if (_ui == 0) return "0";
+        uint j = _ui;
+        uint len;
+        while (j != 0){
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (_ui != 0){
+            bstr[k--] = byte(48 + _ui % 10);
+            _ui /= 10;
+        }
+        return string(bstr);
+    }
 
+    function uintToBytes32(uint256 _ui) internal pure returns (bytes32) {
+        return bytes32(_ui);
+    }
+    
+    function bytes32ToString (bytes32 _data) internal pure returns (string) {
+        bytes memory bytesString = new bytes(32);
+        for (uint j=0; j<32; j++) {
+            byte char = byte(bytes32(uint(_data) * 2 ** (8 * j)));
+            if (char != 0) {
+                bytesString[j] = char;
+            }
+        }
+        return string(bytesString);
+    }
 
 }

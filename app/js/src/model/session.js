@@ -84,7 +84,7 @@ class Session {
 		this.web3providerurl = url;
 	}
 	
-	getWeb3Provider() {
+/*	getWeb3Provider() {
 		var web3providerurl = this.getWeb3ProviderUrl();
 		var web3Provider = new Session.Web3.providers.HttpProvider(web3providerurl);
 
@@ -110,16 +110,20 @@ class Session {
 	
 	getKeythereumInstance() {
 		return Session.keythereum;
-	}
+	}*/
 	
 	getEthereumNodeAccessInstance() {
 		return new Session.EthereumNodeAccess(this);
 	}
 	
+	getAccountEncryptionInstance(account) {
+		return new Session.AccountEncryption(this, account);
+	}
+	
 
 
-	// truffle
-	getTruffleContractObject(contractartifact) {
+	// truffle support
+/*	getTruffleContractObject(contractartifact) {
 		//var TruffleContract = this.getClass('TruffleContract');
 		  
 		var trufflecontract = Session.TruffleContract(contractartifact);
@@ -127,7 +131,7 @@ class Session {
 		trufflecontract.setProvider(this.getWeb3Provider());
 		
 		return trufflecontract;
-	}
+	}*/
 	
 	loadArtifact(jsonfile, callback) {
 		console.log("requiring load of artifact " + jsonfile);
@@ -180,58 +184,31 @@ class Session {
 	
 	// accounts
 	isValidAddress(address) {
-		var ethereumjs = this.getEthereumJsInstance();
-		
-		if (ethereumjs.Util.isValidAddress(address)){
-			return true;
-		}
-		else {
-			throw address + ' is not a valid address!';
-		}
+		var blankaccount = this.createBlankAccountObject()
+		var accountencryption = this.getAccountEncryptionInstance(blankaccount);
+
+		return accountencryption.isValidAddress(address);		
 	}
 
 	isValidPublicKey(pubkey) {
-		var ethereumjs = this.getEthereumJsInstance();
-		
-		var pubkeystr = pubkey.substring(2); // remove leading '0x'
-		var pubkeybuf = ethereumjs.Buffer.Buffer(pubkeystr, 'hex'); 
-		
-		if (ethereumjs.Util.isValidPublic(pubkeybuf)){
-			return true;
-		}
-		else {
-			throw pubkey + ' is not a valid public key!';
-		}
+		var blankaccount = this.createBlankAccountObject()
+		var accountencryption = this.getAccountEncryptionInstance(blankaccount);
+
+		return accountencryption.isValidPublicKey(pubkey);		
 	}
 	
 	isValidPrivateKey(privkey) {
-		var ethereumjs = this.getEthereumJsInstance();
-		
-		/*console.log('typeof ethereumjs:',               (typeof ethereumjs));
-		console.log('Object.keys(ethereumjs):',         Object.keys(ethereumjs));
-		console.log('typeof ethereumjs.Tx:',            (typeof ethereumjs.Tx));
-		console.log('typeof ethereumjs.RLP:',           (typeof ethereumjs.RLP));
-		console.log('typeof ethereumjs.Util:',          (typeof ethereumjs.Util));
-		console.log('typeof ethereumjs.Buffer:',        (typeof ethereumjs.Buffer));
-		console.log('typeof ethereumjs.Buffer.Buffer:', (typeof ethereumjs.Buffer.Buffer));*/
-		
-		var privkeystr = privkey.substring(2); // remove leading '0x'
-		var privkeybuf = ethereumjs.Buffer.Buffer(privkeystr, 'hex'); 
-		
-		if (ethereumjs.Util.isValidPrivate(privkeybuf)){
-			return true;
-		}
-		else {
-			throw privkey + ' is not a valid private key!';
-		}
+		var blankaccount = this.createBlankAccountObject()
+		var accountencryption = this.getAccountEncryptionInstance(blankaccount);
+
+		return accountencryption.isValidPrivateKey(privkey);		
 	}
 	
 	generatePrivateKey() {
-		var ethereumjs = this.getEthereumJsInstance();
+		var blankaccount = this.createBlankAccountObject()
+		var accountencryption = this.getAccountEncryptionInstance(blankaccount);
 
-		var accountPassword="123456";
-		var key = ethereumjs.Wallet.generate(accountPassword);
-		return '0x' + key._privKey.toString('hex');		
+		return accountencryption.generatePrivateKey();		
 	}
 
 	getAccountObject(address) {
@@ -358,6 +335,13 @@ class Session {
 		return (address1.toLowerCase() == address2.toLowerCase());
 	}
 	
+	areAccountsEqual(account1, account2) {
+		if ((!account1) || (!account2))
+			return false;
+		
+		return this.areAddressesEqual(account1.getAddress(), account2.getAddress());
+	}
+	
 	
 	getWalletAccountAddress() {
 		return this.walletaccountaddress;
@@ -407,6 +391,16 @@ class Session {
 		return this.isSessionAccount(contractowneraccount);
 	}
 	
+	// signatures
+	validateStringSignature(accountaddress, plaintext, signature) {
+		var account = this.getAccountObject(accountaddress);
+		
+		if (!account)
+			return false;
+		
+		return account.validateStringSignature(plaintext, signature)
+	}
+	
 	
 	// stakeholders
 	createStakeHolderObject(address) {
@@ -419,6 +413,20 @@ class Session {
 	
 	getStakeHoldersFromJsonArray(jsonarray) {
 		return Session.StakeHolder.getStakeHoldersFromJsonArray(this, jsonarray)
+	}
+	
+	// stockholders
+	createStockHolderObject(address) {
+		console.log("Session.createStockHolderObject called for " + address);
+		return new Session.StockHolder(this, address);
+	}
+	
+	createBlankStockHolderObject() {
+		return new Session.StockHolder(this, null);
+	}
+	
+	getStockHoldersFromJsonArray(jsonarray) {
+		return Session.StockHolder.getStockHoldersFromJsonArray(this, jsonarray)
 	}
 	
 	// issuances
@@ -440,17 +448,87 @@ class Session {
 	}
 	
 	getTransactionUUID() {
-		return 'txn_' + this.guid();
+		return 'id_' + this.guid();
 	}
 	
 	guid() {
-		  function s4() {
-		    return Math.floor((1 + Math.random()) * 0x10000)
-		      .toString(16)
-		      .substring(1);
-		  }
-		  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-		    s4() + '-' + s4() + s4() + s4();
+		var EthereumNodeAccess = this.getEthereumNodeAccessInstance();
+		
+		return EthereumNodeAccess.guid();
+	}
+	
+	signString(plaintext) {
+		var sessionaccount = this.getSessionAccountObject();
+		
+		if (!sessionaccount)
+			throw 'Session must be signed-in to sign a string';
+			
+		var AccountEncryption = this.getAccountEncryptionInstance(sessionaccount);
+		
+		return AccountEncryption.signString(plaintext);
+	}
+	
+	decryptContractStakeHolderIdentifier(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+		
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		/*console.log('stakeholderaddress is ' + stakeholder.getAddress());
+		console.log('stakeholdercreatoraddress is ' + stakeholdercreatoraddress);
+		console.log('sessionaccountaddress is ' + sessionaccountaddress);*/
+		
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
+			// we created this stakeholder, look for symmetric description of our segment
+			return this.getSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
+		}
+		else {
+			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
+			
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				// we own the contract and look for stakeholder creator who encrypted the identifier
+				var stakeholdercreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress); // sender is creator
+				var creatoraccount = stakeholdercreator.getAccountObject(); // fills rsa key if necessary
+				
+				return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedIdentifier(), creatoraccount);
+			}
+			else {
+				// we can not decrypt the identifier
+				return stakeholder.getChainCreatorCryptedIdentifier()
+			}
+				
+			
+		}
+	}
+	
+	decryptContractStakeHolderPrivateKey(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
+			// we created this stakeholder, look for assymmetric decryption of our part
+			return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), this.getSessionAccountObject());
+		}
+		else {
+			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				// we own the contract  and look for stakeholder who encrypted the private key when registering his/her account
+				// sender is stakeholder's account
+				var stakeholderaccount = stakeholder.getAccountObject(); // fills rsa key if necessary
+				console.log('stakeholderaccount rsa public key is ' + stakeholderaccount.getRsaPublicKey());
+				
+				return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), stakeholderaccount);
+			}
+			else {
+				// we can not decrypt the private key
+				return stakeholder.getChainCocryptedPrivKey()
+			}
+		}
+		
 	}
 }
 

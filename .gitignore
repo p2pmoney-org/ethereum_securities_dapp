@@ -1,0 +1,22 @@
+
+# truffle compile results
+#build/contracts/*.json
+
+# shortcut for use with other web server than lite-server
+app/contracts
+
+# overload files
+app/js/src/xtra/lib
+
+# solc command line related files
+solc
+
+# npm files and node modules (run npm install)
+node_modules
+npm-debug.log
+
+#eclipse files
+.project
+
+
+

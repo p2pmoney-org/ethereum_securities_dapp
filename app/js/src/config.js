@@ -67,7 +67,7 @@ class Config {
 /********************/ 
 
 Config.web3provider_protocol = 'http://';
-Config.web3provider_host = '192.168.1.81';
+Config.web3provider_host = 'localhost';
 
 Config.defaultGasLimit = 4712388;
 Config.defaultGasPrice = 100000000000;

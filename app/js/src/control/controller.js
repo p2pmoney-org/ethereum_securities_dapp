@@ -45,6 +45,28 @@ class Controllers {
 		this.displayCurrentPage() 
 	}
 	
+	// accounts
+	gotoContractAccountListPage(contract) {
+		console.log("Controllers.gotoContractAccountListPage called");
+		
+		var global = this.global;
+		
+		var Global = global.getGlobalClass();
+		
+		if (contract) {
+			global.setCurrentFormBand(Global.FORM_DEPLOY_ACCOUNT);
+			global.setCurrentViewBand(Global.VIEW_CONTRACT_ACCOUNTS);
+		}
+		else {
+			return this.gotoHome();
+		}
+		
+		global.resetNavigation();
+		global.setCurrentContract(contract);
+		
+		this.displayCurrentPage() 
+	}
+	
 	// stakeholders
 	gotoContractStakeHolderListPage(contract) {
 		console.log("Controllers.gotoContractStakeHolderListPage called");
@@ -191,6 +213,9 @@ class Controllers {
 		
 		app.clearDisplay();
 		
+		// top band
+		app.displayMessageZone();
+		
 		// bread crumb
 		var breadcrumbs = global.getBreadCrumbsObject();
 		
@@ -231,6 +256,11 @@ class Controllers {
 			var contract = global.getCurrentContract();
 			var stakeholder = global.getCurrentStakeHolder();
 			forms.displayModifyStakeHolderForm(contract, stakeholder);
+		}
+		else if (currentformband == Global.FORM_DEPLOY_ACCOUNT) {
+			// deploy 
+			var contract = global.getCurrentContract();
+			forms.displayDeployAccountForm(contract);
 		}
 		else if (currentformband == Global.FORM_DEPLOY_STAKEHOLDER) {
 			// deploy 
@@ -292,8 +322,13 @@ class Controllers {
 			var contract = global.getCurrentContract();
 			views.displayContract(contract);
 		}
+		else if (currentviewband == Global.VIEW_CONTRACT_ACCOUNTS) {	
+			// view of the account list
+			var contract = global.getCurrentContract();
+			views.displayContractAccounts(contract);
+		}
 		else if (currentviewband == Global.VIEW_CONTRACT_STAKEHOLDERS) {	
-			// view of the contract
+			// view of the stakeholder list
 			var contract = global.getCurrentContract();
 			views.displayContractStakeHolders(contract);
 		}
@@ -558,8 +593,6 @@ class Controllers {
 			var owner = contract.getLocalOwner();
 			var owningaccount = global.getAccountObject(owner);
 			
-			//owningaccount.setPublicKey('pubkey'); // dummy
-			
 			var wallet = app.getFormValue("wallet");
 			var password = app.getFormValue("password");
 			
@@ -579,25 +612,32 @@ class Controllers {
 				return;
 			}
 			
-			contract.deploy(payingaccount, owningaccount, gaslimit, gasPrice, function (err, res) {
+			try {
+				contract.deploy(payingaccount, owningaccount, gaslimit, gasPrice, function (err, res) {
+					
+					if (!err) {
+						console.log('contract deployed at ' + res);
+						
+						//contract.setAddress(res);
+						
+						// save local address
+						global.saveContractObjects(contracts);
+						
+						app.setMessage("contract has been deployed at " + res);
+					}
+					else  {
+						console.log('error deploying contract ' + err);
+					}
+						
+				});
 				
-				if (!err) {
-					console.log('contract deployed at ' + res);
-					
-					//contract.setAddress(res);
-					
-					// save local address
-					global.saveContractObjects(contracts);
-					
-					app.setMessage("contract has been deployed at " + res);
-				}
-				else  {
-					console.log('error deploying contract ' + err);
-				}
-					
-			});
+				app.setMessage("contract deployment created a pending transaction");
+				
+			}
+			catch(e) {
+				app.setMessage("Error: " + e);
+			}
 			
-			app.setMessage("contract deployment created a pending transaction");
 
 			app.refreshDisplay();
 		}
@@ -721,6 +761,96 @@ class Controllers {
 	
 	
 	//
+	// Accounts
+	//
+	
+	// forms
+	handleDeployAccount() {
+		// watch-out, 'this' is defined as the context
+		// of the calling object from event listener
+		var global = Controllers.getGlobalClass().getGlobalObject();
+		var session = global.getSessionObject();
+		
+		var app = global.getAppObject();
+		var contracts = global.getContractsObject();
+
+		var contractindex = app.getFormValue("contractindex");
+
+		console.log("Controllers.handleDeployAccount called for contract with index " + contractindex);
+		
+		var contract = contracts.getContractObjectFromKey(contractindex);
+		
+		if (contract) {
+			
+			var acctprivkey = app.getFormValue("acctprivkey");
+			
+			var account = session.createBlankAccountObject();
+
+			if (session.isValidPrivateKey(acctprivkey)) {
+				
+				account.setPrivateKey(acctprivkey);
+				
+				
+				// payer for registration
+				var wallet = app.getFormValue("wallet");
+				var password = app.getFormValue("password");
+				
+				var gaslimit = app.getFormValue("gaslimit");
+				var gasPrice = app.getFormValue("gasPrice");
+				
+				var payingaccount = global.getAccountObject(wallet);
+				
+				// unlock account
+				payingaccount.unlock(password, 300); // 300s, but we can relock the account
+				
+				contract.finalizeInit(function(success) {
+					
+					if (!success) {
+						
+						app.setMessage("could not finalize the reading of the contract");
+						
+						return;
+					}
+					
+					var owneraccount = contract.getOwnerAccount();
+					console.log("contract owner is " + owneraccount.getAddress());
+					console.log("session address is " + session.getSessionAccountAddress());
+					
+					
+					contract.registerAccount(payingaccount, gaslimit, gasPrice, account, function (err, res) {
+						if (!err) {
+							console.log('account deployed at position ' + res);
+							
+							global.saveContractObjects(contracts);
+							
+							app.setMessage("account has been deployed at " + res);
+							
+							app.refreshDisplay();
+						}
+						else  {
+							console.log('error deploying account ' + err);
+						}
+							
+					});
+					
+					app.setMessage("account deployment created a pending transaction");
+					
+					return;
+
+				});
+					
+					
+					
+				app.refreshDisplay();
+				
+			}
+		}
+		
+	}
+	
+	
+	
+	//
 	// StakeHolders
 	//
 	
@@ -822,13 +952,16 @@ class Controllers {
 				
 				// stakeholder data
 				var shldridentifier = app.getFormValue("shldridentifier");
-				var shldrprivkey = app.getFormValue("shldrprivkey");
-				//var shldraddress = app.getFormValue("shldraddress");
-				//var shldrpubkey = app.getFormValue("shldrpubkey");
-				var shldraddress;
-				var shldrpubkey;
 				
-				try {
+				var shldraddress = app.getFormValue("shldraddress");
+				//var shldrpubkey = app.getFormValue("shldrpubkey");
+				//var shldrprivkey = app.getFormValue("shldrprivkey");
+				
+				//var shldraddress;
+				var shldrrsapubkey;
+				var shldrprivkey;
+				
+				/*try {
 					if ((shldrprivkey) && (!session.isValidPrivateKey(shldrprivkey))) {
 						// isValidPrivateKey thows error if not valid
 						shldrprivkey = null;
@@ -853,13 +986,13 @@ class Controllers {
 				var account = session.getAccountObjectFromPrivateKey(shldrprivkey);
 				
 				shldraddress = account.getAddress();
-				shldrpubkey = account.getPublicKey();
+				shldrpubkey = account.getRsaPublicKey();
 
 				
 				stakeholder.setLocalIdentifier(shldridentifier);
 				stakeholder.setLocalPrivKey(shldrprivkey);
 				stakeholder.setAddress(shldraddress);
-				stakeholder.setChainPubKey(shldrpubkey);
+				stakeholder.setChainPubKey(shldrpubkey);*/
 				
 				// payer for registration
 				var wallet = app.getFormValue("wallet");
@@ -882,33 +1015,125 @@ class Controllers {
 						return;
 					}
 					
-					// check that current session impersonates the contract's owner
 					var owneraccount = contract.getOwnerAccount();
 					console.log("contract owner is " + owneraccount.getAddress());
 					console.log("session address is " + session.getSessionAccountAddress());
 					
-					if (!session.isSessionAccount(owneraccount)) {
-						alert("You must be connected with the account of the contract's owner");
+					// check that current session is signed-in
+					if (session.isAnonymous()) {
+						alert("You must be signed-in to register a stakeholder");
 						
 						return;
 					}
+					
+					var loadpromise;
+					
+					if ((shldraddress) && (session.isValidAddress(shldraddress))) {
+						
+						// we must load the lists to know if the address corresponds to a registered
+						// account and if current session is a shareholder
+						loadpromise = contract.loadChainAccountsAndStakeHolders(function(err, res) {
+							if (!err) {
+								console.log('loading contract\'s account and stakeholder lists finished successfully');
+								
+								return Promise.resolve(res);
+							}
+							else {
+								console.log('error while loading lists: ' + err);
+								
+								return Promise.resolve(false);
+							}
+						});
+					}
+					else {
+						loadpromise = Promise.resolve(true);
+					}
+					
+					loadpromise.then(function(res) {
+						console.log('load promise resolved with res = ' + res);
+						
+						if (res) {
+							
+							if ((shldraddress) && (session.isValidAddress(shldraddress))) {
+								var account = contract.getChainAccountFromAddress(shldraddress);
+								
+								if (!account) {
+									alert("Address provided must correspond to an account registered in the contract: " + shldraddress);
+									
+									return;									
+								}
+								
+								
+								
+								if (!session.ownsContract(contract)) {
+									var sessionaccountaddress = session.getSessionAccountAddress();
+									
+									if (!contract.getChainStakeHolderFromAddress(sessionaccountaddress)) {
+										alert("You must be signed as one of the shareholder of the contract to create new shareholders");
+										
+										return;									
+									}
+
+								}
+								
+								shldraddress = account.getAddress();
+								shldrrsapubkey = account.getRsaPublicKey();
+								
+							}
+							else {
+								if (session.ownsContract(contract)) {
+									// generate private key
+									shldrprivkey = session.generatePrivateKey();
+									
+									console.log("generated private key: " + shldrprivkey);
+									
+									var account = session.getAccountObjectFromPrivateKey(shldrprivkey);
+
+									shldraddress = account.getAddress();
+									shldrrsapubkey = account.getRsaPublicKey();
+									
+								}
+								else {
+									alert("You must be signed as the owner of the contract to register a shareholder without providing an address");
+									
+									return;									
+									
+								}
+							}
+							
+							stakeholder.setLocalIdentifier(shldridentifier);
+							
+							stakeholder.setAddress(shldraddress);
+							stakeholder.setChainRsaPubKey(shldrrsapubkey);
+							
+							if (shldrprivkey)
+							stakeholder.setLocalPrivKey(shldrprivkey);
+							
+							
+							contract.registerStakeHolder(payingaccount, gaslimit, gasPrice, stakeholder, function (err, res) {
+								if (!err) {
+									console.log('shareholder deployed at position ' + res);
+									
+									global.saveContractObjects(contracts);
+									
+									app.setMessage("shareholder has been deployed at " + res);
+									
+									app.refreshDisplay();
+								}
+								else  {
+									console.log('error deploying shareholder ' + err);
+								}
+									
+							});
+							
+						}
+						else {
+							console.log('problem loading lists prevents to register stakeholder');
+						}
+						
+					});
 						
 					
-					contract.registerStakeHolder(payingaccount, gaslimit, gasPrice, stakeholder, function (err, res) {
-						if (!err) {
-							console.log('shareholder deployed at position ' + res);
-							
-							global.saveContractObjects(contracts);
-							
-							app.setMessage("shareholder has been deployed at " + res);
-							
-							app.refreshDisplay();
-						}
-						else  {
-							console.log('error deploying shareholder ' + err);
-						}
-							
-					});
 					
 					app.setMessage("shareholder deployment created a pending transaction");
 					
@@ -957,6 +1182,30 @@ class Controllers {
 
 	
 	// navigation
+	handleGotoAccountListPage() {
+		// watch-out, 'this' is defined as the context
+		// of the calling object from event listener
+		var global = Controllers.getGlobalClass().getGlobalObject();
+		var app = global.getAppObject();
+
+		var contractindex = this.getAttribute("param0");
+		
+		if (!contractindex) {
+			// we look if we are not called from a button click
+			contractindex = app.getFormValue("contractindex");
+		}
+
+		console.log("Controllers.handleGotoAccountListPage called for contract index " + contractindex);
+		
+		var contracts = global.getContractsObject();
+		var contract = contracts.getContractObjectFromKey(contractindex);
+
+		var controllers = global.getControllersObject();
+
+		controllers.gotoContractAccountListPage(contract);
+		
+	}
+	
 	handleGotoStakeHolderListPage() {
 		// watch-out, 'this' is defined as the context
 		// of the calling object from event listener
@@ -1359,6 +1608,8 @@ class Controllers {
 		// of the calling object from event listener
 		var global = Controllers.getGlobalClass().getGlobalObject();
 		var app = global.getAppObject();
+		var session = global.getSessionObject();
+		
 		var contracts = global.getContractsObject();
 
 		var contractindex = app.getFormValue("contractindex");
@@ -1377,7 +1628,6 @@ class Controllers {
 			if (transaction) {
 				console.log("deploying transaction with index " + transactionindex);
 				
-				var session = global.getSessionObject();
 
 				var from = app.getFormValue("from");
 				var to = app.getFormValue("to");
@@ -1395,8 +1645,11 @@ class Controllers {
 				transaction.setLocalCurrency(currency);
 				
 				// nature depends from the current signed account
-				// owner => 1 (transfer), shareholder =>2 (record)
-				transaction.setLocalNature(1); // transfer
+				// owner => 1 (transfer), shareholder =>11 (endorsement record)
+				if (session.ownsContract(contract))
+						transaction.setLocalNature(1); // transfer
+				else
+					transaction.setLocalNature(11); // record
 
 				// payer for registration
 				var wallet = app.getFormValue("wallet");
@@ -1410,6 +1663,13 @@ class Controllers {
 				// unlock account
 				payingaccount.unlock(password, 300); // 300s, but we can relock the account
 				
+				// check that current session is signed-in
+				if (session.isAnonymous()) {
+					alert("You must be signed-in to register a transaction");
+					
+					return;
+				}
+					
 				contract.registerTransaction(payingaccount, gaslimit, gasPrice, transaction, function (err, res) {
 					
 					if (!err) {

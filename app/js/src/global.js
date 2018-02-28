@@ -23,6 +23,8 @@ class Global {
 	static get FORM_DEPLOY_CONTRACT() { return 5;}	// blockchain
 	static get FORM_UPDATE_CONTRACT() { return 6;}	
 	
+	static get FORM_DEPLOY_ACCOUNT() { return 8;}	
+	
 	static get FORM_CREATE_STAKEHOLDER() { return 10}	// local
 	static get FORM_MODIFY_STAKEHOLDER() { return 11}	
 
@@ -41,6 +43,8 @@ class Global {
 	// views
 	static get VIEW_CONTRACT_LIST() { return 1;}
 	static get VIEW_CONTRACT() { return 5;}
+	
+	static get VIEW_CONTRACT_ACCOUNTS() { return 8;}
 	
 	static get VIEW_CONTRACT_STAKEHOLDERS() { return 10;}
 	static get VIEW_CONTRACT_STAKEHOLDER() { return 15;}
@@ -87,28 +91,31 @@ class Global {
 			// if we are in browser and not node js
 			this.globalscope = window;
 			
-			Global.Web3 = Web3;
+/*			Global.Web3 = Web3;
 			Global.TruffleContract = TruffleContract;
+			
 			Global.ethereumjs = ethereumjs;
-			Global.keythereum = keythereum;
+			Global.keythereum = keythereum;*/
 			
 			Global.EthereumNodeAccess = EthereumNodeAccess;
+			Global.AccountEncryption = AccountEncryption;
 			
 		}
 		else {
 			// node js (e.g. truffle migrate)
 			this.globalscope = global;
 			
-			Global.Web3 = require('web3');
+/*			Global.Web3 = require('web3');
 			Global.TruffleContract = require('truffle-contract');
 			
 			Global.ethereumjs = require('ethereum.js');
 			Global.ethereumjs.Util = require('ethereumjs-util');
 			Global.ethereumjs.Wallet = require('ethereumjs-wallet');
 			
-			Global.keythereum = require('keythereum');
+			Global.keythereum = require('keythereum');*/
 			
 			Global.EthereumNodeAccess = require('../lib/ethereum-node-access.js');
+			Global.AccountEncryption = require('../lib/account-encryption.js');
 
 			
 			Global.Session = require('./model/session.js');
@@ -116,9 +123,11 @@ class Global {
 			Global.AccountMap = Global.Account.AccountMap;
 			Global.Contracts = require('./model/contracts.js');
 			Global.StakeHolder = require('./model/stakeholder.js');
-			Global.StockIssuance = require('./model/stockissuance.js');
-			Global.StockLedger = require('./model/stockledger.js');
-			Global.StockTransaction = require('./model/stocktransaction.js');
+			
+			Global.StockIssuance = require('./model/stockledger/stockissuance.js');
+			Global.StockHolder = require('./model/stockledger/stockholder.js');
+			Global.StockLedger = require('./model/stockledger/stockledger.js');
+			Global.StockTransaction = require('./model/stockledger/stocktransaction.js');
 		}
 	}
 	
@@ -324,11 +333,11 @@ class Global {
 		return this.globalscope.Config.getWeb3ProviderUrl();
 	}
 	
-	getWeb3Instance() {
+/*	getWeb3Instance() {
 		var session = this.getSessionObject();
 
 		return session.getWeb3Instance();
-	}
+	}*/
 	
 	
 	getDefaultGasLimit() {
@@ -374,20 +383,25 @@ class Global {
 		Global.Session.Config = this.globalscope.Config;
 		
 		// libs
-		Global.Session.Web3 = Global.Web3;
+		/*Global.Session.Web3 = Global.Web3;
 		Global.Session.TruffleContract = Global.TruffleContract;
+		
 		Global.Session.ethereumjs = Global.ethereumjs;
-		Global.Session.keythereum = Global.keythereum;
+		Global.Session.keythereum = Global.keythereum;*/
+		
 		Global.Session.EthereumNodeAccess = Global.EthereumNodeAccess;
+		Global.Session.AccountEncryption = Global.AccountEncryption;
 		
 		// model classes
 		Global.Session.Contracts = Global.Contracts;
 		Global.Session.Account = Global.Account;
 		Global.Session.AccountMap = Global.AccountMap;
+		Global.Session.StakeHolder = Global.StakeHolder;
+		
 		Global.Session.StockLedger = Global.StockLedger;
 		Global.Session.StockIssuance = Global.StockIssuance;
 		Global.Session.StockTransaction = Global.StockTransaction;
-		Global.Session.StakeHolder = Global.StakeHolder;
+		Global.Session.StockHolder = Global.StockHolder;
 		
 		var web3providerurl = this.getWeb3ProviderUrl();
 		
@@ -456,13 +470,15 @@ class Global {
 			
 			if (ownsContract) {
 				// we can read the stakeholdername
-				var stakeholder = contract.getChainStakeholderFromAddress(address);
+				var stakeholder = contract.getChainStakeHolderFromAddress(address);
 				
 				if (stakeholder) {
-					var contractowneraccount = contract.getOwnerAccount();
+					/*var contractowneraccount = contract.getOwnerAccount();
 					
 					if (contractowneraccount)
-					displayname = contractowneraccount.aesDecryptString(stakeholder.getChainCocryptedIdentifier());
+					displayname = contractowneraccount.aesDecryptString(stakeholder.getChainCocryptedIdentifier());*/
+					
+					displayname = session.decryptContractStakeHolderIdentifier(contract, stakeholder);
 				}
 			}
 		}
@@ -499,13 +515,9 @@ class Global {
 	
 	// utility
 	guid() {
-		  function s4() {
-		    return Math.floor((1 + Math.random()) * 0x10000)
-		      .toString(16)
-		      .substring(1);
-		  }
-		  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-		    s4() + '-' + s4() + s4() + s4();
+		var session = this.getSessionObject();
+		
+		return session.guid();
 	}
 	
 	areAddressesEqual(address1, address2) {

@@ -8,7 +8,8 @@ module.exports = function(deployer) {
 	
 	var owner_identifier = 'John Lennon';
 	var owner_address = '0xf17f52151EbEF6C7334FAD080c5704D77216b732';
-	var owner_pubkey = '0xce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b90015ea9fee96aed6d9c0fc2fbe0bd1883dee223b3200246ff1e21976bdbc9a0fc8';
+	var owner_aes_pubkey = '0xce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b90015ea9fee96aed6d9c0fc2fbe0bd1883dee223b3200246ff1e21976bdbc9a0fc8';
+	var owner_rsa_pubkey = '0x02ce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b900';
 	var owner_privkey = '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f';
 	
 	// wallet
@@ -23,8 +24,9 @@ module.exports = function(deployer) {
 	var ledger_name1 = 'Share Register';
 	var ledger_description1 = 'Strawberry fields llc';
 	
-	var cocrypted_shldr_identifier1 = '29b88a823769';
-	var cocrypted_ledger_description1 = '17a5948f25650d774796e4def2fa6f6ebdaa204710';
+	//var cocrypted_shldr_identifier1 = '29b88a823769';
+	var cocrypted_shldr_identifier1 = '0x2ebe8e80126a096c59c1a7d7f6';
+	var cocrypted_ledger_description1 = '0x17a5948f25650d774796e4def2fa6f6ebdaa204710';
 	
 	var shareholders1 = [ 'joe@mail.com', 'helene@mail.com', 'richard@example.com', 'meredith@example.com'];
 
@@ -32,16 +34,17 @@ module.exports = function(deployer) {
 	var ledger_name2 = 'Stock Ledger';
 	var ledger_description2 = 'Sergent Pepper Co';
 
-	var cocrypted_shldr_identifier2 = '29b88a823769';
-	var cocrypted_ledger_description2 = '17b4948937691c25658ab4c8feed2349a1';
+	//var cocrypted_shldr_identifier2 = '29b88a823769';
+	var cocrypted_shldr_identifier2 = '0x2ebe8e80126a096c59c1a7d7f6';
+	var cocrypted_ledger_description2 = '0x17b4948937691c25658ab4c8feed2349a1';
 
 	//0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
 	// Truffle deployer
 	//
 	
 	var StockLedger = artifacts.require("StockLedger");
-	deployer.deploy(StockLedger, owner_address, owner_pubkey, cocrypted_shldr_identifier1, ledger_name1, cocrypted_ledger_description1);
-	deployer.deploy(StockLedger, owner_address, owner_pubkey, cocrypted_shldr_identifier2, ledger_name2, cocrypted_ledger_description2);
+	deployer.deploy(StockLedger, owner_address, owner_rsa_pubkey, cocrypted_shldr_identifier1, ledger_name1, cocrypted_ledger_description1);
+	deployer.deploy(StockLedger, owner_address, owner_rsa_pubkey, cocrypted_shldr_identifier2, ledger_name2, cocrypted_ledger_description2);
 
 	
 	//
@@ -112,7 +115,7 @@ module.exports = function(deployer) {
 			account = session.getAccountObjectFromPrivateKey(shldrprivkey);
 			stakeholder.setLocalPrivKey(account.getPrivateKey());
 			stakeholder.setAddress(account.getAddress());
-			stakeholder.setChainPubKey(account.getPublicKey());
+			stakeholder.setChainPubKey(account.getRsaPublicKey());
 			
 			promise = contract1.registerStakeHolder(payingaccount, gaslimit, gasPrice, stakeholder);
 			promises.push(promise);
