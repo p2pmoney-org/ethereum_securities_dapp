@@ -297,7 +297,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(localowner);
+		    text =  document.createTextNode((localowner ? localowner : ''));
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -314,7 +314,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(localowneridentifier);
+		    text =  document.createTextNode((localowneridentifier ? localowneridentifier : ''));
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -921,10 +921,11 @@ class Views {
 					tr.classList.add('table-stakeholder-list-tr-chain-odd');
 			}
 			
-			var chainidentifier = (isLocalOnly ? 'local' : ( ownsContract ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) : (isYou ? 'You' : 'crypted')));
+			var chainidentifier = (isLocalOnly ? null : stakeholder.getChainCocryptedIdentifier());
+			var chainidentifierdisplay = (isLocalOnly ? 'local' : (isYou ? 'You' : ( ownsContract ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) : 'crypted')));
 			
 		    td = document.createElement('td');
-			text = (isLocalOnly ? stakeholder.getLocalIdentifier() : chainidentifier);
+			text = (isLocalOnly ? stakeholder.getLocalIdentifier() : chainidentifierdisplay);
 		    var params = [contract.getContractIndex(), stakeholder.getStakeHolderIndex()];
 		    link = Views.createLink(text,'StakeHolder from contract', "lnk-stakeholder_page", params);
 		    link.onclick = handler_goto_stakeholder_page;
@@ -1209,7 +1210,7 @@ class Views {
 		    var ownsContract = session.ownsContract(contract); 
 			
 			var stakeholderaddress = stakeholder.getAddress();
-			var isYou = session.isSessionAccountAddress(stakeholderaddress)
+			var isYou = session.isSessionAccountAddress(stakeholderaddress);
 		    
 			var chainidentifier = (isLocalOnly ? 'local' : (ownsContract ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) : (isYou ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) + ' (You)' : 'crypted')));
 		    var identifier = (isLocalOnly ? stakeholder.getLocalIdentifier() : chainidentifier);
@@ -1235,26 +1236,47 @@ class Views {
 		    //
 		    // chain data
 		    //
-			var chainaddress = (isLocalOnly ? 'local only' : stakeholder.getAddress());
-			var isauthentic = (isLocalOnly ? 'local only' : stakeholder.isAuthenticated());
-			var chainpubkey = (isLocalOnly ? 'local only' : stakeholder.getChainRsaPubKey());
-			var chainprivkey = (isLocalOnly ? 'local only' : (ownsContract ? session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : (isYou ? session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()))));
-		    var cocryptedprivkey = (isLocalOnly ? 'local only' : chainprivkey);
+			var chainaddress = (isLocalOnly ? null : stakeholder.getAddress());
+			var chainaddressdisplay = (isLocalOnly ? 'local only' : stakeholder.getAddress() + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+			
+			var isauthentic = (isLocalOnly ? false : stakeholder.isAuthenticated());
+			var isauthenticdisplay = (isLocalOnly ? 'local only' : stakeholder.isAuthenticated());
+			
+			var chainrsapubkey = (isLocalOnly ? null : stakeholder.getChainRsaPubKey());
+			var chainrsapubkeydisplay = (isLocalOnly ? 'local only' : chainrsapubkey);
+			
+			//var chainprivkey = (isLocalOnly ? null : stakeholder.getChainCocryptedPrivKey());
+			//var chainprivkeydisplay = (isLocalOnly ? 'local only' : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + (ownsContract ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : (isYou ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : '')));
+			
+			var cocryptedprivkey = (isLocalOnly ? null : stakeholder.getChainCocryptedPrivKey());
+			var cocryptedprivkeydisplay = (isLocalOnly ? 'local only' : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + Views.revealContractStakeHolderPrivateKey(ownsContract, session, contract, stakeholder));
 
-		    var cocryptedidentifier = (isLocalOnly ? 'local only' : stakeholder.getChainCocryptedIdentifier());
+		    var cocryptedidentifier = (isLocalOnly ? null : stakeholder.getChainCocryptedIdentifier());
+		    var cocryptedidentifierdisplay = (isLocalOnly ? 'local only' : Views.showCondensedCryptedText(cocryptedidentifier) + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
 		    
-		    var registrationdate = (isLocalOnly ? 'local only' : stakeholder.getChainRegistrationDate());
-		    var registrationblockdate = (isLocalOnly ? 'local only' : stakeholder.getChainBlockDate());
+		    var registrationdate = (isLocalOnly ? null : stakeholder.getChainRegistrationDate());
+		    var registrationdatedisplay = (isLocalOnly ? 'local only' : registrationdate);
+		    var registrationblockdate = (isLocalOnly ? null : stakeholder.getChainBlockDate());
+		    var registrationblockdatedisplay = (isLocalOnly ? 'local only' : registrationblockdate);
 		    
-		    var creatoraddress = (isLocalOnly ? 'local only' : stakeholder.getChainCreatorAddress());
-		    var crtcrypteddescription= (isLocalOnly ? 'local only' : stakeholder.getChainCreatorCryptedDescription());
-		    var crtcryptedidentifier = (isLocalOnly ? 'local only' : stakeholder.getChainCreatorCryptedIdentifier());
+		    var creatoraddress = (isLocalOnly ? null : stakeholder.getChainCreatorAddress());
+		    var creator = (isLocalOnly ? null : contract.getChainStakeHolderFromAddress(stakeholder.getChainCreatorAddress()));
+		    var creatoraddressdisplay = (isLocalOnly ? 'local only' : creatoraddress + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, creator));
 		    
-		    var shldrcrypteddescription = (isLocalOnly ? 'local only' : stakeholder.getChainStakeHolderCryptedDescription());
-		    var shldrcryptedidentifier = (isLocalOnly ? 'local only' : stakeholder.getChainStakeHolderCryptedIdentifier());
+		    var crtcrypteddescription = (isLocalOnly ? null : stakeholder.getChainCreatorCryptedDescription());
+		    var crtcrypteddescriptiondisplay = (isLocalOnly ? 'local only' : Views.showCondensedCryptedText(crtcrypteddescription) + Views.revealCreatorCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder));
+		    var crtcryptedidentifier = (isLocalOnly ? null : stakeholder.getChainCreatorCryptedIdentifier());
+		    var crtcryptedidentifierdisplay = (isLocalOnly ? 'local only' : Views.showCondensedCryptedText(crtcryptedidentifier) + Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+	    
+		    var shldrcrypteddescription = (isLocalOnly ? null : stakeholder.getChainStakeHolderCryptedDescription());
+		    var shldrcrypteddescriptiondisplay = (isLocalOnly ? 'local only' : Views.showCondensedCryptedText(shldrcrypteddescription) + Views.revealStakeHolderCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder));
+		    var shldrcryptedidentifier = (isLocalOnly ? null : stakeholder.getChainStakeHolderCryptedIdentifier());
+		    var shldrcryptedidentifierdisplay = (isLocalOnly ? 'local only' : Views.showCondensedCryptedText(shldrcryptedidentifier) + Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
 		    
-		    var orderid = (isLocalOnly ? 'local only' : stakeholder.getChainOrderId());
-		    var signature = (isLocalOnly ? 'local only' : stakeholder.getChainSignature());
+		    var orderid = (isLocalOnly ? null : stakeholder.getChainOrderId());
+		    var orderiddisplay = (isLocalOnly ? 'local only' : orderid);
+		    var signature = (isLocalOnly ? null : stakeholder.getChainSignature());
+		    var signaturedisplay = (isLocalOnly ? 'local only' : signature);
 
 		    
 		    
@@ -1288,7 +1310,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainaddress);
+		    text =  document.createTextNode(chainaddressdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1299,13 +1321,13 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-label');
-		    text = document.createTextNode('Public key is:');
+		    text = document.createTextNode('Public rsa key is:');
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainpubkey);
+		    text =  document.createTextNode(chainrsapubkeydisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1319,13 +1341,13 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-label');
-		    text = document.createTextNode((ownsContract ? 'Private key is:' : (isYou ? 'Your Private key is:' : 'Private key (contract crypted) is:')));
+		    text = document.createTextNode('Private key (contract crypted) is:');
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(cocryptedprivkey);
+		    text =  document.createTextNode(cocryptedprivkeydisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1342,7 +1364,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(cocryptedidentifier);
+		    text =  document.createTextNode(cocryptedidentifierdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1360,7 +1382,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(registrationdate);
+		    text =  document.createTextNode(registrationdatedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1377,7 +1399,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(registrationblockdate);
+		    text =  document.createTextNode(registrationblockdatedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1389,13 +1411,13 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-label');
-		    text = document.createTextNode('Creator address is:');
+		    text = document.createTextNode((ownsContract || isYou ? 'Creator is:' : 'Creator address is:'));
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(creatoraddress);
+		    text =  document.createTextNode(creatoraddressdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1412,7 +1434,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(crtcrypteddescription);
+		    text =  document.createTextNode(crtcrypteddescriptiondisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1429,7 +1451,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(crtcryptedidentifier);
+		    text =  document.createTextNode(crtcryptedidentifierdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1448,7 +1470,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(shldrcrypteddescription);
+		    text =  document.createTextNode(shldrcrypteddescriptiondisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1465,7 +1487,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(shldrcryptedidentifier);
+		    text =  document.createTextNode(shldrcryptedidentifierdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1485,7 +1507,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(orderid);
+		    text =  document.createTextNode(orderiddisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1502,7 +1524,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(signature);
+		    text =  document.createTextNode(signaturedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -1970,18 +1992,30 @@ class Views {
 		    
 		    var orderid = issuance.getChainOrderId();
 		    var signature = issuance.getChainSignature();
-		    var isauthentic = (isLocalOnly ? 'local only' : contractowneraccount.validateStringSignature(orderid, signature));
 		    
-		    var chainname = (isLocalOnly ? 'local only' : issuance.getChainName());
-		    var chaincocrypteddescription = (isLocalOnly ? 'local only' : issuance.getChainCocryptedDescription());
-		    var chainnumberofshares = (isLocalOnly ? 'local only' : issuance.getChainNumberOfShares());
-		    var chainpercentofcapital = (isLocalOnly ? 'local only' : issuance.getChainPercentOfCapital());
+		    var isauthentic = (isLocalOnly ? false : contractowneraccount.validateStringSignature(orderid, signature));
+		    var isauthenticdisplay = (isLocalOnly ? 'local only' : isauthentic);
+		    
+		    var chainname = (isLocalOnly ? null : issuance.getChainName());
+		    var chainnamedisplay = (isLocalOnly ? 'local only' : chainname);
+		    
+		    var chaincocrypteddescription = (isLocalOnly ? null : issuance.getChainCocryptedDescription());
+		    var chaincocrypteddescriptiondisplay = (isLocalOnly ? 'local only' : issuance.getChainCocryptedDescription() + Views.revealContractIssuanceDescription(ownsContract, session, contract, issuance));
 
-		    var chaintype = (isLocalOnly ? 'local only' : issuance.getChainType());
-		    var chaincode = (isLocalOnly ? 'local only' : issuance.getChainCode());
+		    var chainnumberofshares = (isLocalOnly ? null : issuance.getChainNumberOfShares());
+		    var chainnumberofsharesdisplay = (isLocalOnly ? 'local only' : chainnumberofshares);
 
-		    var chainorderid = (isLocalOnly ? 'local only' : orderid);
-		    var chainsignature = (isLocalOnly ? 'local only' : signature);
+		    var chainpercentofcapital = (isLocalOnly ? null : issuance.getChainPercentOfCapital());
+		    var chainpercentofcapitaldisplay = (isLocalOnly ? 'local only' : chainpercentofcapital);
+
+		    var chaintype = (isLocalOnly ? null : issuance.getChainType());
+		    var chaintypedisplay = (isLocalOnly ? 'local only' : chaintype);
+		    
+		    var chaincode = (isLocalOnly ? null : issuance.getChainCode());
+		    var chaincodedisplay = (isLocalOnly ? 'local only' : chaincode);
+
+		    var orderiddisplay = (isLocalOnly ? 'local only' : orderid);
+		    var signaturedisplay = (isLocalOnly ? 'local only' : signature);
 
 		    // authentication
 		    tr = document.createElement('tr');
@@ -1996,7 +2030,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(isauthentic);
+		    text =  document.createTextNode(isauthenticdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2013,7 +2047,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainname);
+		    text =  document.createTextNode(chainnamedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2030,7 +2064,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaincocrypteddescription);
+		    text =  document.createTextNode(chaincocrypteddescriptiondisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2048,7 +2082,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaintype);
+		    text =  document.createTextNode(chaintypedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2065,7 +2099,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaincode);
+		    text =  document.createTextNode(chaincodedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2084,7 +2118,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainnumberofshares);
+		    text =  document.createTextNode(chainnumberofsharesdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2102,7 +2136,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainpercentofcapital);
+		    text =  document.createTextNode(chainpercentofcapitaldisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 			
@@ -2119,7 +2153,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainorderid);
+		    text =  document.createTextNode(orderiddisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2136,7 +2170,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainsignature);
+		    text =  document.createTextNode(signaturedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2678,29 +2712,45 @@ class Views {
 		    
 		    var orderid = transaction.getChainOrderId();
 		    var signature = transaction.getChainSignature();
-		    var isauthentic = (isLocalOnly ? 'local only' : ( transactioncreatoraccount ? transactioncreatoraccount.validateStringSignature(orderid, signature) : false));
+		    
+		    var isauthentic = (isLocalOnly ? false : ( transactioncreatoraccount ? transactioncreatoraccount.validateStringSignature(orderid, signature) : false));
+		    var isauthenticdisplay = (isLocalOnly ? 'local only' : isauthentic);
 		    
 		    var chainfrom = (isLocalOnly ? transaction.getLocalFrom() : transaction.getChainFrom());
-		    var chainfromdisplay = (isLocalOnly ? 'local only' : global.getStakeholderDisplayName(chainfrom, contract));
+		    var chainfromstakeholder = (isLocalOnly ? null : contract.getChainStakeHolderFromAddress(chainfrom))
+		    var chainfromdisplay = (isLocalOnly ? 'local only' : chainfrom + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chainfromstakeholder));
 			    
 		    var chainto = (isLocalOnly ? transaction.getLocalTo() : transaction.getChainTo());
-		    var chaintodisplay = (isLocalOnly ? 'local only' : global.getStakeholderDisplayName(chainto, contract));
+		    var chaintostakeholder = (isLocalOnly ? null : contract.getChainStakeHolderFromAddress(chainto))
+		    var chaintodisplay = (isLocalOnly ? 'local only' : chainto + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chaintostakeholder));
 		    
-		    var chainnature = (isLocalOnly ? 'local only' : transaction.getChainNature());
+		    var chainnature = (isLocalOnly ? -1 : transaction.getChainNature());
+		    var chainnaturedisplay = (isLocalOnly ? 'local only' : chainnature);
 		    
-		    var chainissuancenumber = (isLocalOnly ? 'local only' : transaction.getChainIssuanceNumber());
-		    var chainnumberofshares = (isLocalOnly ? 'local only' : transaction.getChainNumberOfShares());
+		    var chainissuancenumber = (isLocalOnly ? -1 : transaction.getChainIssuanceNumber());
+		    var chainissuancenumberdisplay = (isLocalOnly ? 'local only' : chainissuancenumber);
 
-		    var chainconsideration = (isLocalOnly ? 'local only' : transaction.getChainConsideration());
-		    var chaincurrency = (isLocalOnly ? 'local only' : transaction.getChainCurrency());
+		    var chainnumberofshares = (isLocalOnly ? -1 : transaction.getChainNumberOfShares());
+		    var chainnumberofsharesdisplay = (isLocalOnly ? 'local only' : chainnumberofshares);
 
-		    var chaincreatoraddress = (isLocalOnly ? 'local only' : transaction.getChainCreatorAddress());
+		    var chainconsideration = (isLocalOnly ? null : transaction.getChainConsideration());
+		    var chainconsiderationdisplay = (isLocalOnly ? 'local only' : chainconsideration);
+		    
+		    var chaincurrency = (isLocalOnly ? null : transaction.getChainCurrency());
+		    var chaincurrencydisplay = (isLocalOnly ? 'local only' : chaincurrency);
 
-		    var chainorderid = (isLocalOnly ? 'local only' : transaction.getChainOrderId());
-		    var chainsignature = (isLocalOnly ? 'local only' : transaction.getChainSignature());
+		    var chaincreatoraddress = (isLocalOnly ? null : transaction.getChainCreatorAddress());
+		    var chaincreatorstakeholder = (isLocalOnly ? null : contract.getChainStakeHolderFromAddress(chaincreatoraddress))
+		    var chaincreatoraddressdisplay = (isLocalOnly ? 'local only' : chaincreatoraddress + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chaincreatorstakeholder));
 
-		    var chaintransactiondate = (isLocalOnly ? 'local only' : transaction.getChainTransactionDate());
-		    var chainblockdate = (isLocalOnly ? 'local only' : transaction.getChainBlockDate());
+		    var orderiddisplay = (isLocalOnly ? 'local only' : orderid);
+		    var signaturedisplay = (isLocalOnly ? 'local only' : signature);
+
+		    var chaintransactiondate = (isLocalOnly ? null : transaction.getChainTransactionDate());
+		    var chaintransactiondatedisplay = (isLocalOnly ? 'local only' : chaintransactiondate);
+		    
+		    var chainblockdate = (isLocalOnly ? null : transaction.getChainBlockDate());
+		    var chainblockdatedisplay = (isLocalOnly ? 'local only' : chainblockdate);
 		    
 
 		    // authentication
@@ -2716,7 +2766,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(isauthentic);
+		    text =  document.createTextNode(isauthenticdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2767,7 +2817,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainnature);
+		    text =  document.createTextNode(chainnaturedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2784,7 +2834,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainissuancenumber);
+		    text =  document.createTextNode(chainissuancenumberdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2802,7 +2852,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainnumberofshares);
+		    text =  document.createTextNode(chainnumberofsharesdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 		    
@@ -2820,7 +2870,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainconsideration);
+		    text =  document.createTextNode(chainconsiderationdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2837,7 +2887,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaincurrency);
+		    text =  document.createTextNode(chaincurrencydisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2854,7 +2904,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaincreatoraddress);
+		    text =  document.createTextNode(chaincreatoraddressdisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2871,7 +2921,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainorderid);
+		    text =  document.createTextNode(orderiddisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2888,7 +2938,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainsignature);
+		    text =  document.createTextNode(signaturedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2905,7 +2955,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chaintransactiondate);
+		    text =  document.createTextNode(chaintransactiondatedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2922,7 +2972,7 @@ class Views {
 		    
 		    td = document.createElement('td');
 		    td.classList.add('td-value');
-		    text =  document.createTextNode(chainblockdate);
+		    text =  document.createTextNode(chainblockdatedisplay);
 		    td.appendChild(text);
 		    tr.appendChild(td);
 
@@ -2992,6 +3042,134 @@ class Views {
 	static showCondensedCryptedText(cryptedtext) {
 		return (cryptedtext ? cryptedtext.substring(0, 16) + ".........." + cryptedtext.substr(cryptedtext.length - 8) : null);
 	}
+	
+	static revealContractIssuanceDescription(ownsContract, session, contract, issuance) {
+		if (ownsContract) {
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.getSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) ;
+		}
+		else {
+			return '';
+		}
+	}
+	
+	static revealStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+		if (ownsContract) {
+			return Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+		}
+		else {
+			var stkldraddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stkldraddress);
+			
+			if (isYou) {
+				return Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+			}
+			else {
+				var creatoraddress = stakeholder.getChainCreatorAddress();
+				var areYouCreator = session.isSessionAccountAddress(creatoraddress);
+				
+				if (areYouCreator) {
+					return Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+				}
+				else {
+					return '';
+				}
+			}
+			
+		}
+	}
+
+	
+	static revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+		if (ownsContract) {
+			// global.getStakeholderDisplayName(chainto, contract)
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderIdentifier(contract, stakeholder);
+		}
+		else {
+			var stakeholderaddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stakeholderaddress);
+			
+			if (isYou) {
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0You';
+			}
+			else {
+				return '';
+			}
+		}
+	}
+	
+	static revealContractStakeHolderPrivateKey(ownsContract, session, contract, stakeholder) {
+		if (ownsContract) {
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder);
+		}
+		else {
+			return '';
+		}
+	}
+	
+	static revealCreatorCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder) {
+		if (ownsContract)
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderDescription(contract, stakeholder);
+		else {
+			var creatoraddress = stakeholder.getChainCreatorAddress();
+			var isYou = session.isSessionAccountAddress(creatoraddress);
+			
+			if (isYou) {
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderDescription(contract, stakeholder);
+			}
+			else {
+				return '';
+			}
+		}
+	}
+	
+	static revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+		if (ownsContract)
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
+		else {
+			var creatoraddress = stakeholder.getChainCreatorAddress();
+			var isYou = session.isSessionAccountAddress(creatoraddress);
+			
+			if (isYou) {
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
+			}
+			else {
+				return '';
+			}
+		}
+	}
+	
+	static revealStakeHolderCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder) {
+		if (ownsContract)
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
+		else {
+			var stakeholderaddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stakeholderaddress);
+			
+			if (isYou) {
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
+			}
+			else {
+				return '';
+			}
+		}
+	}
+	
+	static revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+		if (ownsContract)
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
+		else {
+			var stakeholderaddress = stakeholder.getAddress();
+			var isYou = session.isSessionAccountAddress(stakeholderaddress);
+			
+			if (isYou) {
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
+			}
+			else {
+				return '';
+			}
+		}
+	}
+	
 	
 }
 

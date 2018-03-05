@@ -112,11 +112,15 @@ class Account{
 		console.log('Account.unlock called for ' + duration + ' seconds ');
 		//console.log('Account.unlock called for ' + duration + ' seconds ' + password);
 		
-		var web3 = this.session.getWeb3Instance();
+/*		var web3 = this.session.getWeb3Instance();
 		
 		var res = web3.personal.unlockAccount(this.address, password, duration);
 		
-		return res;
+		return res;*/
+		
+		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
+		
+		return EthereumNodeAccess.web3_unlockAccount(this, password, duration);
 	}
 	
 	lock() {
@@ -126,9 +130,13 @@ class Account{
 		this.lastunlock = null; // unix time
 		this.lastunlockduration = null;
 		
-		var web3 = this.session.getWeb3Instance();
+/*		var web3 = this.session.getWeb3Instance();
 		
-		web3.personal.lockAccount(this.address)
+		web3.personal.lockAccount(this.address)*/
+		
+		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
+		
+		return EthereumNodeAccess.web3_lockAccount(this);
 	}
 	
 	isLocked() {

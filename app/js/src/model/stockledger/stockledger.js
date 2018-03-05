@@ -85,6 +85,103 @@ class StockLedger {
 		
 	}
 	
+	getOwnerStakeHolderObject() {
+		console.log('StockLedger.getOwnerStakeHolderObject called for ' + this.address);
+
+		var stakeholder = this.getSyncChainOwnerStakeHolderObject();
+		
+		if (stakeholder.getChainCocryptedIdentifier() == "0x")
+			this.overloadOwnerStakeHolderObject(); // if not overloaded, try to do it for this session
+		
+		return stakeholder;
+	}
+	
+	overloadOwnerStakeHolderObject() {
+		var stakeholder = this.getSyncChainOwnerStakeHolderObject();
+
+		var session = this.session;
+		var accountaddress = stakeholder.getAddress();
+		
+		console.log('StockLedger.overloadOwnerStakeHolderObject called for ' + this.address);
+		
+		if (session.isSessionAccountAddress(accountaddress)) {
+			var sessionaccount = session.getSessionAccountObject();
+			
+			console.log('overloading owner\'s stakeholder object for ' + this.address);
+
+			// we overload contract's element for the owner
+			// that contract did not save
+
+			
+			// getting elements
+			var _cocrypted_ledger_description = this.cocrypted_ledger_description;
+		
+			var _shldr_identifier = sessionaccount.aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
+			var _shldr_privkey = sessionaccount.getPrivateKey();
+
+			// filling by mimicking registerStakeHolderAccount encryption steps
+			var creator = sessionaccount;
+			var contractowneraccount = sessionaccount;
+			var stakeholderaccount = sessionaccount;
+			
+			var _contractdescription = creator.aesDecryptString(_cocrypted_ledger_description);
+			
+	        var _cocrypted_shldr_privkey = creator.rsaEncryptString(_shldr_privkey, contractowneraccount);
+	        var _cocrypted_shldr_identifier =  creator.rsaEncryptString(_shldr_identifier, contractowneraccount);
+	        
+	        var _crtcrypted_shldr_description_string = creator.aesEncryptString(_contractdescription);
+	        
+	        var _shldrcrypted_shldr_description_string = creator.rsaEncryptString(_contractdescription, stakeholderaccount);
+	        var _shldrcrypted_shldr_identifier = creator.rsaEncryptString(_shldr_identifier, stakeholderaccount);
+			
+	        var _signature  = session.signString(stakeholder.getChainOrderId());
+			
+	    	
+	        // overloading values in stakeholder object
+	        stakeholder.setChainCocryptedPrivKey(_cocrypted_shldr_privkey);
+	    	stakeholder.setChainCocryptedIdentifier(_cocrypted_shldr_identifier);
+	    	
+	    	stakeholder.setChainCreatorCryptedDescription(_crtcrypted_shldr_description_string);
+
+	    	stakeholder.setChainSignature(_signature);
+	    	
+	    	stakeholder.setChainStakeHolderCryptedDescription(_shldrcrypted_shldr_description_string);
+	    	stakeholder.setChainStakeHolderCryptedIdentifier(_shldrcrypted_shldr_identifier);
+			
+		}
+	}
+	
+	resetOwnerStakeHolderObject() {
+		console.log('StockLedger.resetOwnerStakeHolderObject called for ' + this.address);
+		
+		var stakeholder = this.getSyncChainOwnerStakeHolderObject();
+		
+		var _contractdescription = "0x";
+		
+        var _cocrypted_shldr_privkey = "0x";
+        var _cocrypted_shldr_identifier =  "0x";
+        
+        var _crtcrypted_shldr_description_string = "0x";
+        
+        var _shldrcrypted_shldr_description_string = "0x";
+        var _shldrcrypted_shldr_identifier = creator.rsaEncryptString(_shldr_identifier, stakeholderaccount);
+		
+        var _signature  = "0x";
+		
+    	
+        // overloading values in stakeholder object
+        stakeholder.setChainCocryptedPrivKey(_cocrypted_shldr_privkey);
+    	stakeholder.setChainCocryptedIdentifier(_cocrypted_shldr_identifier);
+    	
+    	stakeholder.setChainCreatorCryptedDescription(_crtcrypted_shldr_description_string);
+
+    	stakeholder.setChainSignature(signature);
+    	
+    	stakeholder.setChainStakeHolderCryptedDescription(_shldrcrypted_shldr_description_string);
+    	stakeholder.setChainStakeHolderCryptedIdentifier(_shldrcrypted_shldr_identifier);
+	}
+		
+	
 	// initialization of object
 	initContract(json) {
 		console.log('StockLedger.initContract called for ' + this.address);
@@ -322,8 +419,9 @@ class StockLedger {
 		for (var i = 0; i < this.chainstakeholderarray.length; i++) {
 			var stakeholder = this.chainstakeholderarray[i];
 			
-			if ((stakeholder) && (session.areAddressesEqual(stakeholder.getAddress(),address)))
-				return stakeholder;
+			if ((stakeholder) && (session.areAddressesEqual(stakeholder.getAddress(),address))) {
+					return stakeholder;
+			}
 		}
 	}
 	
@@ -862,7 +960,11 @@ class StockLedger {
 							cryptedowneridentifier,
 							ledgername,
 							cryptedledgerdescription,
-							{from: fromaddress, gas: gas, gasPrice: gasPrice}])
+							{from: fromaddress, 
+							gas: gas, 
+							gasPrice: gasPrice
+							}]
+							)
 							.then(instance => {
 				    
 					var contractaddress = instance.address;
@@ -958,7 +1060,10 @@ class StockLedger {
 																		_rsa_pubkey,
 																		_ece_pubkey, 
 																		_cocrypted_acct_privkey, 
-																		{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																		{from: fromaddress, 
+																		gas: gas, 
+																		gasPrice: gasPrice
+																		}]
 																		)
 																		.then(function(res) {
 			    	
@@ -1107,7 +1212,7 @@ class StockLedger {
 				var _crtcrypted_shldr_description_string = creator.aesEncryptString(_contractdescription);
 				var _crtcrypted_shldr_identifier = creator.aesEncryptString(_shldr_identifier);
 				
-				var _shldrcrypted_shldr_description_string = creator.rsaEncryptString(_contractdescription, stakeholderaccount);;
+				var _shldrcrypted_shldr_description_string = creator.rsaEncryptString(_contractdescription, stakeholderaccount);
 				var _shldrcrypted_shldr_identifier = creator.rsaEncryptString(_shldr_identifier, stakeholderaccount);
 				
 				var _signature = session.signString(_orderid);
@@ -1116,6 +1221,8 @@ class StockLedger {
 				var _registration_date = Date.now();
 				
 				console.log('registering a shareholder with address ' + _shldr_address + ' rsa public key ' + _shldr_rsa_pubkey + ' crypted private key ' + _cocrypted_shldr_privkey + ' crypted identifier ' + _cocrypted_shldr_identifier + ' registration date ' + _registration_date);
+
+				var txdata = "orderid=" + _orderid;
 
 				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerShareHolder",
 																		[_shldr_address, 
@@ -1130,7 +1237,11 @@ class StockLedger {
 																		_signature,
 																		_shldrcrypted_shldr_description_string,
 																		_shldrcrypted_shldr_identifier,
-																		{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																		{from: fromaddress,
+																		gas: gas, 
+																		gasPrice: gasPrice,
+																		data: txdata
+																		}]
 																		)
 																		.then(function(res) {
 			    	
@@ -1225,6 +1336,8 @@ class StockLedger {
 
 				console.log('registering an issuance with name ' + _name + ' description ' + localdescription + ' number of shares ' + _numberofshares + ' percent of capital ' + _percentofcapital + ' registration date ' + _registration_date);
 
+				var txdata = "orderid=" + _orderid;
+
 				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerIssuance",
 																	[_name, 
 																	_cocrypted_issuance_description,
@@ -1235,7 +1348,11 @@ class StockLedger {
 																	_signature,
 																	_type,
 																	_code,
-																	{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																	{from: fromaddress,
+																	gas: gas, 
+																	gasPrice: gasPrice,
+																	data: txdata
+																	}]
 																	)
 																	.then(function(res) {
 			    	
@@ -1376,6 +1493,7 @@ class StockLedger {
 				
 				console.log('registering a transaction from ' + _from + ' to ' + _to + ' of nature ' + _nature + ' for issuance ' + _issuancenumber + ' number of shares ' + _numberofshares + ' consideration ' + _consideration + ' ' + _currency + ' registration date ' + _registration_date);
 
+				var txdata = "orderid=" + _orderid;
 				var promise2 = EthereumNodeAccess.truffle_method_sendTransaction(contractInstance, "registerTransaction",
 																				[_numberofshares, 
 																				_from, 
@@ -1388,7 +1506,11 @@ class StockLedger {
 																				_currency,
 																				_creatoraddress,
 																				_signature,
-																				{from: fromaddress, gas: gas, gasPrice: gasPrice}]
+																				{from: fromaddress, 
+																				gas: gas, 
+																				gasPrice: gasPrice,
+																				data: txdata
+																				}]
 																				)
 																				.then(function(res) {
 			    	
@@ -1455,6 +1577,16 @@ class StockLedger {
 		account.setRsaPublicKey(this.owner_rsa_pubkey);
 		
 		return account;
+	}
+	
+	getSyncChainOwnerStakeHolderObject() {
+		if (this.chainstakeholderarray.length == 0)
+			throw 'Shareholder array has not been loaded';
+		
+		if (!this.chainstakeholderarray[0])
+			throw 'Shareholder object for contract\'s owner has not been loaded';
+		
+		return this.chainstakeholderarray[0];
 	}
 	
 	

@@ -12,7 +12,12 @@ class Session {
 
 		// web3
 		this.web3providerurl = null;
-		this.web3instance = null;
+		//this.web3instance = null;
+		
+		// ethereum node access
+		this.ethereum_node_access_instance = null;
+		
+
 		
 		// instantiation mechanism
 		this.classmap = Object.create(null); 
@@ -113,11 +118,24 @@ class Session {
 	}*/
 	
 	getEthereumNodeAccessInstance() {
-		return new Session.EthereumNodeAccess(this);
+		if (this.ethereum_node_access_instance)
+			return this.ethereum_node_access_instance;
+		
+		this.ethereum_node_access_instance = new Session.EthereumNodeAccess(this);
+		
+		return this.ethereum_node_access_instance;
 	}
 	
 	getAccountEncryptionInstance(account) {
-		return new Session.AccountEncryption(this, account);
+		if (!account)
+			return;
+		
+		if (account.accountencryption)
+			return account.accountencryption;
+		
+		account.accountencryption = new Session.AccountEncryption(this, account);
+		
+		return account.accountencryption;
 	}
 	
 
@@ -264,6 +282,9 @@ class Session {
 	
 	disconnectAccount() {
 		this.identifyingaccountaddress = null;
+		
+		// we clean the account map
+		this.accountmap.empty();
 	}
 	
 	impersonateAccount(account) {
@@ -468,6 +489,7 @@ class Session {
 		return AccountEncryption.signString(plaintext);
 	}
 	
+	// contract part decryption (asymmetric)
 	decryptContractStakeHolderIdentifier(contract, stakeholder) {
 		var sessionaccountaddress = this.getSessionAccountAddress();
 		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
@@ -481,22 +503,48 @@ class Session {
 		
 		
 		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
-			// we created this stakeholder, look for symmetric description of our segment
-			return this.getSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
+			var cocryptedIdentifier;
+			
+			if (contractowneraddress == stakeholder.getAddress()) {
+				cocryptedIdentifier = contract.getOwnerStakeHolderObject().getChainCocryptedIdentifier();
+				// look at the overloaded version of stakeholder object
+			}
+			else {
+				cocryptedIdentifier = stakeholder.getChainCocryptedIdentifier();
+			}
+			
+			// we created this stakeholder, look for assymmetric description of contract segment
+			var senderaccount = this.getSessionAccountObject();
+			var recipientaccount = this.getSessionAccountObject();
+
+			return recipientaccount.rsaDecryptString(cocryptedIdentifier, senderaccount);
 		}
 		else {
 			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
 			
 			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				var cocryptedIdentifier;
+				
+				if (contractowneraddress == stakeholder.getAddress()) {
+					cocryptedIdentifier = contract.getOwnerStakeHolderObject().getChainCocryptedIdentifier();
+					// look at the overloaded version of stakeholder object
+				}
+				else {
+					cocryptedIdentifier = stakeholder.getChainCocryptedIdentifier();
+				}
+				
 				// we own the contract and look for stakeholder creator who encrypted the identifier
 				var stakeholdercreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress); // sender is creator
 				var creatoraccount = stakeholdercreator.getAccountObject(); // fills rsa key if necessary
 				
-				return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedIdentifier(), creatoraccount);
+				var senderaccount = creatoraccount;
+				var recipientaccount = this.getSessionAccountObject();
+				
+				return recipientaccount.rsaDecryptString(cocryptedIdentifier, senderaccount);
 			}
 			else {
 				// we can not decrypt the identifier
-				return stakeholder.getChainCreatorCryptedIdentifier()
+				return stakeholder.getChainCreatorCryptedIdentifier();
 			}
 				
 			
@@ -510,8 +558,11 @@ class Session {
 		var contractowneraddress = contractowneraccount.getAddress();
 		
 		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
-			// we created this stakeholder, look for assymmetric decryption of our part
-			return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), this.getSessionAccountObject());
+			// we created this stakeholder, look for asymmetricmmetric decryption of our part
+			var senderaccount = this.getSessionAccountObject();
+			var recipientaccount = this.getSessionAccountObject();
+
+			return recipientaccount.rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), senderaccount);
 		}
 		else {
 			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
@@ -519,16 +570,170 @@ class Session {
 				// we own the contract  and look for stakeholder who encrypted the private key when registering his/her account
 				// sender is stakeholder's account
 				var stakeholderaccount = stakeholder.getAccountObject(); // fills rsa key if necessary
-				console.log('stakeholderaccount rsa public key is ' + stakeholderaccount.getRsaPublicKey());
 				
-				return this.getSessionAccountObject().rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), stakeholderaccount);
+				var senderaccount = stakeholderaccount;
+				var recipientaccount = this.getSessionAccountObject();
+
+				return recipientaccount.rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), senderaccount);
 			}
 			else {
 				// we can not decrypt the private key
-				return stakeholder.getChainCocryptedPrivKey()
+				return stakeholder.getChainCocryptedPrivKey();
 			}
 		}
 		
+	}
+	
+	// creator part decryption (symmetric)
+	decryptCreatorStakeHolderDescription(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+		
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
+			// we created this stakeholder, look for symmetric decryption of our part
+			return this.getSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedDescription());
+		}
+		else {
+			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				// we own the contract  and look for stakeholder's private key
+				// to symmetrically decrypt with his/her private key
+				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+				var creatorprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stkldrcreator);
+				
+				creatoraccount.setPrivateKey(creatorprivatekey);
+				
+				return creatoraccount.aesDecryptString(stakeholder.getChainCreatorCryptedDescription());
+			}
+			else {
+				// we can not decrypt the description
+				return stakeholder.getChainCreatorCryptedDescription();
+			}
+		}
+	}
+	
+	decryptCreatorStakeHolderIdentifier(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+		
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholdercreatoraddress)) {
+			// we created this stakeholder, look for symmetric decryption of our part
+			return this.getSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
+		}
+		else {
+			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				// we own the contract  and look for stakeholder's private key
+				// to symmetrically decrypt with his/her private key
+				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+				var creatorprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stkldrcreator);
+				
+				creatoraccount.setPrivateKey(creatorprivatekey);
+				
+				return creatoraccount.aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
+			}
+			else {
+				// we can not decrypt the description
+				return stakeholder.getChainCreatorCryptedIdentifier();
+			}
+		}
+	}
+	
+	// stakeholder part decryption (asymmetric)
+	decryptStakeHolderStakeHolderDescription(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		
+		var stakeholderaddress = stakeholder.getAddress();
+		var stakeholderaccount = this.getAccountObject(stakeholderaddress);
+
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholderaddress)) {
+			// we are the stakeholder, do asymmetric decryption with our private key
+			var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+			var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
+			
+			var senderaccount = creatoraccount;
+			var recipientaccount = this.getSessionAccountObject();
+
+			return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedDescription(), senderaccount);
+		}
+		else {
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+				var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
+				
+				// we own the contract  and look for stakeholder's private key
+				// to asymmetrically decrypt with his/her private key
+				var stakeholderprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stakeholder);
+				
+				stakeholderaccount.setPrivateKey(stakeholderprivatekey);
+				
+				var senderaccount = creatoraccount;
+				var recipientaccount = stakeholderaccount;
+
+				return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedDescription(), senderaccount);
+			}
+			else {
+				// we can not decrypt the description
+				return stakeholder.getChainStakeHolderCryptedDescription();
+			}
+		}
+	}
+	
+	decryptStakeHolderStakeHolderIdentifier(contract, stakeholder) {
+		var sessionaccountaddress = this.getSessionAccountAddress();
+		
+		var stakeholderaddress = stakeholder.getAddress();
+		var stakeholderaccount = this.getAccountObject(stakeholderaddress);
+
+		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
+
+		var contractowneraccount = contract.getSyncChainOwnerAccount();
+		var contractowneraddress = contractowneraccount.getAddress();
+		
+		if (this.areAddressesEqual(sessionaccountaddress, stakeholderaddress)) {
+			// we are the stakeholder, do asymmetric decryption with our private key
+			var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+			var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
+			
+			var senderaccount = creatoraccount;
+			var recipientaccount = this.getSessionAccountObject();
+
+			return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedIdentifier(), senderaccount);
+		}
+		else {
+			if (this.areAddressesEqual(sessionaccountaddress, contractowneraddress)) {
+				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
+				var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
+
+				// we own the contract  and look for stakeholder's private key
+				// to asymmetrically decrypt with his/her private key
+				var stakeholderprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stakeholder);
+				
+				stakeholderaccount.setPrivateKey(stakeholderprivatekey);
+				
+				var senderaccount = creatoraccount;
+				var recipientaccount = stakeholderaccount;
+
+				return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedIdentifier(), senderaccount);
+			}
+			else {
+				// we can not decrypt the description
+				return stakeholder.getChainStakeHolderCryptedDescription();
+			}
+		}
 	}
 }
 

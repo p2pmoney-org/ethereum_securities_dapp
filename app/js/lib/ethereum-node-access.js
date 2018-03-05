@@ -82,6 +82,24 @@ class EthereumNodeAccess {
 		
 		return promise
 	}
+	
+	web3_unlockAccount(account, password, duration) {
+		var web3 = this.getWeb3Instance();
+		var address = account.getAddress();
+		
+		var res = web3.personal.unlockAccount(address, password, duration);
+		
+		return res;
+		
+	}
+	
+	web3_lockAccount(account) {
+		var web3 = this.getWeb3Instance();
+		var address = account.getAddress();
+		
+		web3.personal.lockAccount(address);
+		
+	}
 
 	//
 	// Truffle

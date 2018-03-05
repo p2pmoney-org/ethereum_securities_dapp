@@ -348,8 +348,6 @@ class AccountEncryption {
 		
 		console.log('creating signature for text '+ plaintext);
 		
-		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
-		var web3 = EthereumNodeAccess.getWeb3Instance();
 		var ethereumjs = this.getEthereumJsClass();
 		
 		var account_address = this.account.getAddress();
@@ -358,64 +356,19 @@ class AccountEncryption {
 		// signing
 		//
 		
-		// web3.eth
 
-		//var texthash = '8dfe9be33ccb1c830e048219729e8c01f54c768004d8dc035105629515feb38e';
-		//var textHashBuffer = ethereumjs.Buffer.Buffer(texthash, 'hex');
 		var textHashBuffer = ethereumjs.Util.sha256(plaintext);
 		var texthash = textHashBuffer.toString('hex')
 		
 		console.log( 'text hash is: ', texthash);
 
-		/*var eth_signature = web3.eth.sign(account_address, texthash);
-		console.log( 'web3.eth signature is: ', eth_signature);*/
-
 		// Util signing
 		var priv_key = this.account.private_key.split('x')[1];
-		//var priv_key = '3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1';
 		var priv_key_Buffer = ethereumjs.Buffer.Buffer(priv_key, 'hex')
 		var util_signature =  ethereumjs.Util.ecsign(textHashBuffer, priv_key_Buffer);
 		
+
 		console.log( 'ethereumjs.Util signature is: ', util_signature);
-
-		/*
-		//
-		// recover
-		//
-		
-		// web3.eth recover
-		var sign = eth_signature.split('x')[1];
-
-		var r = ethereumjs.Buffer.Buffer(sign.substring(0, 64), 'hex')
-		var s = ethereumjs.Buffer.Buffer(sign.substring(64, 128), 'hex')
-		//var v = ethereumjs.Buffer.Buffer((parseInt(sign.substring(128, 130)) + 27).toString());
-		var v = (parseInt(sign.substring(128, 130)) + 27);
-		
-		
-		//console.log('r s v : ', r, s , v)
-
-		// console.log('v: ', v)
-
-		var eth_pub = ethereumjs.Util.ecrecover(textHashBuffer, v, r, s);
-		
-		console.log('eth recovered pub key is: ',   '0x' + eth_pub.toString('hex'));
-
-		var eth_recoveredAddress = '0x' + ethereumjs.Util.pubToAddress(eth_pub).toString('hex');
-		
-		
-		// Util recover
-		var util_pub = ethereumjs.Util.ecrecover(textHashBuffer, util_signature.v, util_signature.r, util_signature.s);
-		
-		console.log('util recovered pub key is: ',   '0x' + util_pub.toString('hex'));
-	
-		var util_recoveredAddress = '0x' + ethereumjs.Util.pubToAddress(util_pub).toString('hex');
-
-		console.log('account_address is: ',   account_address);
-		console.log('eth_recoveredAddress is: ',   eth_recoveredAddress);
-		console.log('util_recoveredAddress is: ',   util_recoveredAddress);
-
-		console.log( 'isMatch: ', util_recoveredAddress === account_address );	
-		*/
 		
 		var signature = ethereumjs.Util.toRpcSig(util_signature.v, util_signature.r, util_signature.s);
 		

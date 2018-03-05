@@ -2396,6 +2396,7 @@ class Forms {
 			textbox.setAttribute('type',"text");
 			textbox.setAttribute('name',"numberofshares");
 			textbox.classList.add('form-textbox');
+			textbox.style = "width: 250px;";
 			
 			span.appendChild(textbox);
 
@@ -2659,6 +2660,7 @@ class Forms {
 			textbox.setAttribute('type',"text");
 			textbox.setAttribute('name',"numberofshares");
 			textbox.classList.add('form-textbox');
+			textbox.style = "width: 250px;";
 			textbox.value = localnumberofshares;
 			
 			span.appendChild(textbox);

@@ -15,6 +15,8 @@ class StockTransaction {
 
 		this.local_issuancenumber = null; // 1 based
 		
+		this.local_numberofshares = null;
+		
 		this.local_consideration = null;
 		this.local_currency = null;
 
