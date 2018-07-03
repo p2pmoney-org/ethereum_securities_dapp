@@ -8,10 +8,19 @@ class StakeHolder{
 		this.session = session;
 		this.address = shldr_address;
 		
+		this.uuid = null;
+
+		this.status = Securities.STATUS_LOCAL;
+
 		// local data
 		this.local_shldr_identifier = null;
 		
 		this.local_shldr_privkey = null;
+		
+		this.local_orderid = null;
+		
+		this.local_creation_date = new Date().getTime();
+		this.local_submission_date = null;
 		
 
 		// blockchain data
@@ -39,8 +48,8 @@ class StakeHolder{
 		this.shldrcrypted_shldr_description_string = null; // asymmetric encryption with stakeholder's public key
 		this.shldrcrypted_shldr_identifier= null;
 	    
-		this.orderid; // unique, provided by contract
-		this.signature; // signature of orderid with creator's private key
+		this.orderid = null; // unique, provided by contract
+		this.signature = null; // signature of orderid with creator's private key
 
         
         // operation variables
@@ -72,16 +81,100 @@ class StakeHolder{
 		return account;
 	}
 	
+	getUUID() {
+		if (this.uuid)
+			return this.uuid;
+		
+		this.uuid = this.session.getUUID();
+		
+		return this.uuid;
+	}
+	
 	isLocalOnly() {
-		return (this.position == -1)
+		//return (this.position == -1)
+		return ((this.status != Securities.STATUS_ON_CHAIN) && (this.local_orderid == null));
+	}
+	
+	isLocal() {
+		return (this.status != Securities.STATUS_ON_CHAIN);
+	}
+	
+	isOnChain() {
+		return (this.status == Securities.STATUS_ON_CHAIN);
+	}
+	
+	getStatus() {
+		return this.status;
+	}
+	
+	setStatus(status) {
+		switch(status) {
+			case Securities.STATUS_LOST:
+			case Securities.STATUS_NOT_FOUND:
+			case Securities.STATUS_LOCAL:
+			case Securities.STATUS_SENT:
+			case Securities.STATUS_PENDING:
+			case Securities.STATUS_DEPLOYED:
+			case Securities.STATUS_CANCELLED:
+			case Securities.STATUS_REJECTED:
+			case Securities.STATUS_ON_CHAIN:
+				this.status = status;
+				break;
+			default:
+				// do not change for a unknown status
+				break;
+		}
 	}
 	
 	getLocalJson() {
+		var uuid = this.getUUID();
+		var status = this.getStatus();
 		var identifier = this.local_shldr_identifier;
 		
-		var json = {identifier: identifier};
+		var identifier = this.local_shldr_identifier;
+
+		var orderid = this.local_orderid;
+
+		var creationdate= this.getLocalCreationDate();
+		var submissiondate= this.getLocalSubmissionDate();
+
+		var json = {uuid: uuid, status: status, 
+				creationdate: creationdate, submissiondate: submissiondate, orderid: orderid, 
+				identifier: identifier};
 		
 		return json;
+	}
+	
+	copy(orgObj) {
+
+		// blockchain data
+		this.position = orgObj.position; 
+		
+		this.shldr_pubkey = orgObj.shldr_pubkey;
+		
+		this.shldr_rsa_pubkey = orgObj.shldr_rsa_pubkey;
+		
+		this.cocrypted_shldr_privkey = orgObj.cocrypted_shldr_privkey;
+		this.cocrypted_shldr_identifier= orgObj.cocrypted_shldr_identifier;
+	    
+		this.registration_date = orgObj.registration_date; 
+		this.block_date = orgObj.block_date; 
+		
+		this.replaced_by = orgObj.replaced_by; 
+		this.replacement_date = orgObj.replacement_date; 
+		this.replacement_block_date = orgObj.replacement_block_date; 
+	    
+		this.creator = orgObj.creator; 
+
+		this.crtcrypted_shldr_description_string = orgObj.crtcrypted_shldr_description_string; 
+		this.crtcrypted_shldr_identifier = orgObj.crtcrypted_shldr_identifier;
+		
+		this.shldrcrypted_shldr_description_string = orgObj.shldrcrypted_shldr_description_string; 
+		this.shldrcrypted_shldr_identifier = orgObj.nullshldrcrypted_shldr_identifier;
+	    
+		this.orderid = orgObj.orderid; 
+		this.signature = orgObj.signature; 
+		
 	}
 	
 	getStakeHolderIndex() {
@@ -107,6 +200,30 @@ class StakeHolder{
 	
 	setLocalPrivKey(privkey) {
 		this.local_shldr_privkey = privkey;
+	}
+	
+	getLocalOrderId() {
+		return this.local_orderid;
+	}
+	
+	setLocalOrderId(orderid) {
+		this.local_orderid = orderid;
+	}
+	
+	getLocalCreationDate() {
+		return this.local_creation_date;
+	}
+	
+	setLocalCreationDate(creation_date) {
+		this.local_creation_date = creation_date;
+	}
+	
+	getLocalSubmissionDate() {
+		return this.local_submission_date;
+	}
+	
+	setLocalSubmissionDate(submission_date) {
+		this.local_submission_date = submission_date;
 	}
 	
 	// chain data
@@ -255,7 +372,7 @@ class StakeHolder{
 	}
 
 	// static
-	static getStakeHoldersFromJsonArray(session, jsonarray) {
+	static getStakeHoldersFromJsonArray(module, session, jsonarray) {
 		var array = [];
 		
 		if (!jsonarray)
@@ -263,7 +380,10 @@ class StakeHolder{
 		
 		for (var i = 0; i < jsonarray.length; i++) {
 			var identifier = jsonarray[i]['identifier'];
-			var stakeholder = session.createBlankStakeHolderObject();
+			var stakeholder = module.createBlankStakeHolderObject(session);
+			
+			if (jsonarray[i]["uuid"])
+				stakeholder.uuid = jsonarray[i]["uuid"];
 			
 			stakeholder.setLocalIdentifier(identifier);
 			
@@ -276,6 +396,6 @@ class StakeHolder{
 }
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
-GlobalClass.StakeHolder = StakeHolder;
+	GlobalClass.registerModuleClass('securities', 'StakeHolder', StakeHolder);
 else
-module.exports = StakeHolder; // we are in node js
+	module.exports = StakeHolder; // we are in node js

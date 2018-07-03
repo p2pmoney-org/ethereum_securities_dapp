@@ -1,28 +1,107 @@
-App = {
+'use strict';
+
+class App {
 	//global: null,
 	//web3Provider: null,
 	//securities: [],
+	constructor() {
+		this.eventhandlers = [];
+		
+		this.currentmessage = null;
 
-	init: function() {
+	}
+
+	init() {
 		console.log("Initializing app");
 	  
 		
-		return App.initGlobal();
+		return this.initGlobal();
 		
-	},
+	}
 	
-	initGlobal: function() {
+	initGlobal() {
 		// initializing web3 connection
 		console.log("Initializing global object");
 		// global objects
 		//App.global = window.global;
 		var global = this.getGlobalObject(); // do the creation
 		
-		return App.initAuthorizationAccess();
+		// overload the global object
+		global.app = this;
+		global.getAppObject = function() {
+			return this.app;
+		};
 		
-	},
+		/*********************/
+		/* for compatibility */
+		/*********************/
+		global.getGlobalClass = function() {
+			return GlobalClass;
+		}
+		
+		
+		var commonmodule = global.getModuleObject('common');
+		
+		global.getSessionObject = function() {return commonmodule.getSessionObject();};
+
+		global.getContractsObject = function(bForceRefresh) {return commonmodule.getContractsObject(bForceRefresh);};
+		global.getAccountObject = function(address) {return commonmodule.getAccountObject(address);};
+		global.createBlankAccountObject = function() {return commonmodule.createBlankAccountObject();};
+		
+		global.getWeb3ProviderUrl = function() {return commonmodule.getWeb3ProviderUrl();};
+		global.getDefaultGasLimit = function() {return commonmodule.getDefaultGasLimit();};
+		global.getDefaultGasPrice = function() {return commonmodule.getDefaultGasPrice();};
+		
+		global.useWalletAccount = function() {return commonmodule.useWalletAccount();};
+		global.getWalletAccountAddress = function() {return commonmodule.getWalletAccountAddress();};
+		global.useWalletAccountChallenge = function() {return commonmodule.useWalletAccountChallenge();};
+		global.needToUnlockAccounts = function() {return commonmodule.needToUnlockAccounts();};
+		//global.readLocalJson = function() {return commonmodule.readLocalJson();};
+		//global.saveLocalJson = function(json) {return commonmodule.saveLocalJson(json);};
+		global.saveContractObjects = function(contracts) {return commonmodule.getSessionObject().saveContractObjects(contracts);};
+		
+		global.areAddressesEqual = function(address1, address2) {return commonmodule.getSessionObject().areAddressesEqual(address1, address2);};
+		
+		
+		var securitiesmodule = global.getModuleObject('securities');
+		
+		global.createBlankStockHolderObject = function(session, stockledger) {return securitiesmodule.createBlankStockHolderObject(session, stockledger);};
+		global.createBlankStockIssuanceObject = function(session, stockledger) {return securitiesmodule.createBlankStockIssuanceObject(session, stockledger);};
+		global.createBlankStockTransactionObject = function(session, stockledger) {return securitiesmodule.createBlankStockTransactionObject(session, stockledger);};
+		
+		global.getStakeholderDisplayName =  function(address, contract) {return securitiesmodule.getControllersObject().getStakeholderDisplayName(address, contract);};
+		
+		var mvcmodule = global.getModuleObject('mvc');
+
+		global.getControllersObject = function() {return mvcmodule.getControllersObject();};
+		global.getViewsObject = function() {return mvcmodule.getViewsObject();};
+		global.getFormsObject = function() {return mvcmodule.getFormsObject();};
+		global.getBreadCrumbsObject = function() {return mvcmodule.getBreadCrumbsObject();};
+		
+		global.getCurrentFormBand = function() {return mvcmodule.getCurrentFormBand();};
+		global.setCurrentFormBand = function(value) {return mvcmodule.setCurrentFormBand(value);};
+		global.getCurrentViewBand = function() {return mvcmodule.getCurrentViewBand();};
+		global.setCurrentViewBand = function(value) {return mvcmodule.setCurrentViewBand(value);};
+		
+		global.resetNavigation = function() {return mvcmodule.resetNavigation();};
+		global.getCurrentContract = function() {return mvcmodule.getCurrentContract();};
+		global.setCurrentContract = function(contract) {return mvcmodule.setCurrentContract(contract);};
+		global.getCurrentStakeHolder = function() {return mvcmodule.getCurrentStakeHolder();};
+		global.setCurrentStakeHolder = function(stakeholder) {return mvcmodule.setCurrentStakeHolder(stakeholder);};
+		global.getCurrentIssuance = function() {return mvcmodule.getCurrentIssuance();};
+		global.setCurrentIssuance = function(issuance) {return mvcmodule.setCurrentIssuance(issuance);};
+		global.getCurrentTransaction = function() {return mvcmodule.getCurrentTransaction();};
+		global.setCurrentTransaction = function(transaction) {return mvcmodule.setCurrentTransaction(transaction);};
+		
+		/*********************/
+		/* for compatibility */
+		/*********************/
+		
+		return this.initAuthorizationAccess();
+		
+	}
 	
-	initAuthorizationAccess: function() {
+	initAuthorizationAccess() {
 		console.log("Cheking call from localhost browser");
 		  
 		var href = window.location.href;
@@ -54,10 +133,11 @@ App = {
 			}
 		}
 		
-		return App.initWeb3();
-	},
+		//return this.initWeb3();
+		return this.initContracts();
+	}
   
-	initWeb3: function() {
+	/*	initWeb3() {
 		// initializing web3 connection
 		console.log("Initializing web3 connection");
 		
@@ -65,28 +145,29 @@ App = {
 		
 		console.log('web3 provider is  ' + global.getWeb3ProviderUrl());
 		
-/*		var web3Provider = global.getWeb3Instance();
+		var web3Provider = global.getWeb3Instance();
 
-		web3 = global.getWeb3Instance();*/
+		web3 = global.getWeb3Instance();
   
-	    return App.initContracts();
-	},
+	    return this.initContracts();
+	}*/
 
-	initContracts: function() {
+	initContracts() {
 		var global = this.getGlobalObject();
-		var contracts = global.getContractsObject();
+		/*var contracts = global.getContractsObject();
 		
 		var jsonarray = global.readLocalJson();
 		
-		contracts.initContractObjects(jsonarray);
-	
+		contracts.initContractObjects(jsonarray);*/
 		
-		return App.refreshDisplay();
-	},
+		var commonmodule = global.getModuleObject('common');
+		var contracts = commonmodule.getContractsObject();
+		
+		return this.refreshDisplay();
+	}
 	
 	// scripts
-	include: function(file, callback)
-	{
+	include(file, callback)	{
 
 	  var script  = document.createElement('script');
 	  script.src  = file;
@@ -100,45 +181,43 @@ App = {
 
 	  document.getElementsByTagName('head').item(0).appendChild(script);
 
-	},
+	}
 	
 	// control
-	eventhandlers: [],
 
-	bindEvent: function(event, selector, handler) {
-		if ((App.eventhandlers[event]) && (App.eventhandlers[event][selector]))
+	bindEvent(event, selector, handler) {
+		if ((this.eventhandlers[event]) && (this.eventhandlers[event][selector]))
 			return; // to avoid adding multiple times the handler
 		
 		console.log("binding event " + event + " to selector " + selector);
 		
 		$(document).on(event, selector, handler);
 		
-		if (!App.eventhandlers[event])
-			App.eventhandlers[event] = Object.create(null)
+		if (!this.eventhandlers[event])
+			this.eventhandlers[event] = Object.create(null)
 		
-		App.eventhandlers[event][selector] = true;
-	},
+		this.eventhandlers[event][selector] = true;
+	}
 	
-	unbindEvent: function(event, selector) {
-		if ((App.eventhandlers[event]) && (App.eventhandlers[event][selector]))
-			App.eventhandlers[event][selector] = false;
+	unbindEvent(event, selector) {
+		if ((this.eventhandlers[event]) && (this.eventhandlers[event][selector]))
+			this.eventhandlers[event][selector] = false;
 
 		$(document).off(event).on(event, selector, handler);
-	},
+	}
 	
 	// top band
-	currentmessage: null,
 	
-	setMessage: function(message) {
+	setMessage(message) {
 		this.currentmessage = message;
 		
-	},
+	}
 	
 	clearMessage() {
 		this.currentmessage = null;
 		
 		this.clearMessageZone();
-	},
+	}
 	
 	displayMessageZone() {
 		var messageZone = document.getElementById("message-zone");
@@ -148,69 +227,69 @@ App = {
 		else 
 			messageZone.innerHTML = "&nbsp;";
 		
-	},
+	}
 	
-	clearMessageZone: function() {
+	clearMessageZone() {
 		var messageZone = document.getElementById("message-zone")
 		
 		messageZone.innerHTML = "&nbsp;";
 		
-	},
+	}
 	
 	// breadcrumb
-	setBreadCrumbBand: function(breadcrumb) {
+	setBreadCrumbBand(breadcrumb) {
 		var breadcrumbBand = document.getElementById("breadcrumb-band");
 		
 		breadcrumbBand.appendChild(breadcrumb);
 		
-	},
+	}
 	
-	clearBreadCrumbBand: function() {
+	clearBreadCrumbBand() {
 		var breadcrumbBand = document.getElementById("breadcrumb-band");
 		
 		
 		while (breadcrumbBand.firstChild) {
 			breadcrumbBand.removeChild(breadcrumbBand.firstChild);
 		}	
-	},
+	}
 	
 	// form band, second band
-	addForm: function(form) {
+	addForm(form) {
 		var formband = document.getElementById("form-band");
 		document.getElementById('form-band').appendChild(form);
-	},
+	}
 	
-	getFormValue: function(formelementname) {
+	getFormValue(formelementname) {
 		var value = document.getElementsByName(formelementname)[0].value;
 		
 		return value;
-	},
+	}
 	
-	clearFormBand: function() {
+	clearFormBand() {
 		var formband = document.getElementById("form-band");
 		
 		while (formband.firstChild) {
 			formband.removeChild(formband.firstChild);
 		}	
-	},
+	}
 
 	// view band, third band
-	addView: function(view) {
+	addView(view) {
 		var formband = document.getElementById("view-band");
 		document.getElementById('view-band').appendChild(view);
-	},
+	}
 	
 	
-	clearViewBand: function() {
+	clearViewBand() {
 		var viewband = document.getElementById("view-band");
 		
 		while (viewband.firstChild) {
 			viewband.removeChild(viewband.firstChild);
 		}	
 		
-	},
+	}
 	
-	getGlobalObject: function() {
+	getGlobalObject() {
 		var global;
 		
 		try {
@@ -226,22 +305,20 @@ App = {
 		}
 		
 		return global;
-	},
+	}
 
-	clearDisplay: function() {
+	clearDisplay() {
 		console.log("App.clearDisplay called");
-		var global = this.getGlobalObject()
-		var controllers = global.getControllersObject();
 		
-		App.clearMessageZone();
-		App.clearBreadCrumbBand();
-		App.clearFormBand();
-		App.clearViewBand();
+		this.clearMessageZone();
+		this.clearBreadCrumbBand();
+		this.clearFormBand();
+		this.clearViewBand();
 		
 		return;
-	},
+	}
 	
-	refreshDisplay: function() {
+	refreshDisplay() {
 		console.log("App.refreshDisplay called");
 		var global = this.getGlobalObject()
 		var controllers = global.getControllersObject();
@@ -251,12 +328,21 @@ App = {
 		controllers.displayCurrentPage();
 		
 		return;
-	},
+	}
 	
 };
 
-$(function() {
-  $(window).load(function() {
+//
+//bootstrap of App
+//
+var app = new App();
+
+//initialization of App
+app.init();
+
+
+/*$(function() {
+	  $(window).on('load', function() {
     App.init();
   });
-});
+});*/

@@ -251,11 +251,11 @@ class Account{
 }
 
 if ( typeof window !== 'undefined' && window )
-GlobalClass.Account = Account;
+GlobalClass.registerModuleClass('common', 'Account', Account);
 else
 module.exports = Account; // we are in node js
 
 if ( typeof window !== 'undefined' && window )
-GlobalClass.AccountMap = AccountMap;
+GlobalClass.registerModuleClass('common', 'AccountMap', AccountMap);
 else
 Account.AccountMap = AccountMap; // we are in node js

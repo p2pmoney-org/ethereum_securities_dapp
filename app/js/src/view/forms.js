@@ -41,8 +41,9 @@ class Forms {
 		var tabtext2 = "Create contract";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_ADD_CONTRACT_ADDRESS) {
+		if (currentformband == Constants.FORM_ADD_CONTRACT_ADDRESS) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -98,8 +99,9 @@ class Forms {
 		var tabtext2 = "Deploy contract";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_MODIFY_CONTRACT) {
+		if (currentformband == Constants.FORM_MODIFY_CONTRACT) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -647,8 +649,9 @@ class Forms {
 		var tabtext1 = "Deploy account";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_DEPLOY_ACCOUNT) {
+		if (currentformband == Constants.FORM_DEPLOY_ACCOUNT) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -933,8 +936,9 @@ class Forms {
 		var tabtext1 = "Create shareholder";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_CREATE_STAKEHOLDER) {
+		if (currentformband == Constants.FORM_CREATE_STAKEHOLDER) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -981,8 +985,9 @@ class Forms {
 		var tabtext2 = "Deploy shareholder";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_MODIFY_STAKEHOLDER) {
+		if (currentformband == Constants.FORM_MODIFY_STAKEHOLDER) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -1484,8 +1489,9 @@ class Forms {
 		var tabtext1 = "Create issuance";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_CREATE_ISSUANCE) {
+		if (currentformband == Constants.FORM_CREATE_ISSUANCE) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -1532,8 +1538,9 @@ class Forms {
 		var tabtext2 = "Deploy issuance";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_MODIFY_ISSUANCE) {
+		if (currentformband == Constants.FORM_MODIFY_ISSUANCE) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -2165,8 +2172,9 @@ class Forms {
 		var tabtext1 = "Create transaction";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_CREATE_TRANSACTION) {
+		if (currentformband == Constants.FORM_CREATE_TRANSACTION) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -2213,8 +2221,9 @@ class Forms {
 		var tabtext2 = "Deploy transaction";
 		
 		var Global = global.getGlobalClass();
+		var currentformband = global.getCurrentFormBand();
 		
-		if (global.currentformband == Global.FORM_MODIFY_TRANSACTION) {
+		if (currentformband == Constants.FORM_MODIFY_TRANSACTION) {
 			tab1 = document.createTextNode(tabtext1);
 			divtab1.classList.add('div-form-selected-tab');
 
@@ -3150,7 +3159,7 @@ class Forms {
 	}
 	
 	static getEtherStringFromWei(wei, decimal=2) {
-		var ether = GlobalClass.getEtherFromwei(wei);
+		var ether = Constants.getEtherFromwei(wei);
 		return ether.toFixed(decimal);
 	}
 	
@@ -3170,4 +3179,5 @@ class Forms {
 	
 }
 
-GlobalClass.Forms = Forms;
+//GlobalClass.Forms = Forms;
+GlobalClass.registerModuleClass('mvc', 'Forms', Forms);

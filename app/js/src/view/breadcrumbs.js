@@ -187,4 +187,5 @@ class BreadCrumbs {
 	}
 }
 
-GlobalClass.BreadCrumbs = BreadCrumbs;
+//GlobalClass.BreadCrumbs = BreadCrumbs;
+GlobalClass.registerModuleClass('mvc', 'BreadCrumbs', BreadCrumbs);

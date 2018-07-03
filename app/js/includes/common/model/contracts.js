@@ -10,7 +10,9 @@ class Contracts {
 	constructor(session) {
 		this.session = session;
 		
-		this.contractobjects = [];
+		this.contractclasses = []; // contracttype -> class for instantiation
+		
+		this.contractobjects = []; // array of contract objects
 	}
 	
 	initContractObjects(jsonarray) {
@@ -18,6 +20,11 @@ class Contracts {
 			return;
 		
 		console.log("Contracts.initContractObjects called");
+		
+		if (this.contractobjects.length) {
+			// we empty the array
+			this.flushContractObjects();
+		}
 
 		for(var i = 0; i < jsonarray.length; i++) {
 			var address = (jsonarray[i]['address'] ? jsonarray[i]['address'] : null);
@@ -34,12 +41,39 @@ class Contracts {
 				contract.initContract(jsonarray[i]);
 				this.addContractObject(contract);
 			}
+			else {
+				console.log("contract type not handled: " + contracttype);
+				console.log('handled types ' + Object.getOwnPropertyNames(this.contractclasses));
+			}
 		}	
 		
 	}
 	
-	getContractObjects() {
-		return this.contractobjects;
+	flushContractObjects() {
+		// we empty the array
+		this.contractobjects = [];
+	}
+	
+	getContractObjects(filter) {
+		return this.getContractObjectsArray(filter);
+	}
+	
+	getContractObjectsArray(filter) {
+		if (!filter) {
+			return this.contractobjects; 
+		}
+		else {
+			var array = [];
+			
+			for (var i = 0; i < this.contractobjects.length; i++) {
+				var contract = this.contractobjects[i];
+				
+				if (filter.indexOf(contract.getContractType()) != -1)
+					array.push(contract);
+			}
+			
+			return array;
+		}
 	}
 	
 	getLocalOnlyContractObjects() {
@@ -148,6 +182,18 @@ class Contracts {
 	}
 	
 	// instantiation
+	registerContractClass(contracttype, contractclass) {
+		console.log('Contracts.registerContractClass called for type ' + contracttype);
+		
+		var key = contracttype.toString().toLowerCase();
+		this.contractclasses[key] = contractclass;
+	}
+	
+	getContractClass(contracttype) {
+		var key = contracttype.toString().toLowerCase();
+		return this.contractclasses[key];
+	}
+	
 	getContractObject(address, contracttype) {
 		if (!address)
 			return;
@@ -155,11 +201,12 @@ class Contracts {
 		if (!contracttype)
 			return;
 		
-		var SessionClass = this.session.getSessionClass();
 		var contract;
 		
-		if (contracttype == 'StockLedger') {
-			contract = new SessionClass.StockLedger(this.session, address);
+		var contractclass = this.getContractClass(contracttype);
+		
+		if (contractclass) {
+			contract = new contractclass(this.session, address);
 		}
 		
 		return contract;
@@ -169,21 +216,25 @@ class Contracts {
 		if (!contracttype)
 			return;
 		
-		var SessionClass = this.session.getSessionClass();
 		var contract;
 		
-		if (contracttype == 'StockLedger') {
+		/*if (contracttype == 'StockLedger') {
 			contract = new SessionClass.StockLedger(this.session, null);
+		}*/
+		
+		var contractclass = this.getContractClass(contracttype);
+		
+		if (contractclass) {
+			contract = new contractclass(this.session, null);
 		}
 		
 		return contract;
-		
 	}
 	
 }
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
-GlobalClass.Contracts = Contracts;
+GlobalClass.registerModuleClass('common', 'Contracts', Contracts);
 else
 module.exports = Contracts; // we are in node js
 

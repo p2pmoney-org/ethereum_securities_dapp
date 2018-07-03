@@ -1,52 +1,73 @@
-function promise_include(file)
-{
-	var promise = new Promise(function(resolve, reject) {
-		console.log('starting load of script ' + file);
-		var script  = document.createElement('script');
-		script.src  = file;
-		script.type = 'text/javascript';
-		script.defer = true;
-
-		script.onload = function(){
-			console.log('script ' + file + ' is now loaded');
-			return resolve(true);
-		};
-
-		document.getElementsByTagName('head').item(0).appendChild(script);
-	});
-
-	return promise;
-}
-
-/*function chain_include(promise, file) {
-	return promise.then(promise_include(file));
-}
-*/
+var rootscriptloader = window.ScriptLoader.getScriptLoader('rootloader');
 
 //include all global js files here 
-promise_include('./js/src/config.js')
-.then(function () {return promise_include('./js/src/global.js');})
+rootscriptloader.push_script('./js/src/config.js');
+rootscriptloader.push_script('./js/src/constants.js');
+rootscriptloader.push_script('./js/includes/common/global.js');
+rootscriptloader.push_script('./js/src/xtra/xtra-config.js');
 
-.then(function () {return promise_include('./js/src/xtra/xtra-config.js');})
 
-//include all necessary view js files here 
-.then(function () {return promise_include('./js/src/control/controller.js');})
+// perform load
+rootscriptloader.load_scripts();
 
-//include all necessary view js files here 
-.then(function () {return promise_include('./js/src/view/breadcrumbs.js');})
-.then(function () {return promise_include('./js/src/view/forms.js');})
-.then(function () {return promise_include( './js/src/view/views.js');})
+//libs
+var libscriptloader = rootscriptloader.getChildLoader('libloader');
 
-// include all necessary model js files here 
-.then(function () {return promise_include('./js/src/model/contracts.js');})
-.then(function () {return promise_include('./js/src/model/account.js');})
-.then(function () {return promise_include('./js/src/model/stakeholder.js');})
+//jquery
+libscriptloader.push_script('./js/lib/jquery-3.1.0.js');
 
-.then(function () {return promise_include('./js/src/model/stockledger/stocktransaction.js');})
-.then(function () {return promise_include('./js/src/model/stockledger/stockissuance.js');})
-.then(function () {return promise_include('./js/src/model/stockledger/stockholder.js');})
-.then(function () {return promise_include('./js/src/model/stockledger/stockledger.js');})
+libscriptloader.push_script('./js/lib/bootstrap.min-3.3.7.js');
 
-.then(function () {return promise_include('./js/src/model/session.js');}); // should be last
+libscriptloader.push_script('./js/lib/web3-0.20.3.js');
+libscriptloader.push_script('./js/lib/truffle-contract-1.1.11.js');
+
+libscriptloader.push_script('./js/lib/ethereumjs-all-2017-10-31.min.js');
+libscriptloader.push_script('./js/lib/keythereum.min.js');
+libscriptloader.push_script('./js/lib/bitcore.min.js');
+libscriptloader.push_script('./js/lib/bitcore-ecies.min.js');
+
+// interfaces to abstract the previous libs
+libscriptloader.push_script('./js/lib/ethereum-node-access.js');
+libscriptloader.push_script('./js/lib/account-encryption.js');
+
+
+//perform load
+libscriptloader.load_scripts();
+
+//modules
+var modulescriptloader = libscriptloader.getChildLoader('moduleloader');
+
+// common
+modulescriptloader.push_script('./js/includes/common/module.js');
+
+// securities
+modulescriptloader.push_script('./js/src/includes/securities/module.js');
+
+//perform load
+modulescriptloader.load_scripts();
+
+
+//mvc
+var mvcscriptloader = modulescriptloader.getChildLoader('mvcloader');
+
+mvcscriptloader.push_script('./js/src/module.js', 
+	function() {
+		var global = GlobalClass.getGlobalObject();	
+		
+		var allmodulesscriptloader = global.loadModule('mvc', modulescriptloader, function() {
+			// and finally loading the app
+			var appscriptloader = allmodulesscriptloader.getChildLoader('apploader');
+			
+			appscriptloader.push_script('./js/app.js');
+
+			//perform load
+			appscriptloader.load_scripts();
+		});
+		
+	});
+
+//perform load
+mvcscriptloader.load_scripts();
+
 
 

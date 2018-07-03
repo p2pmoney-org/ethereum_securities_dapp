@@ -4,7 +4,9 @@
 'use strict';
 
 class Session {
-	constructor() {
+	constructor(global) {
+		
+		this.global = global;
 		
 		this.sessionuuid = null;
 		
@@ -18,12 +20,15 @@ class Session {
 		this.ethereum_node_access_instance = null;
 		
 
+		var common = global.getModuleObject('common');
+
+		// local storage
+		this.localstorage = new common.LocalStorage(this);
 		
 		// instantiation mechanism
 		this.classmap = Object.create(null); 
 		
-		
-		this.accountmap = new Session.AccountMap();
+		this.accountmap = new common.AccountMap();
 
 		// impersonation
 		this.identifyingaccountaddress = null;
@@ -89,34 +94,10 @@ class Session {
 		this.web3providerurl = url;
 	}
 	
-/*	getWeb3Provider() {
-		var web3providerurl = this.getWeb3ProviderUrl();
-		var web3Provider = new Session.Web3.providers.HttpProvider(web3providerurl);
-
-		return web3Provider;
+	// instance of objects
+	getGlobalObject() {
+		return this.global;
 	}
-	
-	getWeb3Instance() {
-		if (this.web3instance)
-			return this.web3instance;
-		
-		var web3Provider = this.getWeb3Provider();
-		  
-		this.web3instance = new Session.Web3(web3Provider);		
-		
-		console.log("web3 instance created");
-		
-		return this.web3instance;
-	}
-	
-	getEthereumJsInstance() {
-		return Session.ethereumjs;
-	}
-	
-	getKeythereumInstance() {
-		return Session.keythereum;
-	}*/
-	
 	getEthereumNodeAccessInstance() {
 		if (this.ethereum_node_access_instance)
 			return this.ethereum_node_access_instance;
@@ -138,25 +119,19 @@ class Session {
 		return account.accountencryption;
 	}
 	
-
-
-	// truffle support
-/*	getTruffleContractObject(contractartifact) {
-		//var TruffleContract = this.getClass('TruffleContract');
-		  
-		var trufflecontract = Session.TruffleContract(contractartifact);
-	  
-		trufflecontract.setProvider(this.getWeb3Provider());
-		
-		return trufflecontract;
-	}*/
 	
+	// storage
+	getLocalStorageObject() {
+		return this.localstorage;
+	}
+
+
 	loadArtifact(jsonfile, callback) {
 		console.log("requiring load of artifact " + jsonfile);
 		var loadpromise 
 		
 		if ( !this.nodejs ) {
-			loadpromise = $.getJSON('./contracts/StockLedger.json', function(data) {
+			loadpromise = $.getJSON(jsonfile, function(data) {
 				console.log('contract json file read ');
 				
 				if (callback)
@@ -389,15 +364,41 @@ class Session {
 
 	
 	// contracts
-	getContractsObject() {
-		if (this.contracts)
+	getContractsObject(bForceRefresh) {
+		if ((this.contracts) && (!bForceRefresh) && (bForceRefresh != true))
 			return this.contracts;
 		
-		this.contracts = new Session.Contracts(this);
+		if (this.contracts) {
+			this.contracts.flushContractObjects();
+		}
+		else {
+			this.contracts = new Session.Contracts(this);
+		}
+		
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		var keys = ['contracts'];
+
+		var jsonarray = commonmodule.readLocalJson(this, keys);
+		
+		this.contracts.initContractObjects(jsonarray);
 		
 		return this.contracts;
 	}
 	
+	saveContractObjects(contracts) {
+		var json = contracts.getContractObjectsJson();
+		console.log("contracts json is " + JSON.stringify(json));
+		
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		var keys = ['contracts'];
+
+		commonmodule.saveLocalJson(this, keys, json);
+	}
+
 	ownsContract(contract) {
 		if (this.isAnonymous())
 			return false;
@@ -412,6 +413,13 @@ class Session {
 		return this.isSessionAccount(contractowneraccount);
 	}
 	
+	// contract instance
+	getContractInstance(contractaddress, contractartifact) {
+		var contractinstance = new Session.ContractInstance(this, contractaddress, contractartifact);
+		
+		return contractinstance;
+	}
+	
 	// signatures
 	validateStringSignature(accountaddress, plaintext, signature) {
 		var account = this.getAccountObject(accountaddress);
@@ -423,59 +431,20 @@ class Session {
 	}
 	
 	
-	// stakeholders
-	createStakeHolderObject(address) {
-		return new Session.StakeHolder(this, address);
-	}
 	
-	createBlankStakeHolderObject() {
-		return new Session.StakeHolder(this, null);
-	}
-	
-	getStakeHoldersFromJsonArray(jsonarray) {
-		return Session.StakeHolder.getStakeHoldersFromJsonArray(this, jsonarray)
-	}
-	
-	// stockholders
-	createStockHolderObject(address) {
-		console.log("Session.createStockHolderObject called for " + address);
-		return new Session.StockHolder(this, address);
-	}
-	
-	createBlankStockHolderObject() {
-		return new Session.StockHolder(this, null);
-	}
-	
-	getStockHoldersFromJsonArray(jsonarray) {
-		return Session.StockHolder.getStockHoldersFromJsonArray(this, jsonarray)
-	}
-	
-	// issuances
-	createBlankStockIssuanceObject() {
-		return new Session.StockIssuance(this);
-	}
-	
-	getStockIssuancesFromJsonArray(jsonarray) {
-		return Session.StockIssuance.getStockIssuancesFromJsonArray(this, jsonarray)
-	}
-	
-	// transactions
-	createBlankStockTransactionObject() {
-		return new Session.StockTransaction(this);
-	}
-	
-	getStockTransactionsFromJsonArray(jsonarray) {
-		return Session.StockTransaction.getStockTransactionsFromJsonArray(this, jsonarray)
+	guid() {
+		var EthereumNodeAccess = this.getEthereumNodeAccessInstance();
+		
+		return EthereumNodeAccess.guid();
 	}
 	
 	getTransactionUUID() {
 		return 'id_' + this.guid();
 	}
 	
-	guid() {
-		var EthereumNodeAccess = this.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.guid();
+	getUUID() {
+		// we use loosely the terms guid and uuid for the moment
+		return this.guid();
 	}
 	
 	signString(plaintext) {
@@ -738,6 +707,6 @@ class Session {
 }
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
-GlobalClass.Session = Session;
+GlobalClass.registerModuleClass('common', 'Session', Session);
 else
 module.exports = Session; // we are in node js

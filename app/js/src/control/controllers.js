@@ -18,8 +18,8 @@ class Controllers {
 		
 		var Global = global.getGlobalClass();
 		
-		global.setCurrentFormBand(Global.FORM_ADD_CONTRACT_ADDRESS);
-		global.setCurrentViewBand(Global.VIEW_CONTRACT_LIST);
+		global.setCurrentFormBand(Constants.FORM_ADD_CONTRACT_ADDRESS);
+		global.setCurrentViewBand(Constants.VIEW_CONTRACT_LIST);
 		
 		this.displayCurrentPage() 
 	}
@@ -32,8 +32,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_MODIFY_CONTRACT);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_CONTRACT);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT);
 		}
 		else {
 			return this.gotoHome();
@@ -54,8 +54,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_DEPLOY_ACCOUNT);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_ACCOUNTS);
+			global.setCurrentFormBand(Constants.FORM_DEPLOY_ACCOUNT);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_ACCOUNTS);
 		}
 		else {
 			return this.gotoHome();
@@ -76,8 +76,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_CREATE_STAKEHOLDER);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_STAKEHOLDERS);
+			global.setCurrentFormBand(Constants.FORM_CREATE_STAKEHOLDER);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_STAKEHOLDERS);
 		}
 		else {
 			return this.gotoHome();
@@ -97,8 +97,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_MODIFY_STAKEHOLDER);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_STAKEHOLDER);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_STAKEHOLDER);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_STAKEHOLDER);
 		}
 		else {
 			return this.gotoHome();
@@ -120,8 +120,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_CREATE_ISSUANCE);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_ISSUANCES);
+			global.setCurrentFormBand(Constants.FORM_CREATE_ISSUANCE);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_ISSUANCES);
 		}
 		else {
 			return this.gotoHome();
@@ -141,8 +141,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_MODIFY_ISSUANCE);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_ISSUANCE);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_ISSUANCE);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_ISSUANCE);
 		}
 		else {
 			return this.gotoHome();
@@ -164,8 +164,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_CREATE_TRANSACTION);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_TRANSACTIONS);
+			global.setCurrentFormBand(Constants.FORM_CREATE_TRANSACTION);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_TRANSACTIONS);
 		}
 		else {
 			return this.gotoHome();
@@ -185,8 +185,8 @@ class Controllers {
 		var Global = global.getGlobalClass();
 		
 		if (contract) {
-			global.setCurrentFormBand(Global.FORM_MODIFY_TRANSACTION);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_TRANSACTION);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_TRANSACTION);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_TRANSACTION);
 		}
 		else {
 			return this.gotoHome();
@@ -228,75 +228,75 @@ class Controllers {
 		
 		console.log("currentformband is: " + currentformband);
 
-		if (currentformband == Global.FORM_ADD_CONTRACT_ADDRESS) {
+		if (currentformband == Constants.FORM_ADD_CONTRACT_ADDRESS) {
 			forms.displayAddContractToListForm();
 		}
-		else if (currentformband == Global.FORM_CREATE_CONTRACT) {
+		else if (currentformband == Constants.FORM_CREATE_CONTRACT) {
 			// modify 
 			var contract = global.getCurrentContract();
 			forms.displayCreateContractForm(contract);
 		}
-		else if (currentformband == Global.FORM_MODIFY_CONTRACT) {
+		else if (currentformband == Constants.FORM_MODIFY_CONTRACT) {
 			// modify 
 			var contract = global.getCurrentContract();
 			forms.displayModifyContractForm(contract);
 		}
-		else if (currentformband == Global.FORM_DEPLOY_CONTRACT) {
+		else if (currentformband == Constants.FORM_DEPLOY_CONTRACT) {
 			// deploy 
 			var contract = global.getCurrentContract();
 			forms.displayDeployContractForm(contract);
 		}
-		else if (currentformband == Global.FORM_CREATE_STAKEHOLDER) {
+		else if (currentformband == Constants.FORM_CREATE_STAKEHOLDER) {
 			// create 
 			var contract = global.getCurrentContract();
 			forms.displayCreateStakeHolderForm(contract);
 		}
-		else if (currentformband == Global.FORM_MODIFY_STAKEHOLDER) {
+		else if (currentformband == Constants.FORM_MODIFY_STAKEHOLDER) {
 			// modify 
 			var contract = global.getCurrentContract();
 			var stakeholder = global.getCurrentStakeHolder();
 			forms.displayModifyStakeHolderForm(contract, stakeholder);
 		}
-		else if (currentformband == Global.FORM_DEPLOY_ACCOUNT) {
+		else if (currentformband == Constants.FORM_DEPLOY_ACCOUNT) {
 			// deploy 
 			var contract = global.getCurrentContract();
 			forms.displayDeployAccountForm(contract);
 		}
-		else if (currentformband == Global.FORM_DEPLOY_STAKEHOLDER) {
+		else if (currentformband == Constants.FORM_DEPLOY_STAKEHOLDER) {
 			// deploy 
 			var contract = global.getCurrentContract();
 			var stakeholder = global.getCurrentStakeHolder();
 			forms.displayDeployStakeHolderForm(contract, stakeholder);
 		}
-		else if (currentformband == Global.FORM_CREATE_ISSUANCE) {
+		else if (currentformband == Constants.FORM_CREATE_ISSUANCE) {
 			// create 
 			var contract = global.getCurrentContract();
 			forms.displayCreateIssuanceForm(contract);
 		}
-		else if (currentformband == Global.FORM_MODIFY_ISSUANCE) {
+		else if (currentformband == Constants.FORM_MODIFY_ISSUANCE) {
 			// modify 
 			var contract = global.getCurrentContract();
 			var issuance = global.getCurrentIssuance();
 			forms.displayModifyIssuanceForm(contract, issuance);
 		}
-		else if (currentformband == Global.FORM_DEPLOY_ISSUANCE) {
+		else if (currentformband == Constants.FORM_DEPLOY_ISSUANCE) {
 			// deploy 
 			var contract = global.getCurrentContract();
 			var issuance = global.getCurrentIssuance();
 			forms.displayDeployIssuanceForm(contract, issuance);
 		}
-		else if (currentformband == Global.FORM_CREATE_TRANSACTION) {
+		else if (currentformband == Constants.FORM_CREATE_TRANSACTION) {
 			// create 
 			var contract = global.getCurrentContract();
 			forms.displayCreateTransactionForm(contract);
 		}
-		else if (currentformband == Global.FORM_MODIFY_TRANSACTION) {
+		else if (currentformband == Constants.FORM_MODIFY_TRANSACTION) {
 			// modify 
 			var contract = global.getCurrentContract();
 			var transaction = global.getCurrentTransaction();
 			forms.displayModifyTransactionForm(contract, transaction);
 		}
-		else if (currentformband == Global.FORM_DEPLOY_TRANSACTION) {
+		else if (currentformband == Constants.FORM_DEPLOY_TRANSACTION) {
 			// deploy 
 			var contract = global.getCurrentContract();
 			var transaction = global.getCurrentTransaction();
@@ -313,48 +313,48 @@ class Controllers {
 		
 		console.log("currentviewband is: " + currentviewband);
 
-		if (currentviewband == Global.VIEW_CONTRACT_LIST) {
+		if (currentviewband == Constants.VIEW_CONTRACT_LIST) {
 			var contracts = global.getContractsObject();
 			views.displayContractList(contracts);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT) {	
 			// view of the contract
 			var contract = global.getCurrentContract();
 			views.displayContract(contract);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_ACCOUNTS) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_ACCOUNTS) {	
 			// view of the account list
 			var contract = global.getCurrentContract();
 			views.displayContractAccounts(contract);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_STAKEHOLDERS) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_STAKEHOLDERS) {	
 			// view of the stakeholder list
 			var contract = global.getCurrentContract();
 			views.displayContractStakeHolders(contract);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_STAKEHOLDER) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_STAKEHOLDER) {	
 			// view of the stakeholder
 			var contract = global.getCurrentContract();
 			var stakeholder = global.getCurrentStakeHolder();
 			views.displayContractStakeHolder(contract,stakeholder);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_ISSUANCES) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_ISSUANCES) {	
 			// view of the contract
 			var contract = global.getCurrentContract();
 			views.displayContractIssuances(contract);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_ISSUANCE) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_ISSUANCE) {	
 			// view of the stakeholder
 			var contract = global.getCurrentContract();
 			var issuance = global.getCurrentIssuance();
 			views.displayContractIssuance(contract, issuance);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_TRANSACTIONS) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_TRANSACTIONS) {	
 			// view of the contract
 			var contract = global.getCurrentContract();
 			views.displayContractTransactions(contract);
 		}
-		else if (currentviewband == Global.VIEW_CONTRACT_TRANSACTION) {	
+		else if (currentviewband == Constants.VIEW_CONTRACT_TRANSACTION) {	
 			// view of the stakeholder
 			var contract = global.getCurrentContract();
 			var transaction = global.getCurrentTransaction();
@@ -529,7 +529,8 @@ class Controllers {
 		
 		contracts.addContractObject(contract);
 		
-		global.saveContractObjects(contracts);
+		//global.saveContractObjects(contracts);
+		contract.saveLocalJson();
 		
 		app.setMessage("contract definition added");
 		
@@ -564,7 +565,8 @@ class Controllers {
 				contract.setLocalLedgerName(ledgername);
 			}
 			
-			global.saveContractObjects(contracts);
+			//global.saveContractObjects(contracts);
+			contract.saveLocalJson();
 			
 			app.setMessage("contract definition modified");
 
@@ -621,7 +623,8 @@ class Controllers {
 						//contract.setAddress(res);
 						
 						// save local address
-						global.saveContractObjects(contracts);
+						//global.saveContractObjects(contracts);
+						contract.saveLocalJson();
 						
 						app.setMessage("contract has been deployed at " + res);
 					}
@@ -656,48 +659,48 @@ class Controllers {
 		console.log("Controllers.handleSelectContractForm called for choice " + choice);
 
 		if (choice == "create") {
-			global.setCurrentFormBand(Global.FORM_CREATE_CONTRACT);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_LIST);
+			global.setCurrentFormBand(Constants.FORM_CREATE_CONTRACT);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_LIST);
 		}
 		else if (choice == "add") {
-			global.setCurrentFormBand(Global.FORM_ADD_CONTRACT_ADDRESS);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_LIST);
+			global.setCurrentFormBand(Constants.FORM_ADD_CONTRACT_ADDRESS);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_LIST);
 		}
 		else if (choice == "modify") {
-			global.setCurrentFormBand(Global.FORM_MODIFY_CONTRACT);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_CONTRACT);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT);
 		}
 		else if (choice == "deploy") {
-			global.setCurrentFormBand(Global.FORM_DEPLOY_CONTRACT);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT);
+			global.setCurrentFormBand(Constants.FORM_DEPLOY_CONTRACT);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT);
 		}
 		else if (choice == "deploy_shldr") {
-			global.setCurrentFormBand(Global.FORM_DEPLOY_STAKEHOLDER);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_STAKEHOLDER);
+			global.setCurrentFormBand(Constants.FORM_DEPLOY_STAKEHOLDER);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_STAKEHOLDER);
 		}
 		else if (choice == "modify_shldr") {
-			global.setCurrentFormBand(Global.FORM_MODIFY_STAKEHOLDER);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_STAKEHOLDER);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_STAKEHOLDER);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_STAKEHOLDER);
 		}
 		else if (choice == "deploy_issuance") {
-			global.setCurrentFormBand(Global.FORM_DEPLOY_ISSUANCE);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_ISSUANCE);
+			global.setCurrentFormBand(Constants.FORM_DEPLOY_ISSUANCE);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_ISSUANCE);
 		}
 		else if (choice == "modify_issuance") {
-			global.setCurrentFormBand(Global.FORM_MODIFY_ISSUANCE);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_ISSUANCE);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_ISSUANCE);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_ISSUANCE);
 		}
 		else if (choice == "deploy_transaction") {
-			global.setCurrentFormBand(Global.FORM_DEPLOY_TRANSACTION);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_TRANSACTION);
+			global.setCurrentFormBand(Constants.FORM_DEPLOY_TRANSACTION);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_TRANSACTION);
 		}
 		else if (choice == "modify_transaction") {
-			global.setCurrentFormBand(Global.FORM_MODIFY_TRANSACTION);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_TRANSACTION);
+			global.setCurrentFormBand(Constants.FORM_MODIFY_TRANSACTION);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_TRANSACTION);
 		}
 		else {
-			global.setCurrentFormBand(Global.FORM_ADD_CONTRACT_ADDRESS);
-			global.setCurrentViewBand(Global.VIEW_CONTRACT_LIST);
+			global.setCurrentFormBand(Constants.FORM_ADD_CONTRACT_ADDRESS);
+			global.setCurrentViewBand(Constants.VIEW_CONTRACT_LIST);
 		}
 
 		app.refreshDisplay();
@@ -709,6 +712,8 @@ class Controllers {
 
 		var global = Controllers.getGlobalClass().getGlobalObject();
 		var app = global.getAppObject();
+		
+		var contracts = global.getContractsObject(true); // force read from local storage
 
 		app.refreshDisplay();
 		
@@ -754,7 +759,7 @@ class Controllers {
 
 		var controllers = global.getControllersObject();
 		
-		global.setCurrentFormBand(Global.FORM_MODIFY_CONTRACT_ADDRESS);
+		global.setCurrentFormBand(Constants.FORM_MODIFY_CONTRACT_ADDRESS);
 
 		controllers.gotoContractPage(contract);
 	}
@@ -859,6 +864,7 @@ class Controllers {
 		// watch-out, 'this' is defined as the context
 		// of the calling object from event listener
 		var global = Controllers.getGlobalClass().getGlobalObject();
+		var session = global.getSessionObject();
 		var app = global.getAppObject();
 		var contracts = global.getContractsObject();
 
@@ -872,13 +878,14 @@ class Controllers {
 			var shldridentifier = app.getFormValue("shldridentifier");
 			
 			if ((shldridentifier) && (shldridentifier.length > 0)) {
-				var stakeholder = global.createBlankStakeHolderObject();
+				var stakeholder = global.createBlankStockHolderObject(session, contract);
 				
 				stakeholder.setLocalIdentifier(shldridentifier);
 				
 				contract.addLocalStakeHolder(stakeholder);
 				
-				global.saveContractObjects(contracts);
+				//global.saveContractObjects(contracts);
+				stakeholder.saveLocalJson();
 			}
 		}
 		
@@ -915,7 +922,8 @@ class Controllers {
 					stakeholder.setLocalIdentifier(identifier);
 				}
 				
-				global.saveContractObjects(contracts);
+				//global.saveContractObjects(contracts);
+				stakeholder.saveLocalJson();
 				
 				app.setMessage("shareholder definition modified");
 				
@@ -954,45 +962,9 @@ class Controllers {
 				var shldridentifier = app.getFormValue("shldridentifier");
 				
 				var shldraddress = app.getFormValue("shldraddress");
-				//var shldrpubkey = app.getFormValue("shldrpubkey");
-				//var shldrprivkey = app.getFormValue("shldrprivkey");
 				
-				//var shldraddress;
 				var shldrrsapubkey;
 				var shldrprivkey;
-				
-				/*try {
-					if ((shldrprivkey) && (!session.isValidPrivateKey(shldrprivkey))) {
-						// isValidPrivateKey thows error if not valid
-						shldrprivkey = null;
-					}
-					
-				}
-				catch(e) {
-					console.log("error: " + e);
-					console.log("private key submited is not valid " + shldrprivkey);
-					shldrprivkey = null;
-				}
-				
-				
-				if (!shldrprivkey) {
-					// generate private key
-					shldrprivkey = session.generatePrivateKey();
-					
-					console.log("generated private key: " + shldrprivkey);
-				}
-				
-				// get public key and address from private key
-				var account = session.getAccountObjectFromPrivateKey(shldrprivkey);
-				
-				shldraddress = account.getAddress();
-				shldrpubkey = account.getRsaPublicKey();
-
-				
-				stakeholder.setLocalIdentifier(shldridentifier);
-				stakeholder.setLocalPrivKey(shldrprivkey);
-				stakeholder.setAddress(shldraddress);
-				stakeholder.setChainPubKey(shldrpubkey);*/
 				
 				// payer for registration
 				var wallet = app.getFormValue("wallet");
@@ -1114,7 +1086,8 @@ class Controllers {
 								if (!err) {
 									console.log('shareholder deployed at position ' + res);
 									
-									global.saveContractObjects(contracts);
+									//global.saveContractObjects(contracts);
+									stakeholder.saveLocalJson();
 									
 									app.setMessage("shareholder has been deployed at " + res);
 									
@@ -1258,6 +1231,7 @@ class Controllers {
 		// watch-out, 'this' is defined as the context
 		// of the calling object from event listener
 		var global = Controllers.getGlobalClass().getGlobalObject();
+		var session = global.getSessionObject();
 		var app = global.getAppObject();
 		var contracts = global.getContractsObject();
 
@@ -1274,7 +1248,7 @@ class Controllers {
 			var percentofcapital = app.getFormValue("percentofcapital");
 			
 			
-			var issuance = global.createBlankStockIssuanceObject();
+			var issuance = global.createBlankStockIssuanceObject(session, contract);
 			
 			issuance.setLocalName(issuancename);
 			issuance.setLocalDescription(issuancedescription);
@@ -1283,7 +1257,8 @@ class Controllers {
 			
 			contract.addLocalIssuance(issuance);
 			
-			global.saveContractObjects(contracts);
+			//global.saveContractObjects(contracts);
+			issuance.saveLocalJson();
 		}
 
 		app.setMessage("issuance added, you have to register it on the blockchain before transfering securities");
@@ -1326,7 +1301,8 @@ class Controllers {
 				issuance.setLocalNumberOfShares(numberofshares);
 				issuance.setLocalPercentOfCapital(percentofcapital);
 
-				global.saveContractObjects(contracts);
+				//global.saveContractObjects(contracts);
+				issuance.saveLocalJson();
 
 				app.setMessage("issuance has been modified");
 
@@ -1408,7 +1384,8 @@ class Controllers {
 						if (!err) {
 							console.log('issuance deployed at position ' + res);
 							
-							global.saveContractObjects(contracts);
+							//global.saveContractObjects(contracts);
+							issuance.saveLocalJson();
 							
 							app.setMessage("issuance has been deployed at " + res);
 							
@@ -1456,7 +1433,8 @@ class Controllers {
 			
 			contract.removeIssuanceObject(issuance);
 
-			global.saveContractObjects(contracts);
+			//global.saveContractObjects(contracts);
+			contract.saveLocalJson();
 
 			app.refreshDisplay();
 		}
@@ -1515,6 +1493,7 @@ class Controllers {
 		// watch-out, 'this' is defined as the context
 		// of the calling object from event listener
 		var global = Controllers.getGlobalClass().getGlobalObject();
+		var session = global.getSessionObject();
 		var app = global.getAppObject();
 		var contracts = global.getContractsObject();
 
@@ -1533,7 +1512,7 @@ class Controllers {
 			var currency = app.getFormValue("currency");
 			
 			
-			var transaction = global.createBlankStockTransactionObject();
+			var transaction = global.createBlankStockTransactionObject(session, contract);
 			
 			transaction.setLocalFrom(from);
 			transaction.setLocalTo(to);
@@ -1544,7 +1523,8 @@ class Controllers {
 			
 			contract.addLocalTransaction(transaction);
 			
-			global.saveContractObjects(contracts);
+			//global.saveContractObjects(contracts);
+			transaction.saveLocalJson();
 		}
 
 		app.setMessage("transaction added, you have to register it on the blockchain to make it permanent");
@@ -1591,7 +1571,8 @@ class Controllers {
 				transaction.setLocalConsideration(consideration);
 				transaction.setLocalCurrency(currency);
 
-				global.saveContractObjects(contracts);
+				//global.saveContractObjects(contracts);
+				transaction.saveLocalJson();
 
 				app.setMessage("transaction has been modified");
 
@@ -1675,7 +1656,8 @@ class Controllers {
 					if (!err) {
 						console.log('transaction deployed at position ' + res);
 						
-						global.saveContractObjects(contracts);
+						//global.saveContractObjects(contracts);
+						transaction.saveLocalJson();
 						
 						app.setMessage("transaction has been deployed at " + res);
 						
@@ -1782,4 +1764,5 @@ class Controllers {
 	
 }
 
-GlobalClass.Controllers = Controllers;
+//GlobalClass.Controllers = Controllers;
+GlobalClass.registerModuleClass('mvc', 'Controllers', Controllers);
