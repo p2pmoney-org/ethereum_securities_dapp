@@ -98,13 +98,29 @@ class Session {
 	getGlobalObject() {
 		return this.global;
 	}
+	
 	getEthereumNodeAccessInstance() {
 		if (this.ethereum_node_access_instance)
 			return this.ethereum_node_access_instance;
 		
 		console.log('instantiating EthereumNodeAccess');
 		
-		this.ethereum_node_access_instance = new Session.EthereumNodeAccess(this);
+		var global = this.getGlobalObject();
+
+		var result = []; 
+		var inputparams = [];
+		
+		inputparams.push(this);
+		
+		var ret = global.invokeHooks('getEthereumNodeAccessInstance_hook', result);
+		
+		if (ret && result[0]) {
+			this.ethereum_node_access_instance = result[0];
+		}
+		else {
+			this.ethereum_node_access_instance = new Session.EthereumNodeAccess(this);
+		}
+
 		
 		return this.ethereum_node_access_instance;
 	}
@@ -118,7 +134,22 @@ class Session {
 		
 		console.log('instantiating AccountEncryption');
 		
-		account.accountencryption = new Session.AccountEncryption(this, account);
+		var global = this.getGlobalObject();
+
+		var result = [];
+		var inputparams = [];
+		
+		inputparams.push(this);
+		inputparams.push(account);
+		
+		var ret = global.invokeHooks('getAccountEncryptionInstance_hook', result, inputparams);
+		
+		if (ret && result[0]) {
+			account.accountencryption = result[0];
+		}
+		else {
+			account.accountencryption = new Session.AccountEncryption(this, account);
+		}
 		
 		return account.accountencryption;
 	}
@@ -379,7 +410,7 @@ class Session {
 			this.contracts = new Session.Contracts(this);
 		}
 		
-		var global = this.global;
+		var global = this.getGlobalObject();
 		var commonmodule = global.getModuleObject('common');
 		
 		var keys = ['contracts'];
@@ -395,7 +426,7 @@ class Session {
 		var json = contracts.getContractObjectsJson();
 		console.log("contracts json is " + JSON.stringify(json));
 		
-		var global = this.global;
+		var global = this.getGlobalObject();
 		var commonmodule = global.getModuleObject('common');
 		
 		var keys = ['contracts'];

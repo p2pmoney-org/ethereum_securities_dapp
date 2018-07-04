@@ -25,9 +25,6 @@ var Module = class {
 	registerHooks() {
 		console.log('common module registerHooks called');
 		
-		var commoncontrollers = this.getControllersObject()
-		
-		this.global.registerHook('loginForm_hook', 'common', commoncontrollers.loginForm_hook);
 	}
 	
 	loadModule(parentscriptloader, callback) {
@@ -247,6 +244,8 @@ var Module = class {
 	getSessionObject() {
 		if (this.session)
 			return this.session;
+		
+		console.log('Instantiating Session Object')
 		
 		this.Session.Config = this.global.globalscope.Config;
 		

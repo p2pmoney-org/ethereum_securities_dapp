@@ -55,18 +55,6 @@ var ModuleControllers = class {
 	}
 	
 	// hooks
-	loginForm_hook(result, params) {
-		console.log('common controllers loginForm_hook called');
-		
-		var field = [];
-		
-		field['name'] = 'user';
-		field['type'] = 'text';
-		
-		//result.push(field);
-		
-		return true;
-	}
 
 	// utils
 	getEtherStringFromWei(wei, decimal=2) {
