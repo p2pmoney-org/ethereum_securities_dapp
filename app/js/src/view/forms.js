@@ -1861,11 +1861,6 @@ class Forms {
 		app.addForm(formcontainer);
 		
 		return true;
-		
-		// and this form in the form band
-		app.addForm(formcontainer);
-		
-		return true;
 	}
 	
 

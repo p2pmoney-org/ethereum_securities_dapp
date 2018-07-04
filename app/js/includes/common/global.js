@@ -20,6 +20,8 @@ class Global {
 		// context
 		this.globalscope = null;
 		this.initialized = false;
+		this.initializationpromises = [];
+		
 		this.initGlobalScope();
 	}
 	
@@ -36,6 +38,11 @@ class Global {
 		}
 	}
 	
+	pushFinalInitializationPromise(promise) {
+		if (promise)
+			this.initializationpromises.push(promise);
+	}
+	
 	finalizeGlobalScopeInit(callback) {
 		console.log('Global.finalizeGlobalScopeInit called');
 		
@@ -46,46 +53,46 @@ class Global {
 			return;
 		}
 		
+		// ask modules to register hooks now if they want to be called by preFinalizeGlobalScopeInit_hook
+		this.registerModulesHooks();
+		
+		
+		// calling preFinalizeGlobalScopeInit_hook (gives opportunity to add promises to this.initializationpromises
+		var result = []; 
+		
+		var ret = this.invokeHooks('preFinalizeGlobalScopeInit_hook', result);
+
+		// resolve initialization promises
 		var self = this;
 		
-		var promises = [];
-		var promise;
 		
-		if ( typeof window !== 'undefined' && window ) {
-			var ethereum_node_access_path = self.globalscope.Config.getXtraValue('ethereum_node_access_path');
-			
-			if (ethereum_node_access_path) {
-				console.log("overloading EthereumNodeAccess facade with " + ethereum_node_access_path);
-				
-				var promise = new Promise(function(resolve, reject) {
-					self.app.include(ethereum_node_access_path, function(err, res) {
-						if (!err) {
-							Global.EthereumNodeAccess = window.Xtra_EthereumNodeAccess;
-							
-							// in case session object already requested, reapply
-							Global.Session.EthereumNodeAccess = Global.EthereumNodeAccess;
-						}
-						
-						return resolve(true);
-					});
-					
-					
-				});
-				promises.push(promise);
-			}
-
-		}
-		
-		Promise.all(promises).then(function(arr) {
+		Promise.all(this.initializationpromises).then(function() {
 			console.log("Global.finalizeGlobalScopeInit resolved");
 			
 			self.initialized = true;
+			
+			// calling postFinalizeGlobalScopeInit_hook
+			var result = []; // description of the form entries
+			
+			var ret = self.invokeHooks('postFinalizeGlobalScopeInit_hook', result);
 			
 			if (callback)
 				callback(true);
 		});
 		
 	}
+	
+	//
+	// config setting
+	//
+	getConfigValue(name) {
+		return this.globalscope.Config[name];
+	}
+	
+	getXtraConfigValue(name) {
+		return this.globalscope.Config.getXtraValue(name);
+	}
+	
 	
 	//
 	// variables
@@ -232,6 +239,17 @@ class Global {
 		
 	}
 	
+	areModulesReady() {
+		for (var i=0; i < this.modules.length; i++) {
+			var module = this.modules[i];
+			
+			if (!module.isReady())
+				return false;
+		}
+		
+		return true;
+	}
+	
 	//
 	// hooks mechanism
 	//
@@ -242,7 +260,7 @@ class Global {
 		for (var i=0; i < this.modules.length; i++) {
 			var module = this.modules[i];
 			
-			if (module.registerHooks)
+			if ( (module.isReady()) && (module.registerHooks))
 				module.registerHooks();
 		}
 	}

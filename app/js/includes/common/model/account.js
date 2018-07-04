@@ -9,7 +9,7 @@ class AccountMap {
 	}
 	
 	getAccount(address) {
-		var key = address.toString().toLowerCase();
+		var key = address.toString().trim().toLowerCase();
 		
 		if (key in this.map) {
 			return this.map[key];
@@ -17,7 +17,7 @@ class AccountMap {
 	}
 	
 	pushAccount(account) {
-		var key = account.address.toString().toLowerCase();
+		var key = account.address.toString().trim().toLowerCase();
 
 		// TODO: we could check if we have already this account
 		// and check that we do not replace an object with a private key
@@ -31,13 +31,13 @@ class AccountMap {
 	}
 	
 	removeAccount(account) {
-		var key = account.address.toString().toLowerCase();
+		var key = account.address.toString().trim().toLowerCase();
 
 		delete this.map[key];
 	}
 	
 	count() {
-		return Object.keys(this.map).length
+		return Object.keys(this.map).length;
 	}
 	
 	empty() {
@@ -49,7 +49,7 @@ class AccountMap {
 class Account{
 	constructor(session, address) {
 		this.session = session;
-		this.address = address;
+		this.address = (address ? address.trim().toLowerCase() : address);
 		
 		this.lastunlock = null; // unix time
 		this.lastunlockduration = null;
@@ -86,9 +86,9 @@ class Account{
 	}
 	
 	setPublicKey(pubkey) {
-		this.public_key = pubkey;
+		this.public_key = (pubkey ? pubkey.trim().toLowerCase() : pubkey);
 		
-		this.accountencryption.setPublicKey(pubkey);
+		this.accountencryption.setPublicKey(this.public_key);
 	}
 	
 	getPrivateKey() {
@@ -96,9 +96,9 @@ class Account{
 	}
 	
 	setPrivateKey(privkey) {
-		this.private_key = privkey;
+		this.private_key = (privkey ? privkey.trim().toLowerCase() : privkey);
 		
-		this.accountencryption.setPrivateKey(privkey);
+		this.accountencryption.setPrivateKey(this.private_key);
 	}
 	
 	// operation

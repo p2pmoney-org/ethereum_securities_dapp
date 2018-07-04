@@ -36,7 +36,7 @@ var Module = class {
 		var self = this;
 		var global = this.global;
 
-		var modulescriptloader = global.getScriptLoader('commonloader', parentscriptloader);
+		var modulescriptloader = global.getScriptLoader('commonmoduleloader', parentscriptloader);
 
 		modulescriptloader.push_script('./js/includes/common/control/controllers.js');
 

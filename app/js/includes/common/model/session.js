@@ -102,6 +102,8 @@ class Session {
 		if (this.ethereum_node_access_instance)
 			return this.ethereum_node_access_instance;
 		
+		console.log('instantiating EthereumNodeAccess');
+		
 		this.ethereum_node_access_instance = new Session.EthereumNodeAccess(this);
 		
 		return this.ethereum_node_access_instance;
@@ -113,6 +115,8 @@ class Session {
 		
 		if (account.accountencryption)
 			return account.accountencryption;
+		
+		console.log('instantiating AccountEncryption');
 		
 		account.accountencryption = new Session.AccountEncryption(this, account);
 		
@@ -328,7 +332,7 @@ class Session {
 		if ((!address1) || (!address2))
 			return false;
 		
-		return (address1.toLowerCase() == address2.toLowerCase());
+		return (address1.trim().toLowerCase() == address2.trim().toLowerCase());
 	}
 	
 	areAccountsEqual(account1, account2) {

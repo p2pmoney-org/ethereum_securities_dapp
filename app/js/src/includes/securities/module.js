@@ -37,7 +37,7 @@ var Module = class {
 		var global = this.global;
 
 		// securities
-		var modulescriptloader = global.getScriptLoader('securitiesloader', parentscriptloader);
+		var modulescriptloader = global.getScriptLoader('securitiesmoduleloader', parentscriptloader);
 		
 		modulescriptloader.push_script('./js/src/includes/securities/control/controllers.js');
 

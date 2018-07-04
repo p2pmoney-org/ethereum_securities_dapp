@@ -20,15 +20,47 @@ var Module = class {
 		
 	}
 	
+	deferGlobalInit(global, loopnum) {
+		if (!loopnum)
+			loopnum = 0;
+		
+		var self = this;
+		
+		if (!global.areModulesReady()) {
+			loopnum++;
+			//console.log("loop number " + loopnum);
+			
+			if (loopnum > 100)
+				return;
+			
+			setTimeout(function() {self.deferGlobalInit(global, loopnum);},100);
+		}
+		else {
+			this.doGlobalInit(global);
+		}
+	}
+	
+	doGlobalInit(global) {
+		// spawning potential asynchronous operations
+		global.finalizeGlobalScopeInit(function(res) {
+			console.log("Global object is now up and ready!");
+		});
+		
+	}
+	
 	init() {
 		console.log('mvc module init called');
 
 		var global = this.global;
 		
-		// spawning potential asynchronous operations
-		global.finalizeGlobalScopeInit(function(res) {
-			console.log("Global object is now up and ready!");
-		});
+		// perform global init, when all modules are ready
+		if (!global.areModulesReady()) {
+			this.deferGlobalInit(global);
+		}
+		else {
+			this.doGlobalInit(global);
+		}
+		
 		
 		this.isready = true;
 	}
@@ -40,7 +72,7 @@ var Module = class {
 		var global = this.global;
 		var mvc = global.getModuleObject('mvc');
 		
-		var modulescriptloader = global.getScriptLoader('mvcloader', parentscriptloader);
+		var modulescriptloader = global.getScriptLoader('mvcmoduleloader', parentscriptloader);
 
 		modulescriptloader.push_script('./js/src/control/controllers.js');
 		

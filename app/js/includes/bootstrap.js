@@ -1,5 +1,7 @@
 'use strict';
 
+var scriptloadermap = Object.create(null);
+
 class ScriptLoader {
 	
 	constructor() {
@@ -126,12 +128,26 @@ class ScriptLoader {
 	
 	// static
 	static getScriptLoader(loadername, parentloader) {
+		if (!loadername)
+			throw 'script loaders need to have a name';
+		
+		if (ScriptLoader.findScriptLoader(loadername))
+			throw 'script loader ' + loadername + ' exists already, create under an other name of use findScriptLoader to retrieve it';
+		
 		var scriptloader = new ScriptLoader();
 		
 		scriptloader.loadername = loadername;
 		scriptloader.parentloader = parentloader;
 		
+		// put in the map
+		scriptloadermap[loadername] = scriptloader;
+		
 		return scriptloader;
+	}
+	
+	static findScriptLoader(loadername) {
+		if (scriptloadermap[loadername])
+			return scriptloadermap[loadername];
 	}
 	
 }
