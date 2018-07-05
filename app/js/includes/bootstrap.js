@@ -14,10 +14,7 @@ class ScriptLoader {
 	}
 	
 	// scripts loading
-	promise_include(entry)	{
-		var file = entry['file'];
-		var posttreatment = entry['posttreatment'];
-		
+	static createScriptLoadPromise(file, posttreatment) {
 		var promise = new Promise(function(resolve, reject) {
 			console.log('starting load of script ' + file);
 			var script  = document.createElement('script');
@@ -36,6 +33,16 @@ class ScriptLoader {
 
 			document.getElementsByTagName('head').item(0).appendChild(script);
 		});
+
+		return promise;
+		
+	}
+	
+	promise_include(entry)	{
+		var file = entry['file'];
+		var posttreatment = entry['posttreatment'];
+		
+		var promise = ScriptLoader.createScriptLoadPromise(file, posttreatment);
 
 		return promise;
 	}
@@ -74,6 +81,17 @@ class ScriptLoader {
 		var promise = null;
 
 		var num = 0; // needed to access scope from within function() in then
+		
+		if (!this.scripts.length){
+			console.log('scriptloader ' + (self.loadername ? self.loadername : 'with no name') + ' had no script to load');
+			
+			this.loadfinished = true;
+			
+			if (callback)
+				callback();
+			
+			return;
+		}
 
 		for (var i = 0; i < this.scripts.length; i++) {
 		    
@@ -132,8 +150,10 @@ class ScriptLoader {
 			throw 'script loaders need to have a name';
 		
 		if (ScriptLoader.findScriptLoader(loadername))
-			throw 'script loader ' + loadername + ' exists already, create under an other name of use findScriptLoader to retrieve it';
+			throw 'script loader ' + loadername + ' exists already, create under another name or use findScriptLoader to retrieve it';
 		
+		
+		console.log('creating ScriptLoader ' + loadername + (parentloader ? ' with parent ' + parentloader.loadername : ' with no parent'));
 		var scriptloader = new ScriptLoader();
 		
 		scriptloader.loadername = loadername;
@@ -158,7 +178,7 @@ else
 module.exports = ScriptLoader; // we are in node js
 
 // load browser-load.js
-var browserload = ScriptLoader.getScriptLoader('bootstap');
+var browserload = ScriptLoader.getScriptLoader('bootstrap');
 
 browserload.push_script('./js/src/browser-load.js');
 

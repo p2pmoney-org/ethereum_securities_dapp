@@ -1844,6 +1844,13 @@ class StockLedger {
 			 return callfunc(self.contractinstance);
 			
 		}).then( function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getAccountAt no result retrieved', null);
+				
+				return;
+			}
+			
 			console.log('returning from getAccountAt with res_array ' + res_array);
 
 			var _acct_address = (res_array && res_array[0] ? res_array[0] : null);
@@ -2014,6 +2021,13 @@ class StockLedger {
 			 return callfunc(self.contractinstance);
 			
 		}).then( function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getShareHolderAt no result retrieved', null);
+				
+				return;
+			}
+			
 			// address, cocrypted_shldr_key, cocrypted_shldr_identifier, registration_date, block_date
 			var address = (res_array && res_array[0] ? res_array[0] : null);
 			var shldr_rsa_pubkey = (res_array && res_array[1] ? res_array[1] : null);
@@ -2048,6 +2062,13 @@ class StockLedger {
 			 if (self.contractinstance)
 			 return callfunc(self.contractinstance);
 		}).then(function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getShareHolderExtraAt no result retrieved', null);
+				
+				return;
+			}
+			
 	    	
 			var creator = (res_array && res_array[0] ? res_array[0] : null);
 			var crtcrypted_shldr_description_string = (res_array && res_array[1] ? res_array[1] : null);
@@ -2174,6 +2195,13 @@ class StockLedger {
 			 return callfunc(self.contractinstance);
 			
 		}).then(function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getChainIssuanceAt no result retrieved', null);
+				
+				return;
+			}
+			
 			console.log('returning from getChainIssuanceAt with return ' + res_array);
 			
 	    	var numberofshares = res_array[0];
@@ -2216,6 +2244,13 @@ class StockLedger {
 			 return callfunc(self.contractinstance);
 			 
 	    }).then(function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getChainIssuanceExtraAt no result retrieved', null);
+				
+				return;
+			}
+			
 			console.log('returning from getChainIssuanceExtraAt with return ' + res_array);
 			
 	    	var type = res_array[0];
@@ -2363,6 +2398,13 @@ class StockLedger {
 			 return callfunc(self.contractinstance);
 			
 		}).then(function(res_array) {
+			if (!res_array) {
+				if (callback)
+					callback('getChainTransactionAt no result retrieved', null);
+				
+				return;
+			}
+			
 	    	
 			console.log('returning from getChainTransactionAt with return ' + res_array);
 			

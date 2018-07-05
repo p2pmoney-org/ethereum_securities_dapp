@@ -7,6 +7,7 @@ var Module = class {
 		
 		this.global = null; // put by global on registration
 		this.isready = false;
+		this.isloading = false;
 		
 		this.controllers = null;
 		this.views = null;
@@ -30,8 +31,14 @@ var Module = class {
 		this.isready = true;
 	}
 	
+	// compulsory  module functions
 	loadModule(parentscriptloader, callback) {
 		console.log('securities module loadModule called');
+
+		if (this.isloading)
+			return;
+			
+		this.isloading = true;
 
 		var self = this;
 		var global = this.global;
@@ -60,6 +67,10 @@ var Module = class {
 	
 	isReady() {
 		return this.isready;
+	}
+
+	hasLoadStarted() {
+		return this.isloading;
 	}
 
 	//

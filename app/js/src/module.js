@@ -8,6 +8,7 @@ var Module = class {
 		
 		this.global = null; // put by global on registration
 		this.isready = false;
+		this.isloading = false;
 		
 		// navigation
 		this.currentformband = Constants.FORM_ADD_CONTRACT_ADDRESS;
@@ -20,53 +21,26 @@ var Module = class {
 		
 	}
 	
-	deferGlobalInit(global, loopnum) {
-		if (!loopnum)
-			loopnum = 0;
-		
-		var self = this;
-		
-		if (!global.areModulesReady()) {
-			loopnum++;
-			//console.log("loop number " + loopnum);
-			
-			if (loopnum > 100)
-				return;
-			
-			setTimeout(function() {self.deferGlobalInit(global, loopnum);},100);
-		}
-		else {
-			this.doGlobalInit(global);
-		}
-	}
-	
-	doGlobalInit(global) {
-		// spawning potential asynchronous operations
-		global.finalizeGlobalScopeInit(function(res) {
-			console.log("Global object is now up and ready!");
-		});
-		
-	}
-	
 	init() {
 		console.log('mvc module init called');
 
 		var global = this.global;
 		
-		// perform global init, when all modules are ready
-		if (!global.areModulesReady()) {
-			this.deferGlobalInit(global);
-		}
-		else {
-			this.doGlobalInit(global);
-		}
-		
+		// perform global scope final init
+		global.finalizeGlobalScopeInit(function(res) {
+			console.log("mvc module finished initialization of GlobalScope");
+		});
 		
 		this.isready = true;
 	}
 	
 	loadModule(parentscriptloader, callback) {
 		console.log('mvc module loadModule called');
+
+		if (this.isloading)
+			return;
+			
+		this.isloading = true;
 
 		var self = this;
 		var global = this.global;
@@ -83,8 +57,8 @@ var Module = class {
 		modulescriptloader.push_script('./js/src/model/models.js');
 
 		modulescriptloader.load_scripts(function() { 
-									self.init(); 
 									mvc.Models.loadModules(parentscriptloader, function() {
+										self.init(); 
 										if (callback) callback(null, self);
 									}); 
 								});
@@ -96,6 +70,10 @@ var Module = class {
 		return this.isready;
 	}
 	
+	hasLoadStarted() {
+		return this.isloading;
+	}
+
 	
 	// state
 	

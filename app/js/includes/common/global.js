@@ -39,29 +39,36 @@ class Global {
 	}
 	
 	pushFinalInitializationPromise(promise) {
-		if (promise)
+		if (promise) {
+			if (this.initialized)
+				throw "global scope initialization has finished, it's no longer possible to push promises at this stage";
+			
 			this.initializationpromises.push(promise);
+		}
 	}
 	
-	finalizeGlobalScopeInit(callback) {
-		console.log('Global.finalizeGlobalScopeInit called');
+	_deferGlobalInit(loopnum, callback) {
+		if (!loopnum)
+			loopnum = 0;
 		
-		if (this.initialized) {
-			if (callback)
-				callback(true);
+		var self = this;
+		
+		if (!this.areModulesReady()) {
+			loopnum++;
+			//console.log("loop number " + loopnum);
 			
-			return;
+			if (loopnum > 1000) {
+				throw 'ERROR: modules took too long to get ready. Aborting initialization of global scope!!!';
+			}
+			
+			setTimeout(function() {self._deferGlobalInit(loopnum, callback);},100);
 		}
-		
-		// ask modules to register hooks now if they want to be called by preFinalizeGlobalScopeInit_hook
-		this.registerModulesHooks();
-		
-		
-		// calling preFinalizeGlobalScopeInit_hook (gives opportunity to add promises to this.initializationpromises
-		var result = []; 
-		
-		var ret = this.invokeHooks('preFinalizeGlobalScopeInit_hook', result);
-
+		else {
+			this._doGlobalInit(callback);
+		}
+	}
+	
+	_doGlobalInit(callback) {
 		// resolve initialization promises
 		var self = this;
 		
@@ -79,7 +86,41 @@ class Global {
 			if (callback)
 				callback(true);
 		});
+	}
+
+	
+	finalizeGlobalScopeInit(callback) {
+		console.log('Global.finalizeGlobalScopeInit called');
 		
+		if (this.initialized) {
+			if (callback)
+				callback(true);
+			
+			return;
+		}
+		
+		// ask registered modules to load now if they haven't starter
+		this.loadAllModules();
+
+		// ask modules to register hooks now if they want to be called by preFinalizeGlobalScopeInit_hook
+		this.registerModulesHooks();
+		
+		
+		// calling preFinalizeGlobalScopeInit_hook (gives opportunity to add promises to this.initializationpromises
+		var result = []; 
+		
+		var ret = this.invokeHooks('preFinalizeGlobalScopeInit_hook', result);
+
+		this._deferGlobalInit(0, function() {
+			console.log("Global object is now up and ready!");
+			
+			if (callback)
+				callback(true);
+		})
+	}
+	
+	isGlobalScopeReady() {
+		return this.initialized;
 	}
 	
 	//
@@ -121,6 +162,21 @@ class Global {
 	
 	registerModuleObject(module) {
 		console.log('Global.registerModuleObject called for ' + (module ? module.name : 'invalid'));
+		
+		if (!module)
+			throw 'passed a null value to registerModuleObject';
+		
+		if (!module.name)
+			throw 'module needs to have a name property';
+		
+		if (!module.loadModule)
+			throw 'module ' + module.name + ' needs to have a loadModule function';
+
+		if (!module.hasLoadStarted)
+			throw 'module ' + module.name + ' needs to have a hasLoadStarted function';
+
+		if (!module.isReady)
+			throw 'module ' + module.name + ' needs to have a isReady function';
 
 		this.modules[module.name] = module; // for direct access by name in getModuleObject
 		this.modules.push(module); //for iteration on the array
@@ -159,7 +215,7 @@ class Global {
 				var depency = entry['dependency']
 				var module = this.getModuleObject(depency);
 				
-				if (!module.isReady()) {
+				if ( module && (!module.isReady())) {
 					return false;
 				}
 			}
@@ -250,6 +306,21 @@ class Global {
 		return true;
 	}
 	
+	loadAllModules() {
+		var parentscriptloader = ScriptLoader.getScriptLoader('finalallmodulesloader');
+		
+		for (var i=0; i < this.modules.length; i++) {
+			var module = this.modules[i];
+			
+			if (!module.hasLoadStarted())
+				module.loadModule(parentscriptloader);
+		}
+		
+		parentscriptloader.load_scripts();
+		
+		return true;
+	}
+	
 	//
 	// hooks mechanism
 	//
@@ -260,7 +331,7 @@ class Global {
 		for (var i=0; i < this.modules.length; i++) {
 			var module = this.modules[i];
 			
-			if ( (module.isReady()) && (module.registerHooks))
+			if (module.registerHooks)
 				module.registerHooks();
 		}
 	}
@@ -281,7 +352,7 @@ class Global {
 			var hookfunctionname = hookfunction.toString();
 			var entry = [];
 			
-			entry['modulename'] = modulename.toString().toLowerCase();
+			entry['modulename'] = modulename;
 			entry['functionname'] = hookfunctionname;
 			entry['function'] = hookfunction;
 			
@@ -298,11 +369,16 @@ class Global {
 		for (var i=0; i < hookarray.length; i++) {
 			var entry = hookarray[i];
 			var func = entry['function'];
+			var modulename = entry['modulename'];
+			var module = this.getModuleObject(modulename);
 			
-			var ret = func(result, inputparams);
+			if (module) {
+				var ret = func.call(module, result, inputparams);
+				
+				if ((ret) && (ret === false))
+					return ret
+			}
 			
-			if ((ret) && (ret === false))
-				return ret
 		}
 		
 		return true;

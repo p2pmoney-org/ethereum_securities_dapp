@@ -8,6 +8,7 @@ var Module = class {
 		
 		this.global = null; // put by global on registration
 		this.isready = false;
+		this.isloading = false;
 		
 		// control
 		this.controllers = null;
@@ -22,13 +23,14 @@ var Module = class {
 		this.isready = true;
 	}
 	
-	registerHooks() {
-		console.log('common module registerHooks called');
-		
-	}
-	
+	// compulsory  module functions
 	loadModule(parentscriptloader, callback) {
 		console.log('common module loadModule called');
+		
+		if (this.isloading)
+			return;
+			
+		this.isloading = true;
 
 		var self = this;
 		var global = this.global;
@@ -51,7 +53,17 @@ var Module = class {
 	isReady() {
 		return this.isready;
 	}
+	
+	hasLoadStarted() {
+		return this.isloading;
+	}
 
+	// optional  module functions
+	registerHooks() {
+		console.log('common module registerHooks called');
+		
+	}
+	
 	//
 	// control
 	//

@@ -112,7 +112,7 @@ class Session {
 		
 		inputparams.push(this);
 		
-		var ret = global.invokeHooks('getEthereumNodeAccessInstance_hook', result);
+		var ret = global.invokeHooks('getEthereumNodeAccessInstance_hook', result, inputparams);
 		
 		if (ret && result[0]) {
 			this.ethereum_node_access_instance = result[0];
