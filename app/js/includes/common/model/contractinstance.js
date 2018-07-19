@@ -1,6 +1,6 @@
 'use strict';
 
-class ContractInstance {
+var ContractInstance = class {
 	
 	constructor(session, contractaddress, contractartifact) {
 		

@@ -1018,6 +1018,24 @@ class StockLedger {
 	}
 	
 	// shareholder
+	isStakeHolder(session) {
+		var sessionaccountaddresses = session.getSessionAccountAddresses();
+		var found = false;
+		
+		for (var i = 0; i < sessionaccountaddresses.length; i++) {
+			var sessionaccountaddress = sessionaccountaddresses[i];
+			
+			if (!contract.getChainStakeHolderFromAddress(sessionaccountaddress))
+				continue;
+			else {
+				found = true;
+				break;
+			}
+		}
+		
+		return found;
+	}
+	
 	validateStakeHolderRegistration(payingaccount, gas, gasPrice, stakeholder, callback) {
 		// we check the account is unlocked
 		if (payingaccount.isLocked())
@@ -1044,9 +1062,10 @@ class StockLedger {
 					throw 'address ' + shldraddress + ' does not correspond to a registered account, impossible to register shareholder: ' + stakeholder.getLocalIdentifier();
 				}
 				else {
-					var sessionaccountaddress = session.getSessionAccountAddress();
+					/*var sessionaccountaddress = session.getSessionAccountAddress();
 					
-					if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {
+					if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {*/
+					if (!this.isStakeHolder(session)) {
 						throw 'not signed-in as a shareholder of the contract, impossible to register new shareholder: ' + stakeholder.getLocalIdentifier();
 					}
 					else {
@@ -1305,9 +1324,10 @@ class StockLedger {
 
 		if (!session.isSessionAccount(owningaccount)) {
 			// trying to register a transaction while not being owner of the contract
-			var sessionaccountaddress = session.getSessionAccountAddress();
+			/*var sessionaccountaddress = session.getSessionAccountAddress();
 			
-			if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {
+			if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {*/
+			if (!this.isStakeHolder(session)) {
 				throw 'only registered shareholders of the contract can register transactions';
 			}
 			else {

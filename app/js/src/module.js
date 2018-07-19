@@ -22,7 +22,7 @@ var Module = class {
 	}
 	
 	init() {
-		console.log('mvc module init called');
+		console.log('module init called for ' + this.name);
 
 		var global = this.global;
 		
@@ -35,7 +35,7 @@ var Module = class {
 	}
 	
 	loadModule(parentscriptloader, callback) {
-		console.log('mvc module loadModule called');
+		console.log('loadModule called for module ' + this.name);
 
 		if (this.isloading)
 			return;

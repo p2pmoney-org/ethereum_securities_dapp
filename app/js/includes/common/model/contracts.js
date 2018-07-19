@@ -5,7 +5,7 @@
 
 var GlobalClass;
 
-class Contracts {
+var Contracts = class {
 	
 	constructor(session) {
 		this.session = session;
@@ -207,6 +207,24 @@ class Contracts {
 		
 		if (contractclass) {
 			contract = new contractclass(this.session, address);
+			
+			if (!contract.getAddress)
+				throw 'contract class for type ' + contracttype + ' must implement getAddress method';
+			
+			if (!contract.getUUID)
+				throw 'contract class for type ' + contracttype + ' must implement getUUID method';
+			
+			if (!contract.getContractType)
+				throw 'contract class for type ' + contracttype + ' must implement getContractType method';
+			
+			if (!contract.getLocalJson)
+				throw 'contract class for type ' + contracttype + ' must implement getLocalJson method';
+			
+			if (!contract.getContractIndex)
+				throw 'contract class for type ' + contracttype + ' must implement getContractIndex method';
+			
+			if (!contract.setContractIndex)
+				throw 'contract class for type ' + contracttype + ' must implement setContractIndex method';
 		}
 		
 		return contract;

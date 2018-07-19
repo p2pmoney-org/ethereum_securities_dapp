@@ -16,7 +16,7 @@ var Module = class {
 	}
 	
 	init() {
-		console.log('securities module init called');
+		console.log('module init called for ' + this.name);
 		
 		var commonmodule = this.global.getModuleObject('common');
 		
@@ -33,7 +33,7 @@ var Module = class {
 	
 	// compulsory  module functions
 	loadModule(parentscriptloader, callback) {
-		console.log('securities module loadModule called');
+		console.log('loadModule called for module ' + this.name);
 
 		if (this.isloading)
 			return;

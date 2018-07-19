@@ -3,7 +3,7 @@
  */
 'use strict';
 
-class AccountMap {
+var AccountMap = class {
 	constructor() {
 		this.map = Object.create(null); // use a simple object to implement the map
 	}
@@ -14,6 +14,18 @@ class AccountMap {
 		if (key in this.map) {
 			return this.map[key];
 		}
+	}
+	
+	getAccountArray() {
+		var array = [];
+		
+		for (var key in this.map) {
+		    if (!this.map[key]) continue;
+		    
+		    array.push(this.map[key]);
+		}
+		
+		return array;
 	}
 	
 	pushAccount(account) {
@@ -46,7 +58,7 @@ class AccountMap {
 }
 
 
-class Account{
+var Account = class {
 	constructor(session, address) {
 		this.session = session;
 		this.address = (address ? address.trim().toLowerCase() : address);

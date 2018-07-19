@@ -19,6 +19,7 @@ class Global {
 
 		// context
 		this.globalscope = null;
+		this.initializing = false;
 		this.initialized = false;
 		this.initializationpromises = [];
 		
@@ -73,8 +74,8 @@ class Global {
 		var self = this;
 		
 		
-		Promise.all(this.initializationpromises).then(function() {
-			console.log("Global.finalizeGlobalScopeInit resolved");
+		Promise.all(this.initializationpromises).then(function(res) {
+			console.log('Global.finalizeGlobalScopeInit ' + res.length + ' promises resolved');
 			
 			self.initialized = true;
 			
@@ -90,7 +91,7 @@ class Global {
 
 	
 	finalizeGlobalScopeInit(callback) {
-		console.log('Global.finalizeGlobalScopeInit called');
+		console.log('Global.finalizeGlobalScopeInit called'); 
 		
 		if (this.initialized) {
 			if (callback)
@@ -99,7 +100,15 @@ class Global {
 			return;
 		}
 		
-		// ask registered modules to load now if they haven't starter
+		if (this.initializing) {
+			throw 'ERROR: calling twice finalizeGlobalScopeInit';
+			
+			return;
+		}
+		
+		this.initializing = true;
+		
+		// ask registered modules to load now if they haven't started
 		this.loadAllModules();
 
 		// ask modules to register hooks now if they want to be called by preFinalizeGlobalScopeInit_hook
@@ -183,6 +192,11 @@ class Global {
 		
 		// we set global property
 		module.global = this;
+		
+		// global object set in the module
+		// call postRegisterModule if module has the function
+		if (module.postRegisterModule)
+			module.postRegisterModule();
 	}
 	
 	registerModuleDepency(modulename, dependingfrom) {
@@ -261,12 +275,16 @@ class Global {
 		
 		var module = this.getModuleObject(modulename);
 		
+		if (module.hasLoadStarted())
+			throw 'trying to load module multiple times: ' + modulename;
+		
 		if (!this.canLoadModule(modulename)) {
 			console.log('cannot yet load module ' + modulename);
-			var dummyscriptloader = this.getScriptLoader('dummy', parentscriptloader);
+			this.dummycount = (this.dummycount ? this.dummycount +1 : 1);
+			var dummyscriptloader = this.getScriptLoader('dummy' + this.dummycount, parentscriptloader);
 			
 			this.deferModuleLoad(modulename, function() {
-				console.log('finished waiting module load of dpendencies for ' + modulename);
+				console.log('finished waiting module load of dependencies for ' + modulename);
 				
 				var modulescriptloader = module.loadModule(parentscriptloader, function (err, res) {
 					console.log('finished loading after defering module ' + res.name);
@@ -299,21 +317,26 @@ class Global {
 		for (var i=0; i < this.modules.length; i++) {
 			var module = this.modules[i];
 			
-			if (!module.isReady())
+			if (!module.isReady()) {
+				console.log('module is not ready: ' + module.name);
 				return false;
+			}
 		}
 		
 		return true;
 	}
 	
 	loadAllModules() {
+		console.log('Global.loadAllModules called');
+				
 		var parentscriptloader = ScriptLoader.getScriptLoader('finalallmodulesloader');
 		
 		for (var i=0; i < this.modules.length; i++) {
 			var module = this.modules[i];
 			
-			if (!module.hasLoadStarted())
+			if (!module.hasLoadStarted()) {
 				module.loadModule(parentscriptloader);
+			}
 		}
 		
 		parentscriptloader.load_scripts();
@@ -402,6 +425,18 @@ class Global {
 	
 	static registerModuleClass(modulename, classname, classprototype) {
 		Global.getGlobalObject().getModuleObject(modulename)[classname] = classprototype;
+		
+		classprototype.getClass = function() {
+			return classprototype;
+		}
+		
+		classprototype.getClassName = function() {
+			return classname;
+		}
+		
+		classprototype.getGlobalObject = function() {
+			return Global.getGlobalObject();
+		}
 	}
 	
 }

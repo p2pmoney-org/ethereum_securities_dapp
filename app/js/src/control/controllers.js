@@ -422,11 +422,11 @@ class Controllers {
 		var app = global.getAppObject();
 		var session = global.getSessionObject();
 		
-		var sessionaccount = session.getSessionAccountObject();
+		var sessionuser = session.getSessionUserObject();
 		
-		if (sessionaccount != null) {
+		if (sessionuser != null) {
 			if (confirm('Do you want to disconnect your account?')) {
-				session.disconnectAccount();
+				session.disconnectUser();
 				
 				app.refreshDisplay();
 				
@@ -610,7 +610,7 @@ class Controllers {
 			
 			if (!session.isSessionAccount(owningaccount)) {
 				alert("You must be connected with the account of the contract's owner");
-				console.log('owning account is ' + owner + ' session account is ' + session.getSessionAccountAddress());
+				console.log('owning account is ' + owner + ' session account is ' + session.getSessionUserIdentifier());
 				return;
 			}
 			
@@ -819,7 +819,7 @@ class Controllers {
 					
 					var owneraccount = contract.getOwnerAccount();
 					console.log("contract owner is " + owneraccount.getAddress());
-					console.log("session address is " + session.getSessionAccountAddress());
+					console.log("session address is " + session.getSessionUserIdentifier());
 					
 					
 					contract.registerAccount(payingaccount, gaslimit, gasPrice, account, function (err, res) {
@@ -989,7 +989,7 @@ class Controllers {
 					
 					var owneraccount = contract.getOwnerAccount();
 					console.log("contract owner is " + owneraccount.getAddress());
-					console.log("session address is " + session.getSessionAccountAddress());
+					console.log("session address is " + session.getSessionUserIdentifier());
 					
 					// check that current session is signed-in
 					if (session.isAnonymous()) {
@@ -1038,9 +1038,20 @@ class Controllers {
 								
 								
 								if (!session.ownsContract(contract)) {
-									var sessionaccountaddress = session.getSessionAccountAddress();
+									/*var sessionaccountaddresses = session.getSessionAccountAddresses();
+									var found = false;
 									
-									if (!contract.getChainStakeHolderFromAddress(sessionaccountaddress)) {
+									for (var i = 0; i < sessionaccountaddresses.length; i++) {
+										var sessionaccountaddress = sessionaccountaddresses[i];
+										if (!contract.getChainStakeHolderFromAddress(sessionaccountaddress))
+											continue;
+										else {
+											found = true;
+											break;
+										}
+									}*/
+									
+									if (!contract.isStakeHolder(session)) {
 										alert("You must be signed as one of the shareholder of the contract to create new shareholders");
 										
 										return;									

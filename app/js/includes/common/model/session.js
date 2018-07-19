@@ -3,7 +3,7 @@
  */
 'use strict';
 
-class Session {
+var Session = class {
 	constructor(global) {
 		
 		this.global = global;
@@ -20,18 +20,19 @@ class Session {
 		this.ethereum_node_access_instance = null;
 		
 
-		var common = global.getModuleObject('common');
+		var commonmodule = global.getModuleObject('common');
 
 		// local storage
-		this.localstorage = new common.LocalStorage(this);
+		this.localstorage = new commonmodule.LocalStorage(this);
 		
 		// instantiation mechanism
 		this.classmap = Object.create(null); 
 		
-		this.accountmap = new common.AccountMap();
+		this.accountmap = new commonmodule.AccountMap();
 
 		// impersonation
-		this.identifyingaccountaddress = null;
+		this.user = null;
+		this.identifyingaccountaddress = null; // obsolete
 		
 		// payer
 		this.walletaccountaddress = null;
@@ -39,6 +40,8 @@ class Session {
 		
 		// execution context
 		this.nodejs = true;
+		
+		this.getClass = function() { return this.constructor.getClass()};
 	}
 	
 	isInNodejs() {
@@ -82,6 +85,7 @@ class Session {
 	
 	// config
 	getXtraConfigValue(key) {
+		var Session = this.getClass();
 		return Session.Config.getXtraValue(key);
 	}
 	
@@ -106,6 +110,7 @@ class Session {
 		console.log('instantiating EthereumNodeAccess');
 		
 		var global = this.getGlobalObject();
+		var Session = this.getClass();
 
 		var result = []; 
 		var inputparams = [];
@@ -135,6 +140,7 @@ class Session {
 		console.log('instantiating AccountEncryption');
 		
 		var global = this.getGlobalObject();
+		var Session = this.getClass();
 
 		var result = [];
 		var inputparams = [];
@@ -210,6 +216,38 @@ class Session {
 		return loadpromise;
 	}
 	
+	// rest connection
+	createRestConnection(rest_server_url, rest_server_api_path) {
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+
+		return new commonmodule.RestConnection(this, rest_server_url, rest_server_api_path);
+	}
+	
+	// user
+	impersonateUser(user) {
+		if (this.user && user)
+			this.disconnectUser();
+		
+		this.user = user;
+	}
+	
+	disconnectUser() {
+		this.user = null;
+		
+		// we clean the account map
+		this.accountmap.empty();
+	}
+	
+	getSessionUserObject() {
+		return this.user;
+	}
+	
+	getSessionUserIdentifier() {
+		if (this.user)
+			return this.user.getUserName();
+	}
+	
 	// accounts
 	isValidAddress(address) {
 		var blankaccount = this.createBlankAccountObject()
@@ -253,6 +291,7 @@ class Session {
 			account = mapvalue;
 		}
 		else {
+			var Session = this.getClass();
 			account = new Session.Account(this, address);
 			
 			// put in map
@@ -281,17 +320,20 @@ class Session {
 	}
 	
 	createBlankAccountObject() {
+		var Session = this.getClass();
 		return new Session.Account(this, null);
 	}
 	
 
 	
 	isAnonymous() {
-		return (this.identifyingaccountaddress == null);
+		return (this.user == null);
+		//return (this.identifyingaccountaddress == null);
 	}
 	
 	disconnectAccount() {
-		this.identifyingaccountaddress = null;
+		//this.identifyingaccountaddress = null;
+		this.user = null;
 		
 		// we clean the account map
 		this.accountmap.empty();
@@ -299,7 +341,8 @@ class Session {
 	
 	impersonateAccount(account) {
 		if (!account) {
-			this.identifyingaccountaddress = null;
+			//this.identifyingaccountaddress = null;
+			this.user = null;
 			return;
 		}
 		
@@ -318,11 +361,18 @@ class Session {
 			
 			this.addAccountObject(account);
 		
-			this.identifyingaccountaddress = address;
+			//this.identifyingaccountaddress = address;
+			var global = this.getGlobalObject();
+			var commonmodule = global.getModuleObject('common');
+
+			this.user = commonmodule.createBlankUserObject();
+			
+			this.user.setUserName(address);
+			this.user.addAccountObject(account);
 		}
 	}
 	
-	getSessionAccountAddress() {
+	/*getSessionAccountAddress() {
 		return this.identifyingaccountaddress;
 	}
 	
@@ -331,6 +381,29 @@ class Session {
 			return this.getAccountObject(this.identifyingaccountaddress);
 		else
 			return null;
+	}*/
+	
+	getSessionAccountObjects() {
+		if (this.user != null)
+			return this.user.getAccountObjects();
+		else
+			return null;
+	}
+	
+	getSessionAccountAddresses() {
+		var array = [];
+
+		if (this.user) {
+			var accountarray = this.getSessionAccountObjects();
+			
+			for (var i = 0; i < accountarray.length; i++) {
+				var account = accountarray[i];
+				array.push(account.getAddress());
+			}
+		}
+		
+		return array;
+		//return this.identifyingaccountaddress;
 	}
 	
 	isSessionAccount(account) {
@@ -353,10 +426,21 @@ class Session {
 		if (!accountaddress)
 			return false;
 		
-		if (this.areAddressesEqual(accountaddress, this.identifyingaccountaddress))
+		var addresses = this.getSessionAccountAddresses();
+		
+		for (var i = 0; i < addresses.length; i++) {
+			var address = addresses[i];
+			
+			if (this.areAddressesEqual(accountaddress, address))
+				return true;
+		}
+		
+		return false;
+		
+		/*if (this.areAddressesEqual(accountaddress, this.identifyingaccountaddress))
 			return true;
 		else
-			return false;
+			return false;*/
 	}
 	
 	areAddressesEqual(address1, address2) {
@@ -407,6 +491,7 @@ class Session {
 			this.contracts.flushContractObjects();
 		}
 		else {
+			var Session = this.getClass();
 			this.contracts = new Session.Contracts(this);
 		}
 		
@@ -450,6 +535,7 @@ class Session {
 	
 	// contract instance
 	getContractInstance(contractaddress, contractartifact) {
+		var Session = this.getClass();
 		var contractinstance = new Session.ContractInstance(this, contractaddress, contractartifact);
 		
 		return contractinstance;

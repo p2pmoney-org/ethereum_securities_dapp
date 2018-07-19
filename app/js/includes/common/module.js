@@ -18,14 +18,14 @@ var Module = class {
 	}
 	
 	init() {
-		console.log('common module init called');
+		console.log('module init called for ' + this.name);
 		
 		this.isready = true;
 	}
 	
 	// compulsory  module functions
 	loadModule(parentscriptloader, callback) {
-		console.log('common module loadModule called');
+		console.log('loadModule called for module ' + this.name);
 		
 		if (this.isloading)
 			return;
@@ -40,9 +40,11 @@ var Module = class {
 		modulescriptloader.push_script('./js/includes/common/control/controllers.js');
 
 		modulescriptloader.push_script('./js/includes/common/model/localstorage.js');
+		modulescriptloader.push_script('./js/includes/common/model/restconnection.js');
 		modulescriptloader.push_script('./js/includes/common/model/contracts.js');
 		modulescriptloader.push_script('./js/includes/common/model/contractinstance.js');
 		modulescriptloader.push_script('./js/includes/common/model/account.js');
+		modulescriptloader.push_script('./js/includes/common/model/user.js');
 		modulescriptloader.push_script('./js/includes/common/model/session.js'); // should be last
 
 		modulescriptloader.load_scripts(function() { self.init(); if (callback) callback(null, self); });
@@ -287,6 +289,21 @@ var Module = class {
 		this.session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
 
 		return this.session;
+	}
+	
+	resetSessionObject() {
+		if (this.session) {
+			// re-read config
+			this.session.setWalletAccountAddress(this.getWalletAccountAddress());
+			this.session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
+		}
+	}
+	
+	// user
+	createBlankUserObject() {
+		var session = this.getSessionObject();
+		
+		return new this.User(session);
 	}
 	
 	// contracts

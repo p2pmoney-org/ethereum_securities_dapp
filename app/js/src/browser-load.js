@@ -22,9 +22,9 @@ libscriptloader.push_script('./js/lib/web3-0.20.3.js');
 libscriptloader.push_script('./js/lib/truffle-contract-1.1.11.js');
 
 libscriptloader.push_script('./js/lib/ethereumjs-all-2017-10-31.min.js');
-libscriptloader.push_script('./js/lib/keythereum.min.js');
-libscriptloader.push_script('./js/lib/bitcore.min.js');
-libscriptloader.push_script('./js/lib/bitcore-ecies.min.js');
+libscriptloader.push_script('./js/lib/keythereum.min-1.0.2.js');
+libscriptloader.push_script('./js/lib/bitcore.min-0.11.7.js');
+libscriptloader.push_script('./js/lib/bitcore-ecies.min-0.9.2.js');
 
 // interfaces to abstract the previous libs
 libscriptloader.push_script('./js/lib/ethereum-node-access.js');
