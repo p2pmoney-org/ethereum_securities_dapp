@@ -34,7 +34,7 @@ class Global {
 		}
 		else {
 			// node js (e.g. truffle migrate)
-			this.globalscope = global;
+			this.globalscope = this;
 			
 		}
 	}
@@ -162,6 +162,10 @@ class Global {
 		return this.globalscope.ScriptLoader.getScriptLoader(loadername, parentscriptloader);
 	}
 	
+	findScriptLoader(loadername) {
+		return this.globalscope.ScriptLoader.findScriptLoader(loadername);
+	}
+	
 	//
 	// modules
 	//
@@ -275,6 +279,9 @@ class Global {
 		
 		var module = this.getModuleObject(modulename);
 		
+		if (!module)
+			throw 'could not find module: ' + modulename;
+
 		if (module.hasLoadStarted())
 			throw 'trying to load module multiple times: ' + modulename;
 		
@@ -329,7 +336,7 @@ class Global {
 	loadAllModules() {
 		console.log('Global.loadAllModules called');
 				
-		var parentscriptloader = ScriptLoader.getScriptLoader('finalallmodulesloader');
+		var parentscriptloader = this.getScriptLoader('finalallmodulesloader');
 		
 		for (var i=0; i < this.modules.length; i++) {
 			var module = this.modules[i];

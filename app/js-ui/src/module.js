@@ -48,13 +48,15 @@ var Module = class {
 		
 		var modulescriptloader = global.getScriptLoader('mvcmoduleloader', parentscriptloader);
 
-		modulescriptloader.push_script('./js/src/control/controllers.js');
+		var moduleroot = './js-ui/src';
+
+		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
 		
-		modulescriptloader.push_script('./js/src/view/breadcrumbs.js');
-		modulescriptloader.push_script('./js/src/view/forms.js');
-		modulescriptloader.push_script('./js/src/view/views.js');
+		modulescriptloader.push_script( moduleroot + '/view/breadcrumbs.js');
+		modulescriptloader.push_script( moduleroot + '/view/forms.js');
+		modulescriptloader.push_script( moduleroot + '/view/views.js');
 		
-		modulescriptloader.push_script('./js/src/model/models.js');
+		modulescriptloader.push_script( moduleroot + '/model/models.js');
 
 		modulescriptloader.load_scripts(function() { 
 									mvc.Models.loadModules(parentscriptloader, function() {

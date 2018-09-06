@@ -3,7 +3,9 @@ var rootscriptloader = window.ScriptLoader.getScriptLoader('rootloader');
 //include all global js files here 
 rootscriptloader.push_script('./js/src/config.js');
 rootscriptloader.push_script('./js/src/constants.js');
-rootscriptloader.push_script('./js/includes/common/global.js');
+
+rootscriptloader.push_script('./includes/modules/common/global.js');
+
 rootscriptloader.push_script('./js/src/xtra/xtra-config.js');
 
 
@@ -14,21 +16,21 @@ rootscriptloader.load_scripts();
 var libscriptloader = rootscriptloader.getChildLoader('libloader');
 
 //jquery
-libscriptloader.push_script('./js/lib/jquery-3.1.0.js');
+libscriptloader.push_script('./includes/lib/jquery-3.1.0.js');
 
-libscriptloader.push_script('./js/lib/bootstrap.min-3.3.7.js');
+libscriptloader.push_script('./includes/lib/bootstrap.min-3.3.7.js');
 
-libscriptloader.push_script('./js/lib/web3-0.20.3.js');
-libscriptloader.push_script('./js/lib/truffle-contract-1.1.11.js');
+libscriptloader.push_script('./includes/lib/web3-0.20.3.js');
+libscriptloader.push_script('./includes/lib/truffle-contract-1.1.11.js');
 
-libscriptloader.push_script('./js/lib/ethereumjs-all-2017-10-31.min.js');
-libscriptloader.push_script('./js/lib/keythereum.min-1.0.2.js');
-libscriptloader.push_script('./js/lib/bitcore.min-0.11.7.js');
-libscriptloader.push_script('./js/lib/bitcore-ecies.min-0.9.2.js');
+libscriptloader.push_script('./includes/lib/ethereumjs-all-2017-10-31.min.js');
+libscriptloader.push_script('./includes/lib/keythereum.min-1.0.2.js');
+libscriptloader.push_script('./includes/lib/bitcore.min-0.11.7.js');
+libscriptloader.push_script('./includes/lib/bitcore-ecies.min-0.9.2.js');
 
 // interfaces to abstract the previous libs
-libscriptloader.push_script('./js/lib/ethereum-node-access.js');
-libscriptloader.push_script('./js/lib/account-encryption.js');
+libscriptloader.push_script('./includes/lib/ethereum-node-access.js');
+libscriptloader.push_script('./includes/lib/account-encryption.js');
 
 
 //perform load
@@ -38,10 +40,10 @@ libscriptloader.load_scripts();
 var modulescriptloader = libscriptloader.getChildLoader('moduleloader');
 
 // common
-modulescriptloader.push_script('./js/includes/common/module.js');
+modulescriptloader.push_script('./includes/modules/common/module.js');
 
 // securities
-modulescriptloader.push_script('./js/src/includes/securities/module.js');
+modulescriptloader.push_script('./dapps/securities/includes/module.js');
 
 //perform load
 modulescriptloader.load_scripts();
@@ -50,7 +52,7 @@ modulescriptloader.load_scripts();
 //mvc
 var mvcscriptloader = modulescriptloader.getChildLoader('mvcloader');
 
-mvcscriptloader.push_script('./js/src/module.js', 
+mvcscriptloader.push_script('./js-ui/src/module.js', 
 	function() {
 		var global = GlobalClass.getGlobalObject();	
 		
@@ -58,7 +60,7 @@ mvcscriptloader.push_script('./js/src/module.js',
 			// and finally loading the app
 			var appscriptloader = allmodulesscriptloader.getChildLoader('apploader');
 			
-			appscriptloader.push_script('./js/app.js');
+			appscriptloader.push_script('./js-ui/app.js');
 
 			//perform load
 			appscriptloader.load_scripts();

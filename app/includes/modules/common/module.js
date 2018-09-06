@@ -36,16 +36,18 @@ var Module = class {
 		var global = this.global;
 
 		var modulescriptloader = global.getScriptLoader('commonmoduleloader', parentscriptloader);
+		
+		var moduleroot = './includes/modules/common';
 
-		modulescriptloader.push_script('./js/includes/common/control/controllers.js');
+		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
 
-		modulescriptloader.push_script('./js/includes/common/model/localstorage.js');
-		modulescriptloader.push_script('./js/includes/common/model/restconnection.js');
-		modulescriptloader.push_script('./js/includes/common/model/contracts.js');
-		modulescriptloader.push_script('./js/includes/common/model/contractinstance.js');
-		modulescriptloader.push_script('./js/includes/common/model/account.js');
-		modulescriptloader.push_script('./js/includes/common/model/user.js');
-		modulescriptloader.push_script('./js/includes/common/model/session.js'); // should be last
+		modulescriptloader.push_script( moduleroot + '/model/localstorage.js');
+		modulescriptloader.push_script( moduleroot + '/model/restconnection.js');
+		modulescriptloader.push_script( moduleroot + '/model/contracts.js');
+		modulescriptloader.push_script( moduleroot + '/model/contractinstance.js');
+		modulescriptloader.push_script( moduleroot + '/model/account.js');
+		modulescriptloader.push_script( moduleroot + '/model/user.js');
+		modulescriptloader.push_script( moduleroot + '/model/session.js'); // should be last
 
 		modulescriptloader.load_scripts(function() { self.init(); if (callback) callback(null, self); });
 		
@@ -62,7 +64,7 @@ var Module = class {
 
 	// optional  module functions
 	registerHooks() {
-		console.log('common module registerHooks called');
+		console.log('module registerHooks called for ' + this.name);
 		
 	}
 	

@@ -46,19 +46,21 @@ var Module = class {
 		// securities
 		var modulescriptloader = global.getScriptLoader('securitiesmoduleloader', parentscriptloader);
 		
-		modulescriptloader.push_script('./js/src/includes/securities/control/controllers.js');
+		var moduleroot = './dapps/securities/includes';
 
-		modulescriptloader.push_script('./js/src/includes/securities/view/views.js');
+		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
 
-		modulescriptloader.push_script('./js/src/includes/securities/model/securities.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stakeholder.js');
+		modulescriptloader.push_script( moduleroot + '/view/views.js');
 
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/stockledger.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/stockholder.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/stockissuance.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/stocktransaction.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/interface/stockledger-contractinterface.js');
-		modulescriptloader.push_script('./js/src/includes/securities/model/stockledger/interface/stockledger-localpersistor.js');
+		modulescriptloader.push_script( moduleroot + '/model/securities.js');
+		modulescriptloader.push_script( moduleroot + '/model/stakeholder.js');
+
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/stockledger.js');
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/stockholder.js');
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/stockissuance.js');
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/stocktransaction.js');
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/interface/stockledger-contractinterface.js');
+		modulescriptloader.push_script( moduleroot + '/model/stockledger/interface/stockledger-localpersistor.js');
 		
 		modulescriptloader.load_scripts(function() { self.init(); if (callback) callback(null, self); });
 		
