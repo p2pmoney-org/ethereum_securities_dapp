@@ -139,7 +139,7 @@ class StockLedger {
 		console.log('StockLedger.overloadOwnerStakeHolderObject called for ' + this.address);
 		
 		if (session.isSessionAccountAddress(accountaddress)) {
-			var sessionaccount = session.getSessionAccountObject();
+			var sessionaccount = session.getSessionAccountObject(accountaddress);
 			
 			console.log('overloading owner\'s stakeholder object for ' + this.address);
 
@@ -1129,7 +1129,7 @@ class StockLedger {
 				
 				var stakeholderaccount = stakeholder.getAccountObject();
 				
-				var creator = session.getSessionAccountObject();
+				var creator = session.getFirstSessionAccountObject();
 				var _creatoraddress = creator.getAddress();
 				
 				if (!contractowneraccount.canDoRsaEncryption) {
@@ -1391,7 +1391,7 @@ class StockLedger {
 				var _shldrcrypted_consideration = _consideration;
 				var _shldrcrypted_currency = _currency;
 
-				var sessionaccount = session.getSessionAccountObject();
+				var sessionaccount = session.getFirstSessionAccountObject();
 				
 				if (sessionaccount) {
 					if (!sessionaccount.canDoAesEncryption) {
@@ -1410,7 +1410,7 @@ class StockLedger {
 					
 					
 					// sign order id
-					var creator = session.getSessionAccountObject();
+					var creator = session.getFirstSessionAccountObject();
 					var _creatoraddress = creator.getAddress();
 					
 					if (!creator.canDoAesEncryption) {
@@ -1887,7 +1887,7 @@ class StockLedger {
 			if (session.ownsContract(self)) {
 				// we decrypt the private key
 				var senderaccount = session.createBlankAccountObject();
-				var contractowneraccount = session.getSessionAccountObject();
+				var contractowneraccount = session.getFirstSessionAccountObject();
 				
 				senderaccount.setRsaPublicKey(_rsa_pubkey);
 				

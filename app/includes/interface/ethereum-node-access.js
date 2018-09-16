@@ -1,5 +1,88 @@
 'use strict';
 
+var Module = class {
+	
+	constructor() {
+		this.name = 'ethereum-node-access';
+		
+		this.global = null; // put by global on registration
+		this.isready = false;
+		this.isloading = false;
+		
+		this.ethereum_node_access_instance = null;
+	}
+	
+	init() {
+		console.log('module init called for ' + this.name);
+
+		var global = this.global;
+		
+		this.isready = true;
+	}
+	
+	// compulsory  module functions
+	loadModule(parentscriptloader, callback) {
+		console.log('loadModule called for module ' + this.name);
+
+		if (this.isloading)
+			return;
+			
+		this.isloading = true;
+
+		var self = this;
+		var global = this.global;
+		
+		var modulescriptloader = global.getScriptLoader('ethereumnodeaccessmoduleloader', parentscriptloader);
+
+		var moduleroot = './includes/lib';
+
+		modulescriptloader.push_script( moduleroot + '/web3-0.20.3.js');
+		modulescriptloader.push_script( moduleroot + '/truffle-contract-1.1.11.js');
+
+		modulescriptloader.load_scripts(function() { self.init(); if (callback) callback(null, self); });
+		
+		return modulescriptloader;
+	}
+	
+	isReady() {
+		return this.isready;
+	}
+
+	hasLoadStarted() {
+		return this.isloading;
+	}
+
+	// optional  module functions
+	
+	// objects
+	getEthereumNodeAccessInstance(session) {
+		if (this.ethereum_node_access_instance)
+			return this.ethereum_node_access_instance;
+		
+		console.log('instantiating EthereumNodeAccess');
+		
+		var global = this.global;
+
+		var result = []; 
+		var inputparams = [];
+		
+		inputparams.push(session);
+		
+		var ret = global.invokeHooks('getEthereumNodeAccessInstance_hook', result, inputparams);
+		
+		if (ret && result[0]) {
+			this.ethereum_node_access_instance = result[0];
+		}
+		else {
+			this.ethereum_node_access_instance = new EthereumNodeAccess(session);
+		}
+
+		
+		return this.ethereum_node_access_instance;
+	}
+	
+}
+
 class EthereumNodeAccess {
 	constructor(session) {
 		this.session = session;
@@ -454,4 +537,7 @@ if ( typeof window !== 'undefined' && window ) // if we are in browser and not n
 window.EthereumNodeAccess = EthereumNodeAccess;
 else
 module.exports = EthereumNodeAccess; // we are in node js
+
+GlobalClass.getGlobalObject().registerModuleObject(new Module());
+
 

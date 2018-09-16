@@ -1788,7 +1788,7 @@ class Views {
 			}
 			
 		    // description
-			var chaindescription = ( ownsContract ? session.getSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
+			var chaindescription = ( ownsContract ? session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
 
 			var statusstring = securitiesviews.getSecuritiesStatusString(issuance);
 		    var local_label = (isLocalOnly ? 'local only' : 'local');
@@ -2133,7 +2133,7 @@ class Views {
 		    
 			var statusstring = securitiesviews.getSecuritiesStatusString(issuance);
 		    var localname = (isOnChain==false ? issuance.getLocalName() : 'on chain');
-			var chaindescription = ( ownsContract ? session.getSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
+			var chaindescription = ( ownsContract ? session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
 		    var localdescription = (isOnChain==false ? issuance.getLocalDescription() : chaindescription);
 		    var localnumberofshares = (isOnChain==false ? issuance.getLocalNumberOfShares() : 'on chain');
 		    var localpercentofcapital = (isOnChain==false ? issuance.getLocalPercentOfCapital() : 'on chain');
@@ -3470,7 +3470,7 @@ class Views {
 	
 	static revealContractIssuanceDescription(ownsContract, session, contract, issuance) {
 		if (ownsContract) {
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.getSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) ;
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) ;
 		}
 		else {
 			return '';

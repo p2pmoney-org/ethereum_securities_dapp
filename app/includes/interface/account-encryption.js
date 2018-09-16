@@ -1,5 +1,94 @@
 'use strict';
 
+var Module = class {
+	
+	constructor() {
+		this.name = 'account-encryption';
+		
+		this.global = null; // put by global on registration
+		this.isready = false;
+		this.isloading = false;
+		
+		this.ethereum_node_access_instance = null;
+	}
+	
+	init() {
+		console.log('module init called for ' + this.name);
+
+		var global = this.global;
+		
+		this.isready = true;
+	}
+	
+	// compulsory  module functions
+	loadModule(parentscriptloader, callback) {
+		console.log('loadModule called for module ' + this.name);
+
+		if (this.isloading)
+			return;
+			
+		this.isloading = true;
+
+		var self = this;
+		var global = this.global;
+		
+		var modulescriptloader = global.getScriptLoader('accountencryptionmoduleloader', parentscriptloader);
+
+		var moduleroot = './includes/lib';
+
+		modulescriptloader.push_script( moduleroot + '/ethereumjs-all-2017-10-31.min.js');
+		modulescriptloader.push_script( moduleroot + '/keythereum.min-1.0.2.js');
+		modulescriptloader.push_script( moduleroot + '/bitcore.min-0.11.7.js');
+		modulescriptloader.push_script( moduleroot + '/bitcore-ecies.min-0.9.2.js');
+
+
+		modulescriptloader.load_scripts(function() { self.init(); if (callback) callback(null, self); });
+		
+		return modulescriptloader;
+	}
+	
+	isReady() {
+		return this.isready;
+	}
+
+	hasLoadStarted() {
+		return this.isloading;
+	}
+
+	// optional  module functions
+	
+	// objects
+	getAccountEncryptionInstance(session, account) {
+		if (!account)
+			return;
+		
+		if (account.accountencryption)
+			return account.accountencryption;
+		
+		console.log('instantiating AccountEncryption');
+		
+		var global = this.global;
+
+		var result = [];
+		var inputparams = [];
+		
+		inputparams.push(session);
+		inputparams.push(account);
+		
+		var ret = global.invokeHooks('getAccountEncryptionInstance_hook', result, inputparams);
+		
+		if (ret && result[0]) {
+			account.accountencryption = result[0];
+		}
+		else {
+			account.accountencryption = new AccountEncryption(session, account);
+		}
+		
+		return account.accountencryption;
+	}
+	
+}
+
 class AccountEncryption {
 	constructor(session, account) {
 		this.session = session;
@@ -465,3 +554,5 @@ if ( typeof window !== 'undefined' && window ) // if we are in browser and not n
 window.AccountEncryption = AccountEncryption;
 else
 module.exports = AccountEncryption; // we are in node js
+
+GlobalClass.getGlobalObject().registerModuleObject(new Module());

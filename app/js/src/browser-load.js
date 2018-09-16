@@ -20,17 +20,9 @@ libscriptloader.push_script('./includes/lib/jquery-3.1.0.js');
 
 libscriptloader.push_script('./includes/lib/bootstrap.min-3.3.7.js');
 
-libscriptloader.push_script('./includes/lib/web3-0.20.3.js');
-libscriptloader.push_script('./includes/lib/truffle-contract-1.1.11.js');
-
-libscriptloader.push_script('./includes/lib/ethereumjs-all-2017-10-31.min.js');
-libscriptloader.push_script('./includes/lib/keythereum.min-1.0.2.js');
-libscriptloader.push_script('./includes/lib/bitcore.min-0.11.7.js');
-libscriptloader.push_script('./includes/lib/bitcore-ecies.min-0.9.2.js');
-
-// interfaces to abstract the previous libs
-libscriptloader.push_script('./includes/lib/ethereum-node-access.js');
-libscriptloader.push_script('./includes/lib/account-encryption.js');
+// interfaces to abstract access to standard libs
+libscriptloader.push_script('./includes/interface/ethereum-node-access.js');
+libscriptloader.push_script('./includes/interface/account-encryption.js');
 
 
 //perform load

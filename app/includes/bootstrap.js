@@ -10,6 +10,7 @@ class ScriptLoader {
 		
 		this.scripts = [];
 		
+		this.loadstarted = false;
 		this.loadfinished = false;
 	}
 	
@@ -79,6 +80,8 @@ class ScriptLoader {
 		
 		var self = this;
 		var promise = null;
+		
+		this.loadstarted = true;
 
 		var num = 0; // needed to access scope from within function() in then
 		
@@ -132,6 +135,10 @@ class ScriptLoader {
 		if (!browserload) {
 			browserload = new BrowserLoad();
 		}
+		
+		if (this.loadstarted)
+			throw this.loadername + ' has started loading scripts. It is no longer possible to add scripts to this loader.';
+			
 		var entry = [];
 		
 		entry['file'] = file;

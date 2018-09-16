@@ -128,6 +128,14 @@ class Global {
 		})
 	}
 	
+	hasGlobalScopeInitializationStarted() {
+		return this.initializing;
+	}
+	
+	isGlobalScopeInitializing() {
+		return ((this.initializing == true) && (this.initialized == false));
+	}
+	
 	isGlobalScopeReady() {
 		return this.initialized;
 	}

@@ -36,10 +36,12 @@ var RestConnection = class {
 		    	if (callback) {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
-			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1'))
+			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1')) {
 			    		callback(null, jsonresponse);
-			    	else 
+			    	}
+			    	else {
 			    		callback((jsonresponse['error'] ? jsonresponse['error'] : 'unknown error'), null);
+			    	}
 		    	}
 		    }
 		    else {
@@ -81,10 +83,13 @@ var RestConnection = class {
 		    	if (callback) {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
-			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1'))
+			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1')) {
+			    		console.log('RestConnection.rest_post response is ' + JSON.stringify(jsonresponse));
 			    		callback(null, jsonresponse);
-			    	else 
+			    	}
+			    	else  {
 			    		callback((jsonresponse['error'] ? jsonresponse['error'] : 'unknown error'), null);
+			    	}
 		    	}
 		    }
 		    else {
