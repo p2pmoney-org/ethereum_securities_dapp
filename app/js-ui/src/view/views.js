@@ -784,6 +784,7 @@ class Views {
 			return;
 		
 		var session = this.global.getSessionObject();
+		var securitiesmodule = this.global.getModuleObject('securities');
 		
 		// in reverse order to have most recent on top
 		var tr;   
@@ -795,7 +796,7 @@ class Views {
 	    for (var i = accountarray.length -1 ; i >= 0; i--) {
 	    	console.log('writing line ' + i);
 			var account = accountarray[i];
-			var ownsContract = session.ownsContract(contract);
+			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			var accountaddress = account.getAddress();
 			var isYou = session.isSessionAccountAddress(accountaddress)
@@ -986,7 +987,9 @@ class Views {
 		if (!stakeholderarray)
 			return;
 		
+		var global = this.global;
 		var session = this.global.getSessionObject();
+		var securitiesmodule = this.global.getModuleObject('securities');
 		var securitiesviews = this.getSecuritiesViews();
 		
 		// in reverse order to have most recent on top
@@ -996,7 +999,7 @@ class Views {
 	    var link;
 	    var linenumber = 1;
 
-		var ownsContract = session.ownsContract(contract);
+		var ownsContract = securitiesmodule.ownsContract(contract);
 
 		for (var i = stakeholderarray.length -1 ; i >= 0; i--) {
 	    	//console.log('writing line ' + i);
@@ -1026,7 +1029,7 @@ class Views {
 			}
 			
 			var chainidentifier = (isLocalOnly ? null : stakeholder.getChainCocryptedIdentifier());
-			var chainidentifierdisplay = (isOnChain==false ? 'local' : (isYou ? 'You' : ( ownsContract ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) : 'crypted')));
+			var chainidentifierdisplay = (isOnChain==false ? 'local' : (isYou ? 'You' : ( ownsContract ? securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder) : 'crypted')));
 			
 			var statusstring = securitiesviews.getSecuritiesStatusString(stakeholder);
 		    var local_label = (isLocalOnly ? 'local only' : 'local');
@@ -1316,7 +1319,9 @@ class Views {
 		viewcontainer.appendChild(view);
 
 		if ((contract) && (stakeholder)){
+			var global = this.global;
 			var session = this.global.getSessionObject();
+			var securitiesmodule = this.global.getModuleObject('securities');
 			var controllers = this.global.getControllersObject();
 			
 			
@@ -1339,13 +1344,13 @@ class Views {
 		    var isLocal = stakeholder.isLocal();
 		    var isOnChain = stakeholder.isOnChain();
 		    
-		    var ownsContract = session.ownsContract(contract); 
+		    var ownsContract = securitiesmodule.ownsContract(contract); 
 			
 			var stakeholderaddress = stakeholder.getAddress();
 			var isYou = session.isSessionAccountAddress(stakeholderaddress);
 		    
 			var statusstring = securitiesviews.getSecuritiesStatusString(stakeholder);
-			var chainidentifier = (isOnChain==false ? 'local' : (ownsContract ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) : (isYou ? session.decryptContractStakeHolderIdentifier(contract, stakeholder) + ' (You)' : 'crypted')));
+			var chainidentifier = (isOnChain==false ? 'local' : (ownsContract ? securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder) : (isYou ? securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder) + ' (You)' : 'crypted')));
 		    var identifier = (isOnChain==false ? stakeholder.getLocalIdentifier() : chainidentifier);
 		    
 		    var localorderid = (isLocalOnly ? "local only" : stakeholder.getLocalOrderId());
@@ -1446,7 +1451,7 @@ class Views {
 		    var local_label = (isLocalOnly ? 'local only' : 'local');
 		    
 			var chainaddress = (isLocalOnly ? null : stakeholder.getAddress());
-			var chainaddressdisplay = (isOnChain==false ? (chainaddress ? chainaddress : local_label) : stakeholder.getAddress() + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+			var chainaddressdisplay = (isOnChain==false ? (chainaddress ? chainaddress : local_label) : stakeholder.getAddress() + Views.revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder));
 			
 			var isauthentic = (isOnChain==false ? false : stakeholder.isAuthenticated());
 			var isauthenticdisplay = (isOnChain==false ? local_label : stakeholder.isAuthenticated());
@@ -1455,13 +1460,13 @@ class Views {
 			var chainrsapubkeydisplay = (isOnChain==false ? local_label : chainrsapubkey);
 			
 			//var chainprivkey = (isLocalOnly ? null : stakeholder.getChainCocryptedPrivKey());
-			//var chainprivkeydisplay = (isLocalOnly ? 'local only' : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + (ownsContract ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : (isYou ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder) : '')));
+			//var chainprivkeydisplay = (isLocalOnly ? 'local only' : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + (ownsContract ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderPrivateKey(contract, stakeholder) : (isYou ? '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderPrivateKey(contract, stakeholder) : '')));
 			
 			var cocryptedprivkey = (isOnChain==false ? null : stakeholder.getChainCocryptedPrivKey());
-			var cocryptedprivkeydisplay = (isOnChain==false ? local_label : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + Views.revealContractStakeHolderPrivateKey(ownsContract, session, contract, stakeholder));
+			var cocryptedprivkeydisplay = (isOnChain==false ? local_label : Views.showCondensedPrivateKey(stakeholder.getChainCocryptedPrivKey()) + Views.revealContractStakeHolderPrivateKey(ownsContract, securitiesmodule, session, contract, stakeholder));
 
 		    var cocryptedidentifier = (isOnChain==false ? null : stakeholder.getChainCocryptedIdentifier());
-		    var cocryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(cocryptedidentifier) + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+		    var cocryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(cocryptedidentifier) + Views.revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder));
 		    
 		    var registrationdate = (isOnChain==false ? null : stakeholder.getChainRegistrationDate());
 		    var registrationdatedisplay = (isOnChain==false ? local_label : registrationdate);
@@ -1470,17 +1475,17 @@ class Views {
 		    
 		    var creatoraddress = (isOnChain==false ? null : stakeholder.getChainCreatorAddress());
 		    var creator = (isOnChain==false ? null : contract.getChainStakeHolderFromAddress(stakeholder.getChainCreatorAddress()));
-		    var creatoraddressdisplay = (isOnChain==false ? local_label : creatoraddress + Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, creator));
+		    var creatoraddressdisplay = (isOnChain==false ? local_label : creatoraddress + Views.revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, creator));
 		    
 		    var crtcrypteddescription = (isOnChain==false ? null : stakeholder.getChainCreatorCryptedDescription());
-		    var crtcrypteddescriptiondisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(crtcrypteddescription) + Views.revealCreatorCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder));
+		    var crtcrypteddescriptiondisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(crtcrypteddescription) + Views.revealCreatorCryptedStakeHolderDescription(ownsContract, securitiesmodule, session, contract, stakeholder));
 		    var crtcryptedidentifier = (isOnChain==false ? null : stakeholder.getChainCreatorCryptedIdentifier());
-		    var crtcryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(crtcryptedidentifier) + Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+		    var crtcryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(crtcryptedidentifier) + Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder));
 	    
 		    var shldrcrypteddescription = (isOnChain==false ? null : stakeholder.getChainStakeHolderCryptedDescription());
-		    var shldrcrypteddescriptiondisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(shldrcrypteddescription) + Views.revealStakeHolderCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder));
+		    var shldrcrypteddescriptiondisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(shldrcrypteddescription) + Views.revealStakeHolderCryptedStakeHolderDescription(ownsContract, securitiesmodule, session, contract, stakeholder));
 		    var shldrcryptedidentifier = (isOnChain==false ? null : stakeholder.getChainStakeHolderCryptedIdentifier());
-		    var shldrcryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(shldrcryptedidentifier) + Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder));
+		    var shldrcryptedidentifierdisplay = (isOnChain==false ? local_label : Views.showCondensedCryptedText(shldrcryptedidentifier) + Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder));
 		    
 		    var orderid = (isOnChain==false ? null : stakeholder.getChainOrderId());
 		    var orderiddisplay = (isOnChain==false ? local_label : orderid);
@@ -1752,6 +1757,7 @@ class Views {
 			return;
 		
 		var session = this.global.getSessionObject();
+		var securitiesmodule = this.global.getModuleObject('securities');
 		var securitiesviews = this.getSecuritiesViews();
 		
 		// in reverse order to have most recent on top
@@ -1761,7 +1767,7 @@ class Views {
 	    var link;
 	    var linenumber = 1;
 	    
-		var ownsContract = session.ownsContract(contract);
+		var ownsContract = securitiesmodule.ownsContract(contract);
 
 	    for (var i = issuancearray.length -1 ; i >= 0; i--) {
 	    	console.log('writing line ' + i);
@@ -1788,7 +1794,7 @@ class Views {
 			}
 			
 		    // description
-			var chaindescription = ( ownsContract ? session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
+			var chaindescription = ( ownsContract ? session.getSessionAccountObject(contract.getSyncChainOwner()).aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
 
 			var statusstring = securitiesviews.getSecuritiesStatusString(issuance);
 		    var local_label = (isLocalOnly ? 'local only' : 'local');
@@ -2107,6 +2113,7 @@ class Views {
 
 		if ((contract) && (issuance)){
 			var session = this.global.getSessionObject();
+			var securitiesmodule = this.global.getModuleObject('securities');
 			var controllers = this.global.getControllersObject();
 			
 			
@@ -2129,11 +2136,11 @@ class Views {
 		    var isLocal = issuance.isLocal();
 		    var isOnChain = issuance.isOnChain();
 
-		    var ownsContract = session.ownsContract(contract); 
+		    var ownsContract = securitiesmodule.ownsContract(contract); 
 		    
 			var statusstring = securitiesviews.getSecuritiesStatusString(issuance);
 		    var localname = (isOnChain==false ? issuance.getLocalName() : 'on chain');
-			var chaindescription = ( ownsContract ? session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
+			var chaindescription = ( ownsContract ? session.getSessionAccountObject(contract.getSyncChainOwner()).aesDecryptString(issuance.getChainCocryptedDescription()) : 'crypted');
 		    var localdescription = (isOnChain==false ? issuance.getLocalDescription() : chaindescription);
 		    var localnumberofshares = (isOnChain==false ? issuance.getLocalNumberOfShares() : 'on chain');
 		    var localpercentofcapital = (isOnChain==false ? issuance.getLocalPercentOfCapital() : 'on chain');
@@ -2317,7 +2324,7 @@ class Views {
 		    var chainnamedisplay = (isOnChain==false ? local_label : chainname);
 		    
 		    var chaincocrypteddescription = (isOnChain==false ? null : issuance.getChainCocryptedDescription());
-		    var chaincocrypteddescriptiondisplay = (isOnChain==false ? local_label : issuance.getChainCocryptedDescription() + Views.revealContractIssuanceDescription(ownsContract, session, contract, issuance));
+		    var chaincocrypteddescriptiondisplay = (isOnChain==false ? local_label : issuance.getChainCocryptedDescription() + Views.revealContractIssuanceDescription(ownsContract, securitiesmodule, session, contract, issuance));
 
 		    var chainnumberofshares = (isOnChain==false ? null : issuance.getChainNumberOfShares());
 		    var chainnumberofsharesdisplay = (isOnChain==false ? local_label : chainnumberofshares);
@@ -2506,6 +2513,7 @@ class Views {
 		
 		var global = this.global;
 		var session = this.global.getSessionObject();
+		var securitiesmodule = this.global.getModuleObject('securities');
 		var securitiesviews = this.getSecuritiesViews();
 
 		// in reverse order to have most recent on top
@@ -2515,7 +2523,7 @@ class Views {
 	    var link;
 	    var linenumber = 1;
 
-		var ownsContract = session.ownsContract(contract);
+		var ownsContract = securitiesmodule.ownsContract(contract);
 		var contractowneraccount = (ownsContract ? contract.getOwnerAccount() : null);
 
 	    for (var i = transactionarray.length -1 ; i >= 0; i--) {
@@ -2912,6 +2920,7 @@ class Views {
 		if ((contract) && (transaction)){
 			var global = this.global;
 			var session = this.global.getSessionObject();
+			var securitiesmodule = global.getModuleObject('securities');
 
 			var controllers = this.global.getControllersObject();
 			
@@ -2931,7 +2940,7 @@ class Views {
 		    var isLocal = transaction.isLocal();
 		    var isOnChain = transaction.isOnChain();
 
-		    var ownsContract = session.ownsContract(contract);
+		    var ownsContract = securitiesmodule.ownsContract(contract);
 		    
 			var statusstring = securitiesviews.getSecuritiesStatusString(transaction);
 		    
@@ -3143,11 +3152,11 @@ class Views {
 		    
 		    var chainfrom = (isOnChain==false ? transaction.getLocalFrom() : transaction.getChainFrom());
 		    var chainfromstakeholder = (isOnChain==false ? null : contract.getChainStakeHolderFromAddress(chainfrom))
-		    var chainfromdisplay = (isOnChain==false ? local_label : chainfrom + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chainfromstakeholder));
+		    var chainfromdisplay = (isOnChain==false ? local_label : chainfrom + Views.revealStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, chainfromstakeholder));
 			    
 		    var chainto = (isOnChain==false ? transaction.getLocalTo() : transaction.getChainTo());
 		    var chaintostakeholder = (isOnChain==false ? null : contract.getChainStakeHolderFromAddress(chainto))
-		    var chaintodisplay = (isOnChain==false ? local_label : chainto + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chaintostakeholder));
+		    var chaintodisplay = (isOnChain==false ? local_label : chainto + Views.revealStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, chaintostakeholder));
 		    
 		    var chainnature = (isOnChain==false ? -1 : transaction.getChainNature());
 		    var chainnaturedisplay = (isOnChain==false ? local_label : chainnature);
@@ -3166,7 +3175,7 @@ class Views {
 
 		    var chaincreatoraddress = (isOnChain==false ? null : transaction.getChainCreatorAddress());
 		    var chaincreatorstakeholder = (isOnChain==false ? null : contract.getChainStakeHolderFromAddress(chaincreatoraddress))
-		    var chaincreatoraddressdisplay = (isOnChain==false ? local_label : chaincreatoraddress + Views.revealStakeHolderIdentifier(ownsContract, session, contract, chaincreatorstakeholder));
+		    var chaincreatoraddressdisplay = (isOnChain==false ? local_label : chaincreatoraddress + Views.revealStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, chaincreatorstakeholder));
 
 		    var orderiddisplay = (isOnChain==false ? local_label : orderid);
 		    var signaturedisplay = (isOnChain==false ? local_label : signature);
@@ -3468,32 +3477,32 @@ class Views {
 		return (cryptedtext ? cryptedtext.substring(0, 16) + ".........." + cryptedtext.substr(cryptedtext.length - 8) : null);
 	}
 	
-	static revealContractIssuanceDescription(ownsContract, session, contract, issuance) {
+	static revealContractIssuanceDescription(ownsContract, securitiesmodule, session, contract, issuance) {
 		if (ownsContract) {
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.getFirstSessionAccountObject().aesDecryptString(issuance.getChainCocryptedDescription()) ;
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.getSessionAccountObject(contract.getSyncChainOwner()).aesDecryptString(issuance.getChainCocryptedDescription()) ;
 		}
 		else {
 			return '';
 		}
 	}
 	
-	static revealStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+	static revealStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract) {
-			return Views.revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+			return Views.revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder);
 		}
 		else {
 			var stkldraddress = stakeholder.getAddress();
 			var isYou = session.isSessionAccountAddress(stkldraddress);
 			
 			if (isYou) {
-				return Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+				return Views.revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder);
 			}
 			else {
 				var creatoraddress = stakeholder.getChainCreatorAddress();
 				var areYouCreator = session.isSessionAccountAddress(creatoraddress);
 				
 				if (areYouCreator) {
-					return Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder);
+					return Views.revealCreatorCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder);
 				}
 				else {
 					return '';
@@ -3504,10 +3513,10 @@ class Views {
 	}
 
 	
-	static revealContractStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+	static revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract) {
 			// global.getStakeholderDisplayName(chainto, contract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderIdentifier(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder);
 		}
 		else {
 			var stakeholderaddress = stakeholder.getAddress();
@@ -3522,24 +3531,24 @@ class Views {
 		}
 	}
 	
-	static revealContractStakeHolderPrivateKey(ownsContract, session, contract, stakeholder) {
+	static revealContractStakeHolderPrivateKey(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract) {
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptContractStakeHolderPrivateKey(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderPrivateKey(contract, stakeholder);
 		}
 		else {
 			return '';
 		}
 	}
 	
-	static revealCreatorCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder) {
+	static revealCreatorCryptedStakeHolderDescription(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderDescription(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptCreatorStakeHolderDescription(contract, stakeholder);
 		else {
 			var creatoraddress = stakeholder.getChainCreatorAddress();
 			var isYou = session.isSessionAccountAddress(creatoraddress);
 			
 			if (isYou) {
-				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderDescription(contract, stakeholder);
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptCreatorStakeHolderDescription(contract, stakeholder);
 			}
 			else {
 				return '';
@@ -3547,15 +3556,15 @@ class Views {
 		}
 	}
 	
-	static revealCreatorCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+	static revealCreatorCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
 		else {
 			var creatoraddress = stakeholder.getChainCreatorAddress();
 			var isYou = session.isSessionAccountAddress(creatoraddress);
 			
 			if (isYou) {
-				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
 			}
 			else {
 				return '';
@@ -3563,15 +3572,15 @@ class Views {
 		}
 	}
 	
-	static revealStakeHolderCryptedStakeHolderDescription(ownsContract, session, contract, stakeholder) {
+	static revealStakeHolderCryptedStakeHolderDescription(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
 		else {
 			var stakeholderaddress = stakeholder.getAddress();
 			var isYou = session.isSessionAccountAddress(stakeholderaddress);
 			
 			if (isYou) {
-				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptStakeHolderStakeHolderDescription(contract, stakeholder);
 			}
 			else {
 				return '';
@@ -3579,15 +3588,15 @@ class Views {
 		}
 	}
 	
-	static revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, session, contract, stakeholder) {
+	static revealStakeHolderCryptedStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder) {
 		if (ownsContract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
 		else {
 			var stakeholderaddress = stakeholder.getAddress();
 			var isYou = session.isSessionAccountAddress(stakeholderaddress);
 			
 			if (isYou) {
-				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + session.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptStakeHolderStakeHolderIdentifier(contract, stakeholder);
 			}
 			else {
 				return '';

@@ -2262,7 +2262,8 @@ class Forms {
 		
 		if (contract) {
 			var session = this.global.getSessionObject();
-			var ownsContract = session.ownsContract(contract);
+			var securitiesmodule = this.global.getModuleObject('securities');
+			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			var contractindex = contract.getContractIndex();
 			
@@ -2493,7 +2494,8 @@ class Forms {
 		
 		if ((contract) && (transaction)) {
 			var session = this.global.getSessionObject();
-			var ownsContract = session.ownsContract(contract);
+			var securitiesmodule = this.global.getModuleObject('securities');
+			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			var contractindex = contract.getContractIndex();
 			var transactionindex = transaction.getTransactionIndex();
@@ -2772,7 +2774,8 @@ class Forms {
 		
 		if ((contract) && (transaction)) {
 			var session = this.global.getSessionObject();
-			var ownsContract = session.ownsContract(contract);
+			var securitiesmodule = this.global.getModuleObject('securities');
+			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			var contractindex = contract.getContractIndex();
 			var transactionindex = transaction.getTransactionIndex();

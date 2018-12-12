@@ -9,6 +9,8 @@ class XtraConfig {
 	constructor() {
 		// add xtra values that could be accessed
 		// via Config.getXtraValue(key)
+		// FOR DEVELOPMENT PURPOSES
+		this.allow_remote_access = 'enabled';
 	}
 }
 

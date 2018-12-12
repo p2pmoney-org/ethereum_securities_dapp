@@ -6,6 +6,15 @@ var GlobalObject;
 class Global {
 	constructor() {
 		
+		console.log('Global constructor called');
+		
+		GlobalObject = this;
+		
+		// execution context
+		this.execution_env = 'prod';
+		this.innodejs = false;
+		this.inbrowser = true;
+		
 		// global variables
 		this.variables = Object.create(null);
 		
@@ -26,6 +35,46 @@ class Global {
 		this.initGlobalScope();
 	}
 	
+	getExecutionEnvironment() {
+		return this.execution_env;
+	}
+	
+	setExecutionEnvironment(val) {
+		console.log('changing execution environment to ' + val);
+		
+		var bootstrap = Bootstrap.getBookstrapObject();
+		
+		switch (val) {
+			case 'dev':
+				bootstrap.setExecutionEnvironment('dev');
+
+				this.execution_env = 'dev';
+				this.overrideConsoleLog();
+				break;
+			default:
+				bootstrap.setExecutionEnvironment('prod');
+				this.execution_env = 'prod';
+				break;
+		};
+	}
+	
+	isInNodejs() {
+		return this.innodejs;
+	}
+	
+	setIsInNodejs(choice) {
+		this.innodejs = choice;
+	}
+	
+	isInBrowser() {
+		return this.inbrowser;
+	}
+	
+	setIsInBrowser(choice) {
+		this.inbrowser = choice;
+	}
+	
+	// initialization seuance
 	initGlobalScope() {
 		if ( typeof window !== 'undefined' && window ) {
 			// if we are in browser and not node js
@@ -91,6 +140,13 @@ class Global {
 
 	
 	finalizeGlobalScopeInit(callback) {
+		var xtra_execution_env = this.getXtraConfigValue('client_env');
+		
+		console.log('xtra_execution_env is ' + xtra_execution_env);
+		
+		if (xtra_execution_env == 'dev')
+			this.setExecutionEnvironment('dev');
+
 		console.log('Global.finalizeGlobalScopeInit called'); 
 		
 		if (this.initialized) {
@@ -428,6 +484,94 @@ class Global {
 		return string;
 	}
 	
+	// log functions
+	overrideConsoleLog() {
+		console.log('overridding console log');
+		
+		if (this.overrideconsolelog == true)
+			return;
+		
+		console.log('global.execution_env is ' + this.execution_env);
+		
+		if (this.execution_env == 'dev') {
+			this.overrideconsolelog = true;
+			
+			// capture bootstrap log function
+			var bootstrap = Bootstrap.getBookstrapObject();
+			this.orgconsolelog = bootstrap.log;
+			
+			var self = this;
+			
+			console.log = function() {
+				self.log.apply(self, arguments);
+			}; 
+			
+		}
+		
+	}
+	
+	releaseConsoleLog() {
+		this.overrideconsolelog = false;
+		
+		console.log = this.orgconsolelog ; 
+	}
+	
+	_timeString() {
+		var now = new Date();
+		var hours = now.getHours();
+		var minutes = now.getMinutes();
+		var seconds = now.getSeconds();
+		var milliseconds = now.getMilliseconds();
+		
+		var hours = (now.getHours().toString().length == 2 ? now.getHours().toString() : "0" + now.getHours().toString());
+		var minutes = (now.getMinutes().toString().length == 2 ? now.getMinutes().toString() : "0" + now.getMinutes().toString());
+		var seconds = (now.getSeconds().toString().length == 2 ? now.getSeconds().toString() : "0" + now.getSeconds().toString());
+		var milliseconds = (now.getMilliseconds().toString().length == 3 ? now.getMilliseconds().toString() : "0" + (now.getMilliseconds().toString().length == 2 ? now.getMilliseconds().toString() : "0" + now.getMilliseconds().toString()));
+		
+		return hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+	}
+	
+	log(string) {
+		if (this.execution_env != 'dev')
+			return; // logging to console disabled
+		
+		if (this.overrideconsolelog == true) {
+			var line = this._timeString() + ": ";
+			
+			line += string;
+			
+			this.orgconsolelog(line); // we've overloaded console.log
+		}
+		else {
+			console.log(sring);
+		}
+	}
+	
+	formatDate(date, format) {
+		var d = date;
+		
+		switch(format) {
+			case 'YYYY-mm-dd HH:MM:SS':
+			return d.getFullYear().toString()+"-"
+			+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"
+			+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "
+			+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"
+			+(d.getMinutes().toString().length==2?d.getMinutes().toString():"0"+d.getMinutes().toString())+":"
+			+(d.getSeconds().toString().length==2?d.getSeconds().toString():"0"+d.getSeconds().toString());
+			
+			default:
+				return date.toString(format);
+		}
+	}
+	
+	parseDate(datestring) {
+		return Date.parse(datestring);
+	}
+	
+
+	
+
+	
 	// static functions
 	static getGlobalObject() {
 		if (GlobalObject)
@@ -439,6 +583,7 @@ class Global {
 	}
 	
 	static registerModuleClass(modulename, classname, classprototype) {
+		console.log('GlobalClass.registerModuleClass called for module ' + modulename + ' and class ' + classname);
 		Global.getGlobalObject().getModuleObject(modulename)[classname] = classprototype;
 		
 		classprototype.getClass = function() {

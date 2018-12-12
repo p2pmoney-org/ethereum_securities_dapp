@@ -22,7 +22,9 @@ libscriptloader.push_script('./includes/lib/bootstrap.min-3.3.7.js');
 
 // interfaces to abstract access to standard libs
 libscriptloader.push_script('./includes/interface/ethereum-node-access.js');
+libscriptloader.push_script('./includes/interface/cryptokey-encryption.js');
 libscriptloader.push_script('./includes/interface/account-encryption.js');
+libscriptloader.push_script('./includes/interface/storage-access.js');
 
 
 //perform load

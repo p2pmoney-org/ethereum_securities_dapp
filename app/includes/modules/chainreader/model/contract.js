@@ -91,7 +91,7 @@ var Contract = class {
 			
 		    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
 		    
-		    return EthereumNodeAccess.web3_contract_dynamicMethodCall(instance, abidef, params, function (err, res) {
+		    return EthereumNodeAccess._web3_contract_dynamicMethodCall(instance, abidef, params, function (err, res) {
 				if (!res) {
 					if (callback)
 						callback('dynamic call returned null', null);
@@ -216,7 +216,7 @@ var Contract = class {
 	    
 	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
 	    
-	    var promise = EthereumNodeAccess.web3_contract_load_at(abi, address, function(err, res)	 {
+	    var promise = EthereumNodeAccess.web3_abi_load_at(abi, address, function(err, res)	 {
 			var instance = res;
 	    	self.instance = instance;
 			

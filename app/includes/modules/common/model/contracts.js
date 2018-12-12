@@ -7,6 +7,24 @@ var GlobalClass;
 
 var Contracts = class {
 	
+	// "constants"
+	static get STATUS_LOST() { return -100;}	
+
+	static get STATUS_NOT_FOUND() { return -20;}	
+	static get STATUS_UNKOWN() { return -10;}	
+
+	static get STATUS_LOCAL() { return 1;}
+	
+	static get STATUS_SENT() { return 10;}	
+	static get STATUS_PENDING() { return 100;}	
+	
+	static get STATUS_DEPLOYED() { return 200;}	
+	static get STATUS_CANCELLED() { return 300;}	
+	static get STATUS_REJECTED() { return 400;}	
+	
+	static get STATUS_ON_CHAIN() { return 1000;}	
+
+	// object part
 	constructor(session) {
 		this.session = session;
 		
@@ -122,14 +140,24 @@ var Contracts = class {
 		if (!contract)
 			return;
 		
-		console.log("Contracts.addContractObject called");
+		var contractuuid = contract.getUUID();
+		
+		console.log("Contracts.addContractObject called for contract with uuid " + contractuuid);
+		
+		if (this._findContractObjectPosFromUUID(contractuuid) != -1) {
+			throw 'trying to add a contract with duplicate uuid ' + contractuuid;
+		}
 		
 		// we could check contract is one of correct types
+		
+		// create transient contractindex
 		var length = this.contractobjects.length;
-		this.contractobjects.push(contract);
 		
 		var key = "key" + Math.floor((Math.random() * 1000) + 1) + "-index" + length;
 		contract.setContractIndex(key);
+		
+		// add to array
+		this.contractobjects.push(contract);
 	}
 	
 	removeContractObjectAt(i) {
@@ -148,13 +176,34 @@ var Contracts = class {
 			return;
 		
 		var key = contract.getContractIndex();
-		var pos = this.findContractObjectPos(key);
+		var pos = this._findContractObjectPosFromKey(key);
 		
 		this.removeContractObjectAt(pos);
 	}
 	
+	getContractObjectFromUUID(uuid) {
+		var i = this._findContractObjectPosFromUUID(uuid);
+		
+		return this.getContractObjectAt(i);
+	}
+	
+	_findContractObjectPosFromUUID(uuid) {
+		var length = this.contractobjects.length;
+		
+		for(var i = 0; i < length; i++) {
+			var contract = this.contractobjects[i];
+			
+			var contractuuid = contract.getUUID();
+			
+			if (contractuuid == uuid)
+			return i;
+		}
+		
+		return -1;
+	}
+	
 	getContractObjectFromKey(key) {
-		var i = this.findContractObjectPos(key);
+		var i = this._findContractObjectPosFromKey(key);
 		
 		return this.getContractObjectAt(i);
 	}
@@ -166,7 +215,7 @@ var Contracts = class {
 			return this.contractobjects[i];
 	}
 	
-	findContractObjectPos(key) {
+	_findContractObjectPosFromKey(key) {
 		var length = this.contractobjects.length;
 		
 		for(var i = 0; i < length; i++) {
@@ -235,10 +284,6 @@ var Contracts = class {
 			return;
 		
 		var contract;
-		
-		/*if (contracttype == 'StockLedger') {
-			contract = new SessionClass.StockLedger(this.session, null);
-		}*/
 		
 		var contractclass = this.getContractClass(contracttype);
 		

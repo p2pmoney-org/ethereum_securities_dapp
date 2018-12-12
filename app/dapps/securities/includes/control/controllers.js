@@ -15,7 +15,7 @@ var ModuleControllers = class {
 		var displayname = (session.isSessionAccountAddress(address) ? 'You' : address);
 		
 		if (displayname != 'You') {
-			var ownsContract = session.ownsContract(contract);
+			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			if (ownsContract) {
 				// we can read the stakeholdername
@@ -27,7 +27,7 @@ var ModuleControllers = class {
 					if (contractowneraccount)
 					displayname = contractowneraccount.aesDecryptString(stakeholder.getChainCocryptedIdentifier());*/
 					
-					displayname = session.decryptContractStakeHolderIdentifier(contract, stakeholder);
+					displayname = securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder);
 				}
 			}
 		}

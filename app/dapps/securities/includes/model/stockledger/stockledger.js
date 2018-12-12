@@ -925,7 +925,7 @@ class StockLedger {
 		
 		var promise = contractinterface.deploy(contractowner, contractownerpublkey,	cryptedowneridentifier,	ledgername,	cryptedledgerdescription, payingaccount, owningaccount, gas, gasPrice)
 		.then(function(res) {
-			console.log('StockLedger.deploy promise of deployment should be resolved');
+			console.log('StockLedger.deploy promise of deployment resolved, result is ' + res);
 			
 			self.setStatus(Securities.STATUS_PENDING); // we'll set to deploy when we see the contract through an activate
 			self.setAddress(contractinterface.getAddress());
@@ -1842,6 +1842,7 @@ class StockLedger {
 		
 		var self = this;
 		var session = this.session;
+		var securitiesmodule = this.getSecuritiesModuleObject();
 		
 		var owner = this.localowner;
 		
@@ -1884,10 +1885,13 @@ class StockLedger {
 			
 			account.cocrypted_acct_privkey = _cocrypted_acct_privkey;
 
-			if (session.ownsContract(self)) {
+			if (securitiesmodule.ownsContract(self)) {
 				// we decrypt the private key
 				var senderaccount = session.createBlankAccountObject();
-				var contractowneraccount = session.getFirstSessionAccountObject();
+				
+				//var contractowneraccount = session.getFirstSessionAccountObject();
+				var contractowneraddress = self.getSyncChainOwner();
+				var contractowneraccount = session.getSessionAccountObject(contractowneraddress);
 				
 				senderaccount.setRsaPublicKey(_rsa_pubkey);
 				

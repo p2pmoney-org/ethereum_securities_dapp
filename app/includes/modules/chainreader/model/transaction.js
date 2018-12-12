@@ -276,7 +276,7 @@ var Transaction = class {
 	    var Block = chainreadermodule.getBlockClass();
 	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
 	    
-	    return EthereumNodeAccess.web3_getTransaction(txahash, function(err, res) {
+	    var promise = EthereumNodeAccess.web3_getTransaction(txahash, function(err, res) {
 			if (err) {
 				if (callback)
 					callback(err, null);

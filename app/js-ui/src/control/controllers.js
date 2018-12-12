@@ -385,6 +385,14 @@ class Controllers {
 		controllers.gotoHome();
 	}
 	
+	refreshPage() {
+		var global = Controllers.getGlobalClass().getGlobalObject();
+		var app = global.getAppObject();
+		app.refreshDisplay();
+	}
+	
+
+	
 	//
 	// Identification
 	//
@@ -957,6 +965,7 @@ class Controllers {
 			if ((stakeholder) && (stakeholder.isLocalOnly())) {
 				
 				var session = global.getSessionObject();
+				var securitiesmodule = global.getModuleObject('securities');
 				
 				// stakeholder data
 				var shldridentifier = app.getFormValue("shldridentifier");
@@ -1037,7 +1046,7 @@ class Controllers {
 								
 								
 								
-								if (!session.ownsContract(contract)) {
+								if (!securitiesmodule.ownsContract(contract)) {
 									/*var sessionaccountaddresses = session.getSessionAccountAddresses();
 									var found = false;
 									
@@ -1064,7 +1073,7 @@ class Controllers {
 								
 							}
 							else {
-								if (session.ownsContract(contract)) {
+								if (securitiesmodule.ownsContract(contract)) {
 									// generate private key
 									shldrprivkey = session.generatePrivateKey();
 									
@@ -1601,6 +1610,7 @@ class Controllers {
 		var global = Controllers.getGlobalClass().getGlobalObject();
 		var app = global.getAppObject();
 		var session = global.getSessionObject();
+		var securitiesmodule = global.getModuleObject('securities');
 		
 		var contracts = global.getContractsObject();
 
@@ -1638,7 +1648,7 @@ class Controllers {
 				
 				// nature depends from the current signed account
 				// owner => 1 (transfer), shareholder =>11 (endorsement record)
-				if (session.ownsContract(contract))
+				if (securitiesmodule.ownsContract(contract))
 						transaction.setLocalNature(1); // transfer
 				else
 					transaction.setLocalNature(11); // record

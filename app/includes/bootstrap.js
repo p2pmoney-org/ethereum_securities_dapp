@@ -1,5 +1,88 @@
 'use strict';
 
+class Bootstrap {
+	constructor() {
+		this.execution_env = 'prod';
+		
+		// capture console.log
+		this.overrideConsoleLog();
+	}
+	
+	_testConsole() {
+		try {
+			console;
+			return true;
+		}
+		catch(e) {
+			return false;
+		}
+	}
+	
+	overrideConsoleLog() {
+		
+		// in case of browsers not supporting console
+		if (!this._testConsole()) {
+			window.console = {};
+			
+			window.console.log = function() {};
+		}
+		
+		console.log('overridding console log');
+		
+		if (this.execution_env != 'dev') {
+			console.log('set the execution environment to dev to keep receiving logs');
+			
+			// capture current log function
+			this.orgconsolelog = console.log.bind(console);
+			
+			var self = this;
+			
+			console.log = function() {
+				if (self.execution_env == 'debug')
+				self.orgconsolelog.apply(this, arguments);
+			};
+			
+			this.log = this.orgconsolelog;
+			
+		}
+		else {
+			// outputs everything
+			// no overload of console.log
+			this.orgconsolelog = console.log;
+			this.log = console.log
+		}
+	}
+	
+	getExecutionEnvironment() {
+		return this.execution_env;
+	}
+	
+	setExecutionEnvironment(val) {
+		switch (val) {
+			case 'dev':
+				this.execution_env = 'debug';
+				break;
+			default:
+				this.execution_env = 'prod';
+				break;
+		};
+	}
+	
+	releaseConsoleLog() {
+		this.overrideconsolelog = false;
+		
+		console.log = this.orgconsolelog ; 
+	}
+	
+	
+	// static
+	static getBookstrapObject() {
+		return BootstrapObject;
+	}
+}
+
+var BootstrapObject = new Bootstrap();
+
 var scriptloadermap = Object.create(null);
 
 class ScriptLoader {

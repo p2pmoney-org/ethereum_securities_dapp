@@ -6,9 +6,84 @@ var ModuleControllers = class {
 		this.module = module;
 	}
 	
+	// session
+	getSessionTransferDefaultValues(session, divcue) {
+		var values = [];
+		
+		var module = this.module;
+		
+		var global = module.global;
+		var commonmodule = global.getModuleObject('common');
+
+		var gaslimit = module.getDefaultGasLimit();
+		var gasPrice = module.getDefaultGasPrice();
+		
+		values['gaslimit'] = gaslimit;
+		values['gasprice'] = gasPrice;
+		
+		var walletaddress = null;
+		
+		if (session) {
+			var sessionaccount = session.getMainSessionAccountObject();
+			
+			if (sessionaccount) {
+				walletaddress = sessionaccount.getAddress();
+			}
+			else {
+				if (commonmodule.useWalletAccount()) {
+					// do we pay everything from a single wallet
+					walletaddress = commonmodule.getWalletAccountAddress();
+				}
+				else {
+					console.log('not using wallet account');
+					console.log('wallet address is ' + commonmodule.getWalletAccountAddress());
+				}
+			}
+			
+			if (walletaddress) {
+				
+				values['walletused'] = walletaddress;
+				
+				if (divcue) {
+					// we display the balance in the div passed
+					var wallet = module.getAccountObject(walletaddress);
+					
+					this.writebalance(wallet, divcue);
+				}
+			}
+		}
+	
+		
+		return values;
+		
+	}
+	
+	// account
+	getAccountObjectFromUUID(session, accountuuid) {
+		var accountobjects = session.getAccountObjects();
+		
+		for (var i = 0; i < accountobjects.length; i++) {
+			var accountobject = accountobjects[i];
+			
+			if (accountobject.getAccountUUID() == accountuuid)
+				return accountobject;
+		}
+	}
+	
+	getSessionAccountObjectFromUUID(session, accountuuid) {
+		var accountobjects = session.getSessionAccountObjects();
+		
+		for (var i = 0; i < accountobjects.length; i++) {
+			var accountobject = accountobjects[i];
+			
+			if (accountobject.getAccountUUID() == accountuuid)
+				return accountobject;
+		}
+	}
+	
 	// contracts
 	
-	// contract
+	// deployment
 	getContractDeploymentDefaultValues(contract, divcue) {
 		var values = [];
 		
@@ -18,6 +93,9 @@ var ModuleControllers = class {
 			var localdescription = contract.getLocalDescription();
 			
 			var module = this.module;
+			
+			var global = module.global;
+			var commonmodule = global.getModuleObject('common');
 
 			var gaslimit = module.getDefaultGasLimit();
 			var gasPrice = module.getDefaultGasPrice();
@@ -29,9 +107,9 @@ var ModuleControllers = class {
 			
 			var isLocalOnly = contract.isLocalOnly();
 			
-			if (module.useWalletAccount()) {
+			if (commonmodule.useWalletAccount()) {
 				// do we pay everything from a single wallet
-				walletaddress = module.getWalletAccountAddress();
+				walletaddress = commonmodule.getWalletAccountAddress();
 			}
 			else {
 				// or from the wallet of the owner of the contract
@@ -71,6 +149,7 @@ var ModuleControllers = class {
 				var global = self.module.global;
 				var balancetext = self.getEtherStringFromWei(res);
 				
+				console.log('writebalance ether balance is ' + balancetext);
 				divbalance.innerHTML = global.t('The account') + ' ' + wallet.getAddress() + ' ' + global.t('has') + ' ' + balancetext + ' ' + global.t('Ether');
 			}
 			else {

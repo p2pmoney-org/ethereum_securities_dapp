@@ -28,7 +28,10 @@ var Session = class {
 		// instantiation mechanism
 		this.classmap = Object.create(null); 
 		
+		this.cryptokeymap = new commonmodule.CryptoKeyMap();
 		this.accountmap = new commonmodule.AccountMap();
+		
+		this.transactionmap = Object.create(null); // use a simple object to implement the map
 
 		// impersonation
 		this.user = null;
@@ -38,18 +41,8 @@ var Session = class {
 		this.walletaccountaddress = null;
 		this.needtounlockaccounts = true;
 		
-		// execution context
-		this.nodejs = true;
-		
+		// utility
 		this.getClass = function() { return this.constructor.getClass()};
-	}
-	
-	isInNodejs() {
-		return this.nodejs;
-	}
-	
-	setIsInNodejs(choice) {
-		this.nodejs = choice;
 	}
 	
 	getSessionUUID() {
@@ -59,6 +52,11 @@ var Session = class {
 		this.sessionuuid = this.guid();
 		
 		return this.sessionuuid;
+	}
+	
+	setSessionUUID(sessionuuid) {
+		console.log('changing sessionuuid from ' + this.sessionuuid + ' to ' + sessionuuid);
+		this.sessionuuid = sessionuuid;
 	}
 	
 	// class map
@@ -103,36 +101,19 @@ var Session = class {
 		return this.global;
 	}
 	
+	
+	// instances of interfaces
 	getEthereumNodeAccessInstance() {
 		var global = this.getGlobalObject();
 		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
 		
 		return ethereumnodeaccessmodule.getEthereumNodeAccessInstance(this);
-
-		/*if (this.ethereum_node_access_instance)
-			return this.ethereum_node_access_instance;
-		
-		console.log('instantiating EthereumNodeAccess');
-		
+	}
+	
+	getCryptoKeyEncryptionInstance(cryptokey) {
 		var global = this.getGlobalObject();
-		var Session = this.getClass();
-
-		var result = []; 
-		var inputparams = [];
-		
-		inputparams.push(this);
-		
-		var ret = global.invokeHooks('getEthereumNodeAccessInstance_hook', result, inputparams);
-		
-		if (ret && result[0]) {
-			this.ethereum_node_access_instance = result[0];
-		}
-		else {
-			this.ethereum_node_access_instance = new Session.EthereumNodeAccess(this);
-		}
-
-		
-		return this.ethereum_node_access_instance;*/
+		var cryptokeytencryptionmodule = global.getModuleObject('cryptokey-encryption');
+		return cryptokeytencryptionmodule.getCryptoKeyEncryptionInstance(this, cryptokey);
 	}
 	
 	getAccountEncryptionInstance(account) {
@@ -140,34 +121,13 @@ var Session = class {
 		var accountencryptionmodule = global.getModuleObject('account-encryption');
 		
 		return accountencryptionmodule.getAccountEncryptionInstance(this, account);
-
-		/*if (!account)
-			return;
-		
-		if (account.accountencryption)
-			return account.accountencryption;
-		
-		console.log('instantiating AccountEncryption');
-		
+	}
+	
+	getStorageAccessInstance() {
 		var global = this.getGlobalObject();
-		var Session = this.getClass();
-
-		var result = [];
-		var inputparams = [];
+		var storageaccessmodule = global.getModuleObject('storage-access');
 		
-		inputparams.push(this);
-		inputparams.push(account);
-		
-		var ret = global.invokeHooks('getAccountEncryptionInstance_hook', result, inputparams);
-		
-		if (ret && result[0]) {
-			account.accountencryption = result[0];
-		}
-		else {
-			account.accountencryption = new Session.AccountEncryption(this, account);
-		}
-		
-		return account.accountencryption;*/
+		return storageaccessmodule.getStorageAccessInstance(this);
 	}
 	
 	
@@ -176,56 +136,6 @@ var Session = class {
 		return this.localstorage;
 	}
 
-
-	loadArtifact(jsonfile, callback) {
-		console.log("requiring load of artifact " + jsonfile);
-		var loadpromise 
-		
-		if ( !this.nodejs ) {
-			loadpromise = $.getJSON(jsonfile, function(data) {
-				console.log('contract json file read ');
-				
-				if (callback)
-				callback(data);
-				
-				return data;
-			});
-			
-		}
-		else {
-			var process = require('process');
-			var fs = require('fs');
-			var path = require('path');
-			
-			var truffle_relative_dir = '../../../../build';
-			this.execution_dir = (process.env.root_dir ? process.env.root_dir :  path.join(__dirname, truffle_relative_dir));
-			
-			var jsonPath;
-			var jsonFile;
-			var config;
-			
-			try {
-				jsonPath = path.join(this.execution_dir, jsonfile);
-				jsonFile = fs.readFileSync(jsonPath, 'utf8');
-				
-				var data = JSON.parse(jsonFile);
-				
-				if (callback)
-					callback(data);
-
-				return Promise.resolve(data);
-				
-			}
-			catch(e) {
-				console.log('exception reading json file: ' + e.message); 
-			}
-		}
-		
-		
-		
-		return loadpromise;
-	}
-	
 	// rest connection
 	createRestConnection(rest_server_url, rest_server_api_path) {
 		var global = this.global;
@@ -234,31 +144,7 @@ var Session = class {
 		return new commonmodule.RestConnection(this, rest_server_url, rest_server_api_path);
 	}
 	
-	// user
-	impersonateUser(user) {
-		if (this.user && user)
-			this.disconnectUser();
-		
-		this.user = user;
-	}
-	
-	disconnectUser() {
-		this.user = null;
-		
-		// we clean the account map
-		this.accountmap.empty();
-	}
-	
-	getSessionUserObject() {
-		return this.user;
-	}
-	
-	getSessionUserIdentifier() {
-		if (this.user)
-			return this.user.getUserName();
-	}
-	
-	// accounts
+	// addresses and keys (personal or third party, as strings)
 	isValidAddress(address) {
 		var blankaccount = this.createBlankAccountObject()
 		var accountencryption = this.getAccountEncryptionInstance(blankaccount);
@@ -287,6 +173,96 @@ var Session = class {
 		return accountencryption.generatePrivateKey();		
 	}
 
+	areAddressesEqual(address1, address2) {
+		if ((!address1) || (!address2))
+			return false;
+		
+		return (address1.trim().toLowerCase() == address2.trim().toLowerCase());
+	}
+	
+	// crypto keys (encryption operations)
+	addCryptoKeyObject(cryptokey) {
+		this.cryptokeymap.pushCryptoKey(cryptokey);
+	}
+	
+	removeCryptoKeyObject(cryptokey) {
+		this.cryptokeymap.removeCryptoKey(cryptokey);
+	}
+	
+	createBlankCryptoKeyObject() {
+		var Session = this.getClass();
+		
+		return new Session.CryptoKey(this, null);
+	}
+	
+	getSessionCryptoKeyObjects(bForceRefresh, callback) {
+		var cryptokeys = this.cryptokeymap.getCryptoKeyArray();
+		
+		if ((!bForceRefresh) && (bForceRefresh != true)) {
+			
+			if (callback)
+				callback(null, cryptokeys);
+			
+			return cryptokeys;
+		}
+		
+		var global = this.getGlobalObject();
+		var self = this;
+		
+		// invoke hook to build processing chain
+		var result = [];
+		
+		var params = [];
+		
+		params.push(this);
+		
+		result.get = function(err, keyarray) {
+
+			if (!err) {
+				self.cryptokeymap.empty();
+				
+				for (var i = 0; i < keyarray.length; i++) {
+					var key = keyarray[i];
+					
+					self.cryptokeymap.pushCryptoKey(key);
+				}
+				
+				if (callback)
+					callback(null, self.cryptokeymap.getCryptoKeyArray());
+			}
+			else {
+				if (callback)
+					callback(err, self.cryptokeymap.getCryptoKeyArray());
+			}
+		};
+
+		var ret = global.invokeHooks('getSessionCryptoKeyObjects_hook', result, params);
+		
+		if (ret && result && result.length) {
+			global.log('getSessionCryptoKeyObjects_hook result is ' + JSON.stringify(result));
+		}
+		
+		
+		// process after hooks chained the get functions
+		var keyarray = [];
+		
+		result.get(null, keyarray);
+
+		
+		return this.cryptokeymap.getCryptoKeyArray();
+	}
+	
+	
+	
+	// account objects
+	// (all accounts, personal or third party, referenced by the session)
+	areAccountsEqual(account1, account2) {
+		if ((!account1) || (!account2))
+			return false;
+		
+		return this.areAddressesEqual(account1.getAddress(), account2.getAddress());
+	}
+	
 	getAccountObject(address) {
 		if (!address)
 			return;
@@ -323,6 +299,15 @@ var Session = class {
 	
 	addAccountObject(account) {
 		this.accountmap.pushAccount(account);
+		
+		var owner = account.getOwner();
+		
+		if (owner) {
+			var sessionuser = this.getSessionUserObject();
+			
+			if (sessionuser.isEqual(owner))
+				sessionuser.addAccountObject(account);
+		}
 	}
 	
 	removeAccountObject(account) {
@@ -334,19 +319,142 @@ var Session = class {
 		return new Session.Account(this, null);
 	}
 	
+	getAccountObjects(bForceRefresh, callback) {
+		var accounts = this.accountmap.getAccountArray();
+		
+		if ((!bForceRefresh) && (bForceRefresh != true)) {
+			
+			if (callback)
+				callback(null, accounts);
+			
+			return accounts;
+		}
+		
+		var global = this.getGlobalObject();
+		var self = this;
+		
+		// invoke hook to build processing chain
+		var result = [];
+		
+		var params = [];
+		
+		params.push(this);
+		
+		result.get = function(err, accountarray) {
+			if (!err) {
+				self.accountmap.empty();
+				
+				for (var i = 0; i < accountarray.length; i++) {
+					var account = accountarray[i];
+					
+					self.accountmap.pushAccount(account);
+				}
+				
+				if (callback)
+					callback(null, self.accountmap.getAccountArray());
+			}
+			else {
+				if (callback)
+					callback(err, self.accountmap.getAccountArray());
+			}
+		};
 
+		var ret = global.invokeHooks('getAccountObjects_hook', result, params);
+		
+		if (ret && result && result.length) {
+			global.log('getAccountObjects_hook result is ' + JSON.stringify(result));
+		}
+		
+		
+		// process after hooks chained the get functions
+		var accountarray = [];
+		
+		result.get(null, accountarray);
+		
+		return this.accountmap.getAccountArray();
+	}
 	
+	// transactions
+	getTransactionObject(transactionuuid) {
+		var transaction = new Session.Transaction(this, transactionuuid);
+		
+		if (transactionuuid in this.transactionmap)  {
+			transaction.setHash(this.transactionmap[transactionuuid]);
+		}
+		
+		return transaction;
+	}
+	
+
+	// user (impersonation)
+	impersonateUser(user) {
+		if (this.user && user)
+			this.disconnectUser();
+		
+		this.user = user;
+	}
+	
+	disconnectUser() {
+		this.user = null;
+		
+		// we clean the cryptokey map
+		this.cryptokeymap.empty();
+		
+		// we clean the account map
+		this.accountmap.empty();
+		
+		// we clean the local storage
+		this.localstorage.empty();
+	}
+	
+	getSessionUserObject() {
+		return this.user;
+	}
+	
+	getSessionUserIdentifier() {
+		if (this.user)
+			return this.user.getUserName();
+	}
+	
+	// session identification
 	isAnonymous() {
+		var oldisanonymous = (this.user == null);
+		
+		// we call isSessionAnonymous hook in case
+		// we should not longer be identified
+		var global = this.global;
+
+		var result = []; 
+		var inputparams = [];
+		
+		inputparams.push(this);
+		
+		var ret = global.invokeHooks('isSessionAnonymous_hook', result, inputparams);
+		
+		if (ret && result && result.length) {
+			console.log('Session.isAnonymous handled by a module');			
+		}
+
+		var newisanonymous = (this.user == null);
+		
+		if (newisanonymous != oldisanonymous)
+		console.log('a isSessionAnonymous_hook has changed the isanonymous flag');
+		
 		return (this.user == null);
-		//return (this.identifyingaccountaddress == null);
 	}
 	
 	disconnectAccount() {
 		//this.identifyingaccountaddress = null;
 		this.user = null;
 		
+		// we clean the cryptokey map
+		this.cryptokeymap.empty();
+		
 		// we clean the account map
 		this.accountmap.empty();
+		
+		// we clean the local storage
+		this.localstorage.empty();
 	}
 	
 	impersonateAccount(account) {
@@ -369,8 +477,6 @@ var Session = class {
 				this.removeAccountObject(oldaccount);
 			}
 			
-			this.addAccountObject(account);
-		
 			//this.identifyingaccountaddress = address;
 			var global = this.getGlobalObject();
 			var commonmodule = global.getModuleObject('common');
@@ -378,26 +484,28 @@ var Session = class {
 			this.user = commonmodule.createBlankUserObject();
 			
 			this.user.setUserName(address);
+			this.user.setUserUUID(address);
+
 			this.user.addAccountObject(account);
+			
+			// adding to our map
+			this.addAccountObject(account);
+			
 		}
 	}
 	
-	/*getSessionAccountAddress() {
-		return this.identifyingaccountaddress;
-	}
-	
-	getSessionAccountObject() {
-		if (this.identifyingaccountaddress != null)
-			return this.getAccountObject(this.identifyingaccountaddress);
-		else
-			return null;
-	}*/
-	
+	// session accounts
+	// (all personal accounts of the user impersonated in the session)
 	getFirstSessionAccountObject() {
 		var sessionaccounts = this.getSessionAccountObjects();
 		
 		if (sessionaccounts && sessionaccounts[0])
 			return sessionaccounts[0];
+	}
+
+	getMainSessionAccountObject() {
+		// return first for the moment
+		return this.getFirstSessionAccountObject();
 	}
 
 	getSessionAccountObject(accountaddress) {
@@ -418,11 +526,110 @@ var Session = class {
 		}
 	}
 	
-	getSessionAccountObjects() {
+	getSessionAccountObjects(bForceRefresh, callback) {
+		var accounts;
+		
+		if ((!bForceRefresh) && (bForceRefresh != true)) {
+			
+			if (this.user != null)
+				accounts = this.user.getAccountObjects();
+			else
+				accounts = null;
+			
+			if (callback)
+				callback(null, accounts);
+			
+			return accounts;
+		}
+		
+		// we refresh the list of all accounts
+		var self = this;
+		
+		this.getAccountObjects(bForceRefresh, function(err, ress) {
+			var accnts;
+			if (!err) {
+				
+				if (self.user != null)
+					accnts = self.user.getAccountObjects();
+				else
+					accnts = null;
+				
+				if (callback)
+					callback(null, accnts);
+				
+				return accnts;
+			}
+			else {
+				if (callback)
+					callback(err, accnts);
+				
+				return accnts;
+			}
+		});
+		
 		if (this.user != null)
 			return this.user.getAccountObjects();
 		else
 			return null;
+	}
+	
+	readSessionAccountFromKeys(keys) {
+		var session = this;
+		var global = this.getGlobalObject();
+		var commonmodule = global.getModuleObject('common');
+		var user = session.getSessionUserObject();
+		
+		var accountarray = [];
+		
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			
+			var keyuuid = key['key_uuid'];
+			var privatekey = key['private_key'];
+			var publickey = key['public_key'];
+			var address = key['address'];
+			var rsapublickey = key['rsa_public_key'];
+			var description = key['description'];
+			
+			var account = commonmodule.createBlankAccountObject();
+			
+			account.setAccountUUID(keyuuid);
+			account.setDescription(description);
+			
+			
+			if (privatekey) {
+				try {
+					account.setPrivateKey(privatekey);
+					
+					//user.addAccountObject(account);
+					account.setOwner(user);
+					session.addAccountObject(account);
+					
+					accountarray.push(account);
+				}
+				catch(e) {
+					console.log('exception while adding internal accounts: ' + e);
+				}
+			}
+			else {
+				// simple account, not a session account
+				try {
+					account.setAddress(address);
+					account.setPublicKey(publickey);
+					account.setRsaPublicKey(rsapublickey);
+				
+					session.addAccountObject(account);
+					
+					accountarray.push(account);
+				}
+				catch(e) {
+					console.log('exception while adding external accounts: ' + e);
+				}
+			}
+		
+		}
+		
+		return accountarray;
 	}
 	
 	getSessionAccountAddresses() {
@@ -471,28 +678,11 @@ var Session = class {
 		}
 		
 		return false;
-		
-		/*if (this.areAddressesEqual(accountaddress, this.identifyingaccountaddress))
-			return true;
-		else
-			return false;*/
-	}
-	
-	areAddressesEqual(address1, address2) {
-		if ((!address1) || (!address2))
-			return false;
-		
-		return (address1.trim().toLowerCase() == address2.trim().toLowerCase());
-	}
-	
-	areAccountsEqual(account1, account2) {
-		if ((!account1) || (!account2))
-			return false;
-		
-		return this.areAddressesEqual(account1.getAddress(), account2.getAddress());
 	}
 	
 	
+	
+	// Wallet
 	getWalletAccountAddress() {
 		return this.walletaccountaddress;
 	}
@@ -518,9 +708,14 @@ var Session = class {
 
 	
 	// contracts
-	getContractsObject(bForceRefresh) {
-		if ((this.contracts) && (!bForceRefresh) && (bForceRefresh != true))
+	getContractsObject(bForceRefresh, callback) {
+		if ((this.contracts) && (!bForceRefresh) && (bForceRefresh != true)) {
+			
+			if (callback)
+				callback(null, this.contracts);
+			
 			return this.contracts;
+		}
 		
 		if (this.contracts) {
 			this.contracts.flushContractObjects();
@@ -531,43 +726,71 @@ var Session = class {
 		}
 		
 		var global = this.getGlobalObject();
-		var commonmodule = global.getModuleObject('common');
+		var self = this;
 		
-		var keys = ['contracts'];
+		// invoke hook to build processing chain
+		var result = [];
+		
+		var params = [];
+		
+		params.push(this);
+		
+		result.get = function(err, jsonarray) {
+			if (!err) {
+				self.contracts.initContractObjects(jsonarray);
+				
+				if (callback)
+					callback(null, self.contracts);
+			}
+			else {
+				if (callback)
+					callback(err, self.contracts);
+			}
+		};
 
-		var jsonarray = commonmodule.readLocalJson(this, keys);
+		var ret = global.invokeHooks('getContractsObject_hook', result, params);
 		
-		this.contracts.initContractObjects(jsonarray);
+		if (ret && result && result.length) {
+			global.log('getContractsObject_hook result is ' + JSON.stringify(result));
+		}
+		
+		
+		// process after hooks chained the get functions
+		var jsonarray = [];
+		
+		result.get(null, jsonarray);
+
 		
 		return this.contracts;
 	}
 	
-	saveContractObjects(contracts) {
+	saveContractObjects(contracts, callback) {
 		var json = contracts.getContractObjectsJson();
-		console.log("contracts json is " + JSON.stringify(json));
+		console.log("Session.saveContractObjects: contracts json is " + JSON.stringify(json));
 		
 		var global = this.getGlobalObject();
-		var commonmodule = global.getModuleObject('common');
+		var self = this;
 		
-		var keys = ['contracts'];
+		var keys = ['common','contracts'];
 
-		commonmodule.saveLocalJson(this, keys, json);
+		var localstorageobject = this.getLocalStorageObject();
+		
+		localstorageobject.saveLocalJson(keys, json, function(err, jsonarray) {
+			if (!err) {
+				// re-initialize contract list (that can have been refreshed from previous states)
+				// with the saved version
+				if (self.contracts) {
+					self.contracts.initContractObjects(jsonarray);
+				}
+			}
+			
+			if (callback)
+				callback(null, self.contracts);
+			
+			return self.contracts;
+		});
 	}
 
-	ownsContract(contract) {
-		if (this.isAnonymous())
-			return false;
-		
-		if (!contract)
-			return false;
-		
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		
-		console.log("contract owner is " + contract.getOwner() + " account is " + contractowneraccount.getAddress());
-		
-		return this.isSessionAccount(contractowneraccount);
-	}
-	
 	// contract instance
 	getContractInstance(contractaddress, contractartifact) {
 		var Session = this.getClass();
@@ -612,248 +835,6 @@ var Session = class {
 		var AccountEncryption = this.getAccountEncryptionInstance(sessionaccount);
 		
 		return AccountEncryption.signString(plaintext);
-	}
-	
-	// contract part decryption (asymmetric)
-	decryptContractStakeHolderIdentifier(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-		
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholdercreatoraddress)) {
-			var cocryptedIdentifier;
-			
-			if (contractowneraddress == stakeholder.getAddress()) {
-				cocryptedIdentifier = contract.getOwnerStakeHolderObject().getChainCocryptedIdentifier();
-				// look at the overloaded version of stakeholder object
-			}
-			else {
-				cocryptedIdentifier = stakeholder.getChainCocryptedIdentifier();
-			}
-			
-			// we created this stakeholder, look for assymmetric description of contract segment
-			var senderaccount = this.getFirstSessionAccountObject();
-			var recipientaccount = this.getFirstSessionAccountObject();
-
-			return recipientaccount.rsaDecryptString(cocryptedIdentifier, senderaccount);
-		}
-		else {
-			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
-			
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				var cocryptedIdentifier;
-				
-				if (contractowneraddress == stakeholder.getAddress()) {
-					cocryptedIdentifier = contract.getOwnerStakeHolderObject().getChainCocryptedIdentifier();
-					// look at the overloaded version of stakeholder object
-				}
-				else {
-					cocryptedIdentifier = stakeholder.getChainCocryptedIdentifier();
-				}
-				
-				// we own the contract and look for stakeholder creator who encrypted the identifier
-				var stakeholdercreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress); // sender is creator
-				var creatoraccount = stakeholdercreator.getAccountObject(); // fills rsa key if necessary
-				
-				var senderaccount = creatoraccount;
-				var recipientaccount = this.getFirstSessionAccountObject();
-				
-				return recipientaccount.rsaDecryptString(cocryptedIdentifier, senderaccount);
-			}
-			else {
-				// we can not decrypt the identifier
-				return stakeholder.getChainCreatorCryptedIdentifier();
-			}
-				
-			
-		}
-	}
-	
-	decryptContractStakeHolderPrivateKey(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholdercreatoraddress)) {
-			// we created this stakeholder, look for asymmetricmmetric decryption of our part
-			var senderaccount = this.getFirstSessionAccountObject();
-			var recipientaccount = this.getFirstSessionAccountObject();
-
-			return recipientaccount.rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), senderaccount);
-		}
-		else {
-			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				// we own the contract  and look for stakeholder who encrypted the private key when registering his/her account
-				// sender is stakeholder's account
-				var stakeholderaccount = stakeholder.getAccountObject(); // fills rsa key if necessary
-				
-				var senderaccount = stakeholderaccount;
-				var recipientaccount = this.getFirstSessionAccountObject();
-
-				return recipientaccount.rsaDecryptString(stakeholder.getChainCocryptedPrivKey(), senderaccount);
-			}
-			else {
-				// we can not decrypt the private key
-				return stakeholder.getChainCocryptedPrivKey();
-			}
-		}
-		
-	}
-	
-	// creator part decryption (symmetric)
-	decryptCreatorStakeHolderDescription(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-		
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholdercreatoraddress)) {
-			// we created this stakeholder, look for symmetric decryption of our part
-			return this.getFirstSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedDescription());
-		}
-		else {
-			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				// we own the contract  and look for stakeholder's private key
-				// to symmetrically decrypt with his/her private key
-				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-				var creatorprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stkldrcreator);
-				
-				creatoraccount.setPrivateKey(creatorprivatekey);
-				
-				return creatoraccount.aesDecryptString(stakeholder.getChainCreatorCryptedDescription());
-			}
-			else {
-				// we can not decrypt the description
-				return stakeholder.getChainCreatorCryptedDescription();
-			}
-		}
-	}
-	
-	decryptCreatorStakeHolderIdentifier(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-		
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholdercreatoraddress)) {
-			// we created this stakeholder, look for symmetric decryption of our part
-			return this.getFirstSessionAccountObject().aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
-		}
-		else {
-			var creatoraccount = this.getAccountObject(stakeholdercreatoraddress);
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				// we own the contract  and look for stakeholder's private key
-				// to symmetrically decrypt with his/her private key
-				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-				var creatorprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stkldrcreator);
-				
-				creatoraccount.setPrivateKey(creatorprivatekey);
-				
-				return creatoraccount.aesDecryptString(stakeholder.getChainCreatorCryptedIdentifier());
-			}
-			else {
-				// we can not decrypt the description
-				return stakeholder.getChainCreatorCryptedIdentifier();
-			}
-		}
-	}
-	
-	// stakeholder part decryption (asymmetric)
-	decryptStakeHolderStakeHolderDescription(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		
-		var stakeholderaddress = stakeholder.getAddress();
-		var stakeholderaccount = this.getAccountObject(stakeholderaddress);
-
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholderaddress)) {
-			// we are the stakeholder, do asymmetric decryption with our private key
-			var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-			var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
-			
-			var senderaccount = creatoraccount;
-			var recipientaccount = this.getFirstSessionAccountObject();
-
-			return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedDescription(), senderaccount);
-		}
-		else {
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-				var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
-				
-				// we own the contract  and look for stakeholder's private key
-				// to asymmetrically decrypt with his/her private key
-				var stakeholderprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stakeholder);
-				
-				stakeholderaccount.setPrivateKey(stakeholderprivatekey);
-				
-				var senderaccount = creatoraccount;
-				var recipientaccount = stakeholderaccount;
-
-				return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedDescription(), senderaccount);
-			}
-			else {
-				// we can not decrypt the description
-				return stakeholder.getChainStakeHolderCryptedDescription();
-			}
-		}
-	}
-	
-	decryptStakeHolderStakeHolderIdentifier(contract, stakeholder) {
-		//var sessionaccountaddress = this.getSessionAccountAddress();
-		
-		var stakeholderaddress = stakeholder.getAddress();
-		var stakeholderaccount = this.getAccountObject(stakeholderaddress);
-
-		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
-
-		var contractowneraccount = contract.getSyncChainOwnerAccount();
-		var contractowneraddress = contractowneraccount.getAddress();
-		
-		if (this.isSessionAccountAddress(stakeholderaddress)) {
-			// we are the stakeholder, do asymmetric decryption with our private key
-			var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-			var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
-			
-			var senderaccount = creatoraccount;
-			var recipientaccount = this.getFirstSessionAccountObject();
-
-			return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedIdentifier(), senderaccount);
-		}
-		else {
-			if (this.isSessionAccountAddress(contractowneraddress)) {
-				var stkldrcreator = contract.getChainStakeHolderFromAddress(stakeholdercreatoraddress);
-				var creatoraccount = stkldrcreator.getAccountObject(); // fills rsa key if necessary
-
-				// we own the contract  and look for stakeholder's private key
-				// to asymmetrically decrypt with his/her private key
-				var stakeholderprivatekey = this.decryptContractStakeHolderPrivateKey(contract, stakeholder);
-				
-				stakeholderaccount.setPrivateKey(stakeholderprivatekey);
-				
-				var senderaccount = creatoraccount;
-				var recipientaccount = stakeholderaccount;
-
-				return recipientaccount.rsaDecryptString(stakeholder.getChainStakeHolderCryptedIdentifier(), senderaccount);
-			}
-			else {
-				// we can not decrypt the description
-				return stakeholder.getChainStakeHolderCryptedDescription();
-			}
-		}
 	}
 }
 

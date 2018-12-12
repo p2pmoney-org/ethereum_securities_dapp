@@ -3,7 +3,7 @@
 var Module = class {
 	
 	constructor() {
-		this.name = 'account-encryption';
+		this.name = 'cryptokey-encryption';
 		
 		this.global = null; // put by global on registration
 		this.isready = false;
@@ -32,7 +32,7 @@ var Module = class {
 		var self = this;
 		var global = this.global;
 		
-		var modulescriptloader = global.getScriptLoader('accountencryptionmoduleloader', parentscriptloader);
+		var modulescriptloader = global.getScriptLoader('cryptokeyencryptionmoduleloader', parentscriptloader);
 
 		var moduleroot = './includes/lib';
 
@@ -60,14 +60,14 @@ var Module = class {
 	// optional  module functions
 	
 	// objects
-	getAccountEncryptionInstance(session, account) {
-		if (!account)
+	getCryptoKeyEncryptionInstance(session, cryptokey) {
+		if (!cryptokey)
 			return;
 		
-		if (account.accountencryption)
-			return account.accountencryption;
+		if (cryptokey.cryptokeyencryption)
+			return cryptokey.cryptokeyencryption;
 		
-		console.log('instantiating AccountEncryption');
+		console.log('instantiating CryptoKeyEncryption');
 		
 		var global = this.global;
 
@@ -75,26 +75,137 @@ var Module = class {
 		var inputparams = [];
 		
 		inputparams.push(session);
-		inputparams.push(account);
+		inputparams.push(cryptokey);
 		
-		var ret = global.invokeHooks('getAccountEncryptionInstance_hook', result, inputparams);
+		var ret = global.invokeHooks('getCryptoKeyEncryptionInstance_hook', result, inputparams);
 		
 		if (ret && result[0]) {
-			account.accountencryption = result[0];
+			cryptokey.cryptokeyencryption = result[0];
 		}
 		else {
-			account.accountencryption = new AccountEncryption(session, account);
+			cryptokey.cryptokeyencryption = new CryptoKeyEncryption(session, cryptokey);
 		}
 		
-		return account.accountencryption;
+		return cryptokey.cryptokeyencryption;
+	}
+	
+	pickCryptoKeyEncryptionInstance(session) {
+		var cryptokeys = session.getSessionCryptoKeyObjects();
+		var numberofcryptokeys = cryptokeys.length;
+		
+		if (numberofcryptokeys < 1)
+			throw 'no crypto key defined in session to pick one';
+		
+		// we pick at random one of the crypto key in the session
+		// (we could do a round robin, or a prefered key if necessary)
+		var cryptokey = cryptokeys[Math.floor(Math.random() * numberofcryptokeys)];
+		
+		return cryptokey;
+	}
+	
+	findCryptoKeyEncryptionInstanceFromUUID(session, keyuuid) {
+		var cryptokeys = session.getSessionCryptoKeyObjects();
+		
+		for (var i = 0; i < cryptokeys.length; i++) {
+			var cryptokey = cryptokeys[i];
+			
+			if (cryptokey.getKeyUUID() == keyuuid)
+				return cryptokey;
+		}
+		
+	}
+	
+	// private key encryption
+	encryptPrivateKey(privatekey, cryptokey) {
+		if (!privatekey)
+			return null;
+		
+		var cryptedprivatekey = cryptokey.aesEncryptString(privatekey);
+		
+		// add key uuid as prefix
+		var encryptedprivatekey = cryptokey.getKeyUUID() + ':' + cryptedprivatekey;
+		
+		return encryptedprivatekey;
+	}
+	
+	decryptPrivateKey(session, encryptedprivatekey) {
+		if (!encryptedprivatekey)
+			return null;
+		
+		// find crypto key uuid
+		var keyuuid = encryptedprivatekey.substr(0, encryptedprivatekey.indexOf(':'));
+		var encryptedprivatekey = encryptedprivatekey.substring(encryptedprivatekey.indexOf(':') + 1);
+		
+		if (!keyuuid) {
+			// see if it is a privatekey in clear
+			var account = session.createBlankAccountObject();
+			
+			account.setPrivateKey(encryptedprivatekey);
+			
+			if (account.isPrivateKeyValid())
+				return encryptedprivatekey;
+			
+			throw 'could not decrypt private key';
+		}
+		
+		var cryptokey = this.findCryptoKeyEncryptionInstanceFromUUID(session, keyuuid);
+		
+		if (!cryptokey)
+			throw 'could not find crypto key with uuid: ' + keyuuid;
+		
+		return cryptokey.aesDecryptString(encryptedprivatekey);
+	}
+	
+	decryptJsonArray(session, jsonarray) {
+		
+		console.log('jsonarray length is ' + (jsonarray ? jsonarray.length : 0));
+		
+		var user = session.getSessionUserObject();
+		var useruuid = user.getUserUUID();
+		
+		var keysjson = [];
+
+		for(var i = 0; i < (jsonarray ? jsonarray.length : 0); i++) {
+			var uuid = (jsonarray[i]['uuid'] ? jsonarray[i]['uuid'] : null);
+			var owneruuid = (jsonarray[i]['owner_uuid'] ? jsonarray[i]['owner_uuid'] : null);
+			
+			// we keep only our entries, based on owneruuid
+			if (owneruuid == useruuid) {
+				var keyuuid = (jsonarray[i]['key_uuid'] ? jsonarray[i]['key_uuid'] : (jsonarray[i]['uuid'] ? jsonarray[i]['uuid'] : null));
+				var address = (jsonarray[i]['address'] ? jsonarray[i]['address'] : null);
+				var encryptedprivatekey = (jsonarray[i]['private_key'] ? jsonarray[i]['private_key'] : null);
+				var description = (jsonarray[i]['description'] ? jsonarray[i]['description'] : null);
+				
+				try {
+					var privatekey = this.decryptPrivateKey(session, encryptedprivatekey);
+
+					keysjson.push({key_uuid: keyuuid, address: address, private_key: privatekey, description: description})
+				}
+				catch(e) {
+					console.log('could not decrypt private key for address ' + address + ' with keyuuid ' + keyuuid);
+				}
+				
+			}
+		}
+		
+		console.log('keysjson length is ' + keysjson.length);
+		return keysjson;
 	}
 	
 }
 
-class AccountEncryption {
-	constructor(session, account) {
+class CryptoKeyEncryption {
+	constructor(session, cryptokey) {
 		this.session = session;
-		this.account = account;
+		this.cryptokey = cryptokey;
+	}
+	
+	getSessionObject() {
+		return this.session;
+	}
+	
+	getCryptoKeyObject() {
+		return this.cryptokey;
 	}
 	
 	// encryption
@@ -123,65 +234,62 @@ class AccountEncryption {
 	}
 	
 	setPrivateKey(privkey) {
-		var account = this.account;
-		account.private_key = privkey;
-		
-		if (!privkey)
-			return;
+		var cryptokey = this.cryptokey;
+		cryptokey.private_key = privkey;
 		
 		var ethereumjs = this.getEthereumJsClass();
 		
 		// ECE
-		if (account.public_key == null) {
+		if (cryptokey.public_key == null) {
 			//console.log('ethereumjs is ' + JSON.stringify(ethereumjs));
 			
-			account.public_key = '0x' + ethereumjs.Util.privateToPublic(account.private_key).toString('hex');
+			cryptokey.public_key = '0x' + ethereumjs.Util.privateToPublic(cryptokey.private_key).toString('hex');
 			
-			console.log('aes public key is: ' + account.public_key );
+			console.log('aes public key is: ' + cryptokey.public_key );
 			
-			if (account.address != null) {
+			if (cryptokey.address != null) {
 				// remove in session
-				this.session.removeAccountObject(account);
+				this.session.removeCryptoKeyObject(cryptokey);
 			}
 			
-			account.address = '0x' + ethereumjs.Util.privateToAddress(account.private_key).toString('hex');
+			cryptokey.address = '0x' + ethereumjs.Util.privateToAddress(cryptokey.private_key).toString('hex');
 			
-			console.log('address is: ' + account.address);
+			console.log('address is: ' + cryptokey.address);
 		}
 		else {
 			// check public key corresponds
-			var public_key = '0x' + ethereumjs.Util.privateToPublic(account.private_key).toString('hex');
+			var public_key = '0x' + ethereumjs.Util.privateToPublic(cryptokey.private_key).toString('hex');
 			
-			if (public_key != account.public_key) {
+			if (public_key != cryptokey.public_key) {
 				// overwrite
-				account.public_key = public_key;
+				cryptokey.public_key = public_key;
 				
-				if (account.address != null) {
+				if (cryptokey.address != null) {
 					// remove in session
-					this.session.removeAccountObject(account);
+					this.session.removeCryptoKeyObject(cryptokey);
 				}
 				
-				account.address = '0x' + ethereumjs.Util.privateToAddress(account.private_key).toString('hex');
+				cryptokey.address = '0x' + ethereumjs.Util.privateToAddress(cryptokey.private_key).toString('hex');
 			}
 		}
 		
 		// RSA
-		if (account.rsa_public_key == null) {
-			account.rsa_public_key = this.getRsaPublicKeyFromPrivateKey(account.private_key);
+		if (cryptokey.rsa_public_key == null) {
+			cryptokey.rsa_public_key = this.getRsaPublicKeyFromPrivateKey(cryptokey.private_key);
 			
-			console.log('rsa public key is: ' + account.rsa_public_key );
+			console.log('rsa public key is: ' + cryptokey.rsa_public_key );
 		}
 		else {
 			// check rsa public key corresponds
-			var rsa_public_key = this.getRsaPublicKeyFromPrivateKey(account.private_key);
+			var rsa_public_key = this.getRsaPublicKeyFromPrivateKey(cryptokey.private_key);
 			
-			if (rsa_public_key != account.rsa_public_key) {
+			if (rsa_public_key != cryptokey.rsa_public_key) {
 				// overwrite
-				account.rsa_public_key = rsa_public_key;
+				cryptokey.rsa_public_key = rsa_public_key;
 				
-				if (account.address != null) {
+				if (cryptokey.address != null) {
 					// remove in session
-					this.session.removeAccountObject(account);
+					this.session.removeCryptoKeyObject(cryptokey);
 				}
 			}
 			
@@ -189,33 +297,33 @@ class AccountEncryption {
 	}
 	
 	setPublicKey(pubkey) {
-		var account = this.account;
+		var cryptokey = this.cryptokey;
 
-		if (account.private_key)
+		if (cryptokey.private_key)
 			throw 'you should not call directly setPublicKey if a private key has already been set';
 
 		var ethereumjs = this.getEthereumJsClass();
 		
-		account.public_key = pubkey;
+		cryptokey.public_key = pubkey;
 		
-		if (account.address != null) {
+		if (cryptokey.address != null) {
 			// remove in session
-			this.session.removeAccountObject(account);
+			this.session.removeCryptoKeyObject(cryptokey);
 		}
 		
-		account.address = '0x' + ethereumjs.Util.publicToAddress(account.public_key).toString('hex');
+		cryptokey.address = '0x' + ethereumjs.Util.publicToAddress(cryptokey.public_key).toString('hex');
 	}
 	
 	// symmetric
 	canDoAesEncryption() {
-		if (this.account.private_key != null)
+		if (this.cryptokey.private_key != null)
 			return true;
 		else
 			return false;
 	}
 	
 	canDoAesDecryption() {
-		if (this.account.private_key != null)
+		if (this.cryptokey.private_key != null)
 			return true;
 		else
 			return false;
@@ -225,7 +333,7 @@ class AccountEncryption {
 		//var key = 'f06d69cdc7da0faffb1008270bca38f5';
 		//var key = 'ae6ae8e5ccbfb04590405997ee2d52d2
 
-		var key = this.account.private_key.substring(2, 34);
+		var key = this.cryptokey.private_key.substring(2, 34);
 		//var rootiv = '6087dab2f9fdbbfaddc31a90ae6ae8e5ccbfb04590405997ee2d529735c1e6';
 		var rootiv = '6087dab2f9fdbbfaddc31a90ae6ae8e5ccbfb04590405997ee2d529735c1e6aef54cde547';
 		var iv = rootiv.substring(0,32);
@@ -239,7 +347,7 @@ class AccountEncryption {
 	
 	// symmetric encryption with the private key
 	aesEncryptString(plaintext) {
-		if (this.account.private_key == null)
+		if (this.cryptokey.private_key == null)
 			throw 'No private key set to encrypt string ' + plaintext;
 		
 		if (!plaintext)
@@ -275,9 +383,9 @@ class AccountEncryption {
 	}
 	
 	aesDecryptString(cyphertext) {
-		console.log('AccountEncryption.aesDecryptString called for ' + cyphertext);
+		console.log('CryptoKeyEncryption.aesDecryptString called for ' + cyphertext);
 		
-		if (this.account.private_key == null)
+		if (this.cryptokey.private_key == null)
 			throw 'No private key set to decrypt string ' + cyphertext;
 		
 		if (!cyphertext)
@@ -312,14 +420,14 @@ class AccountEncryption {
 	
 	
 	canDoRsaEncryption() {
-		if (this.account.rsa_public_key != null)
+		if (this.cryptokey.rsa_public_key != null)
 			return true;
 		else
 			return false;
 	}
 	
 	canDoRsaDecryption() {
-		if (this.account.private_key != null)
+		if (this.cryptokey.private_key != null)
 			return true;
 		else
 			return false;
@@ -339,48 +447,48 @@ class AccountEncryption {
 		return rsa_public_key;
 	}
 	
-	getRsaPublicKey(account) {
-		if (!account)
-			throw 'Null account passed to getRsaPublicKey';
+	getRsaPublicKey(cryptokey) {
+		if (!cryptokey)
+			throw 'Null cryptokey passed to getRsaPublicKey';
 		
-		var rsaPubKey = account.getRsaPublicKey();
+		var rsaPubKey = cryptokey.getRsaPublicKey();
 		
 		if (rsaPubKey)
 			return rsaPubKey;
 		else {
-			if (account.private_key) {
+			if (cryptokey.private_key) {
 				// in case rsa public key has not been computed (should not happen)
-				console.log('SHOULD NOT HAPPEN: no rsa public key, but account has a private key');
+				console.log('SHOULD NOT HAPPEN: no rsa public key, but cryptokey has a private key');
 			    var bitcore = this.getBitcoreClass();
 
-			    var accountwif = this.getRsaWifFromPrivateKey(account.private_key);
-				var accountPrivateKey = new bitcore.PrivateKey(accountwif);
+			    var cryptokeywif = this.getRsaWifFromPrivateKey(cryptokey.private_key);
+				var cryptokeyPrivateKey = new bitcore.PrivateKey(cryptokeywif);
 				
-				return '0x' + accountPrivateKey.toPublicKey().toString('hex');
+				return '0x' + cryptokeyPrivateKey.toPublicKey().toString('hex');
 			}
 			else {
-				throw 'account has not private key to compute rsa public key';
+				throw 'cryptokey has not private key to compute rsa public key';
 			}
 		}
 	}
 	
-	rsaEncryptString(plaintext, recipientaccount) {
-		console.log('AccountEncryption.rsaEncryptString called for ' + plaintext);
+	rsaEncryptString(plaintext, recipientcryptokey) {
+		console.log('CryptoKeyEncryption.rsaEncryptString called for ' + plaintext);
 		
 	    var bitcore = this.getBitcoreClass();
 	    var ECIES = this.getBitcoreEcies();
 
-	    // sender, this account
+	    // sender, this cryptokey
 	    //var senderwif = 'Kxr9tQED9H44gCmp6HAdmemAzU3n84H3dGkuWTKvE23JgHMW8gct';
-	    var senderwif = this.getRsaWifFromPrivateKey(this.account.private_key);
+	    var senderwif = this.getRsaWifFromPrivateKey(this.cryptokey.private_key);
 		var senderPrivateKey = new bitcore.PrivateKey(senderwif);
 		
 		// recipient
 	    //var recipientwif = 'Kxr9tQED9H44gCmp6HAdmemAzU3n84H3dGkuWTKvE23JgHMW8gct';
-	    //var recipientwif = this.getRsaWifFromPrivateKey(recipientaccount.private_key);
+	    //var recipientwif = this.getRsaWifFromPrivateKey(recipientcryptokey.private_key);
 		//var recipientPrivateKey = new bitcore.PrivateKey(recipientwif);
 		//var recipientPublicKey = recipientPrivateKey.toPublicKey();
-		var rsapubkey = this.getRsaPublicKey(recipientaccount);
+		var rsapubkey = this.getRsaPublicKey(recipientcryptokey);
 		var recipientPublicKey = new bitcore.PublicKey(rsapubkey.substring(2));
 
 		// encryption
@@ -391,7 +499,7 @@ class AccountEncryption {
 	    var encrypted = '0x' + encryptor.encrypt(plaintext).toString('hex');
 	    
 	    // test decrypt
-	    /*var decrypted = recipientaccount.rsaDecryptString(encrypted, this.account);
+	    /*var decrypted = recipientcryptokey.rsaDecryptString(encrypted, this.cryptokey);
 	    
 	    console.log('plaintext is ' + plaintext);
 	    console.log('encrypted text is ' + encrypted);
@@ -401,8 +509,8 @@ class AccountEncryption {
 	    return encrypted;
 	}
 	
-	rsaDecryptString(cyphertext, senderaccount) {
-		console.log('AccountEncryption.rsaDecryptString called for ' + cyphertext);
+	rsaDecryptString(cyphertext, sendercryptokey) {
+		console.log('CryptoKeyEncryption.rsaDecryptString called for ' + cyphertext);
 		
 		var hexcypertext = cyphertext.substring(2);
 		
@@ -415,15 +523,15 @@ class AccountEncryption {
 	    
 	    // sender
 	    //var senderwif = 'Kxr9tQED9H44gCmp6HAdmemAzU3n84H3dGkuWTKvE23JgHMW8gct';
-	    //var senderwif = this.getRsaWifFromPrivateKey(senderaccount.private_key);
+	    //var senderwif = this.getRsaWifFromPrivateKey(sendercryptokey.private_key);
 		//var senderPrivateKey = new bitcore.PrivateKey(senderwif);
 		//var senderPublicKey = senderPrivateKey.toPublicKey();
-		var rsapubkey = this.getRsaPublicKey(senderaccount);
+		var rsapubkey = this.getRsaPublicKey(sendercryptokey);
 		var senderPublicKey = new bitcore.PublicKey(rsapubkey.substring(2));
 
-		// recipient, this account
+		// recipient, this cryptokey
 	    //var recipientwif = 'Kxr9tQED9H44gCmp6HAdmemAzU3n84H3dGkuWTKvE23JgHMW8gct';
-	    var recipientwif = this.getRsaWifFromPrivateKey(this.account.private_key);
+	    var recipientwif = this.getRsaWifFromPrivateKey(this.cryptokey.private_key);
 		var recipientPrivateKey = new bitcore.PrivateKey(recipientwif);
 
 		var decryptor = new ECIES()
@@ -444,7 +552,7 @@ class AccountEncryption {
 		
 		var ethereumjs = this.getEthereumJsClass();
 		
-		var account_address = this.account.getAddress();
+		var cryptokey_address = this.cryptokey.getAddress();
 		
 		//
 		// signing
@@ -457,7 +565,7 @@ class AccountEncryption {
 		console.log( 'text hash is: ', texthash);
 
 		// Util signing
-		var priv_key = this.account.private_key.split('x')[1];
+		var priv_key = this.cryptokey.private_key.split('x')[1];
 		var priv_key_Buffer = ethereumjs.Buffer.Buffer(priv_key, 'hex')
 		var util_signature =  ethereumjs.Util.ecsign(textHashBuffer, priv_key_Buffer);
 		
@@ -468,7 +576,7 @@ class AccountEncryption {
 		
 		console.log('signature is: ', signature);
 		
-		console.log('Account.validateStringSignature returns ' + this.validateStringSignature(plaintext, signature));
+		console.log('CryptoKey.validateStringSignature returns ' + this.validateStringSignature(plaintext, signature));
 		
 		return signature; 
 	}
@@ -477,7 +585,7 @@ class AccountEncryption {
 		if (signature) {
 			var ethereumjs = this.getEthereumJsClass();
 			
-			var account_address = this.account.getAddress();
+			var cryptokey_address = this.cryptokey.getAddress();
 
 			var textHashBuffer = ethereumjs.Util.sha256(plaintext);
 			var texthash = textHashBuffer.toString('hex')
@@ -490,7 +598,7 @@ class AccountEncryption {
 			var util_pub = ethereumjs.Util.ecrecover(textHashBuffer, sig.v, sig.r, sig.s);
 			var util_recoveredAddress = '0x' + ethereumjs.Util.pubToAddress(util_pub).toString('hex');
 			
-			return (util_recoveredAddress === account_address);
+			return (util_recoveredAddress === cryptokey_address);
 		}
 		else
 			return false;
@@ -547,8 +655,8 @@ class AccountEncryption {
 	generatePrivateKey() {
 		var ethereumjs = this.getEthereumJsClass();
 
-		var accountPassword="123456";
-		var key = ethereumjs.Wallet.generate(accountPassword);
+		var cryptokeyPassword="123456";
+		var key = ethereumjs.Wallet.generate(cryptokeyPassword);
 		return '0x' + key._privKey.toString('hex');		
 	}
 
@@ -556,8 +664,8 @@ class AccountEncryption {
 }
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.AccountEncryption = AccountEncryption;
+window.CryptoKeyEncryption = CryptoKeyEncryption;
 else
-module.exports = AccountEncryption; // we are in node js
+module.exports = CryptoKeyEncryption; // we are in node js
 
 GlobalClass.getGlobalObject().registerModuleObject(new Module());

@@ -81,14 +81,27 @@ var User = class {
 	}
 	
 	addAccountObject(account) {
+		account.setOwner(this);
+
 		this.accountmap.pushAccount(account);
 	}
 	
 	removeAccountObject(account) {
 		this.accountmap.removeAccount(account);
+		
+		account.setOwner(null);
 	}
 	
 
+	isEqual(user) {
+		var useruuid1 = this.useruuid;
+		var useruuid2 = (user ? user.useruuid : null);
+		
+		if ( useruuid1 && useruuid2 && (useruuid1 == useruuid2))
+			return true;
+		else
+			return false;
+	}
 }
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
