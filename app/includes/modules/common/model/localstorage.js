@@ -151,7 +151,6 @@ var LocalStorage = class {
 		
 		this._replaceJsonLeaves(localjson, uuid, fieldname, json);
 		
-		//this.saveLocalJson(keys, localjson);
 	}
 	
 	insertLocalJsonLeaf(keys, parentuuid, collectionname, json, uuidfieldname) {
@@ -167,7 +166,7 @@ var LocalStorage = class {
 		var parentjson = (parentuuid ? this._findJsonLeaf(localjson, parentuuid, fieldname) : localjson);
 		var collectionjsonarray = (collectionname ? parentjson[collectionname] : parentjson);
 		
-		if (!collectionjsonarray) {
+		if ((!collectionjsonarray) || (collectionjsonarray.constructor !== Array))  {
 			collectionjsonarray = [];
 			
 			if (collectionname)
@@ -178,7 +177,6 @@ var LocalStorage = class {
 		
 		collectionjsonarray.push(json);
 		
-		//this.saveLocalJson(keys, localjson);
 	}
 	
 	
