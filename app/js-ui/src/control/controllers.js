@@ -721,9 +721,16 @@ class Controllers {
 		var global = Controllers.getGlobalClass().getGlobalObject();
 		var app = global.getAppObject();
 		
-		var contracts = global.getContractsObject(true); // force read from local storage
+		/*var contracts = global.getContractsObject(true); // force read from local storage
 
-		app.refreshDisplay();
+		app.refreshDisplay();*/
+		
+		var securitiesmodule = global.getModuleObject('securities');
+		
+		// force refresh
+		var contracts = securitiesmodule.getStockLedgers(true, function(err, res) {
+			app.refreshDisplay();
+		});
 		
 		return;
 	}

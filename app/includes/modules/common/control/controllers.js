@@ -55,9 +55,62 @@ var ModuleControllers = class {
 	
 		
 		return values;
-		
 	}
 	
+	getAccountTransferDefaultValues(session, fromaccount, divcue) {
+		var values = [];
+		
+		var module = this.module;
+		
+		var global = module.global;
+		var commonmodule = global.getModuleObject('common');
+
+		var gaslimit = module.getDefaultGasLimit();
+		var gasPrice = module.getDefaultGasPrice();
+		
+		values['gaslimit'] = gaslimit;
+		values['gasprice'] = gasPrice;
+		
+		var walletaddress = null;
+		
+		if (session) {
+			/*var sessionaccount = session.getMainSessionAccountObject();
+			
+			if (sessionaccount) {
+				walletaddress = sessionaccount.getAddress();
+			}
+			else {
+				if (commonmodule.useWalletAccount()) {
+					// do we pay everything from a single wallet
+					walletaddress = commonmodule.getWalletAccountAddress();
+				}
+				else {
+					console.log('not using wallet account');
+					console.log('wallet address is ' + commonmodule.getWalletAccountAddress());
+				}
+			}*/
+			
+			// ether transfers does not support "in name of" transactions
+			// we necessarily use fromaccount as wallet
+			walletaddress = fromaccount.getAddress();
+
+			if (walletaddress) {
+				
+				values['walletused'] = walletaddress;
+				
+				if (divcue) {
+					// we display the balance in the div passed
+					var wallet = module.getAccountObject(walletaddress);
+					
+					this.writebalance(wallet, divcue);
+				}
+			}
+		}
+	
+		
+		return values;
+	}
+
 	// account
 	getAccountObjectFromUUID(session, accountuuid) {
 		var accountobjects = session.getAccountObjects();
@@ -144,13 +197,18 @@ var ModuleControllers = class {
 		console.log('spawning write of getBalance');
 		var self = this;
 		
+		divbalance.currentwalletaddress = wallet.getAddress();
+		
 		var res = wallet.getChainBalance(function(err, res) {
 			if (!err) {
-				var global = self.module.global;
-				var balancetext = self.getEtherStringFromWei(res);
-				
-				console.log('writebalance ether balance is ' + balancetext);
-				divbalance.innerHTML = global.t('The account') + ' ' + wallet.getAddress() + ' ' + global.t('has') + ' ' + balancetext + ' ' + global.t('Ether');
+				if (divbalance.currentwalletaddress.toLowerCase()  == wallet.getAddress().toLowerCase()) {
+					// we write the balance, if indeed we are the current wallet selected for the div
+					var global = self.module.global;
+					var balancetext = self.getEtherStringFromWei(res);
+					
+					console.log('writebalance ether balance is ' + balancetext);
+					divbalance.innerHTML = global.t('The account') + ' ' + wallet.getAddress() + ' ' + global.t('has') + ' ' + balancetext + ' ' + global.t('Ether');
+				}
 			}
 			else {
 				console.log(err);

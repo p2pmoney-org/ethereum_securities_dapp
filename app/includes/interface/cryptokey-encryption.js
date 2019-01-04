@@ -161,7 +161,7 @@ var Module = class {
 		console.log('jsonarray length is ' + (jsonarray ? jsonarray.length : 0));
 		
 		var user = session.getSessionUserObject();
-		var useruuid = user.getUserUUID();
+		var useruuid = (user ? user.getUserUUID() : null);
 		
 		var keysjson = [];
 

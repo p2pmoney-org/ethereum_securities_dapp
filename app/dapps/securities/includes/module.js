@@ -115,6 +115,44 @@ var Module = class {
 		return this.session;
 	}
 	
+	_filterContracts(contracts) {
+		var array = [];
+		
+		if (!contracts)
+			return array;
+		
+		var contractarray = contracts.getContractObjectsArray();
+
+		for (var i = 0; i < contractarray.length; i++) {
+			var contract = contractarray[i];
+			
+			if (contract.getContractType() == 'TokenERC20')
+			array.push(contract);
+		}
+
+		return array;
+	}
+	
+	getStockLedgers(bForceRefresh, callback) {
+		var global = this.global;
+		var self = this;
+		
+		var commonmodule = global.getModuleObject('common');
+		
+		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+			if (callback) {
+				var array = self._filterContracts(contracts);
+				
+				callback(null, array);
+			}
+		});
+		
+		var array = this._filterContracts(contracts);
+		
+		return array;
+		
+	}
+	
 	// stakeholders
 	createStakeHolderObject(session, address) {
 		return new this.StakeHolder(session, address);
