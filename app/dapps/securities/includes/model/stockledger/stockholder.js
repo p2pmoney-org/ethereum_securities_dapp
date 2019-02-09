@@ -41,10 +41,10 @@ class StockHolder extends StakeHolder {
 			
 	}
 
-	saveLocalJson() {
+	saveLocalJson(callback) {
 		var persistor = this.getStockLedgerObject().getContractLocalPersistor();
 		
-		persistor.saveStockHolderJson(this);
+		persistor.saveStockHolderJson(this, callback);
 	}
 	
 		
@@ -60,6 +60,9 @@ class StockHolder extends StakeHolder {
 			return array;
 		
 		for (var i = 0; i < jsonarray.length; i++) {
+			if (!jsonarray[i])
+				continue;
+			
 			var stockholder = module.createBlankStockHolderObject(session, stockledger);
 			
 			stockholder.initFromLocalJson(jsonarray[i]);

@@ -155,27 +155,65 @@ var LocalStorage = class {
 	
 	insertLocalJsonLeaf(keys, parentuuid, collectionname, json, uuidfieldname) {
 		var fieldname = (uuidfieldname ? uuidfieldname : 'uuid');
-		console.log('insert json leaf under ' + fieldname + ' ' + parentuuid + ' with ' + fieldname + ' ' + json[fieldname] + ' for collection ' + collectionname);
+		var key = this.keystostring(keys);
+
+		console.log('insert json leaf for key ' + key + ' under ' + fieldname + ' ' + parentuuid + ' with ' + fieldname + ' ' + json[fieldname] + ' for collection ' + collectionname);
 
 		var session = this.session;
 		var localjson = this.readLocalJson(keys);
+		var collectionjsonarray;
 		
-		if (!localjson)
+		if (!localjson) {
+			// no entry for these keys, insert an empty array for them
 			localjson = [];
+			this.storagemap.updateJson(key, localjson);
+			
+			// and the collection is
+			if (collectionname) {
+				localjson.collectionname = [];
+				collectionjsonarray = localjson.collectionname;
+			}
+			else {
+				collectionjsonarray = localjson;
+			}
+		}
+		else {
+			
+			if (localjson.constructor !== Array) {
+				var newlocaljson = [];
+				
+				for (var property in localjson) {
+				    if (localjson.hasOwnProperty(property)) {
+				    	newlocaljson.property = localjson.property;
+				    }
+				}
+				
+				localjson = newlocaljson;
+				this.storagemap.updateJson(key, localjson);
+			}
+			
+			if (parentuuid) {
+				var parentjson = this._findJsonLeaf(localjson, parentuuid, fieldname);
+			}
+			else {
+				var parentjson = localjson;
+			}
+			
+			collectionjsonarray = (collectionname ? parentjson[collectionname] : parentjson);
+		}
 		
 		var parentjson = (parentuuid ? this._findJsonLeaf(localjson, parentuuid, fieldname) : localjson);
 		var collectionjsonarray = (collectionname ? parentjson[collectionname] : parentjson);
 		
-		if ((!collectionjsonarray) || (collectionjsonarray.constructor !== Array))  {
-			collectionjsonarray = [];
-			
-			if (collectionname)
-				parentjson[collectionname] = collectionjsonarray;
-			else
-				parentjson = collectionjsonarray;
+		if (collectionjsonarray.constructor !== Array) {
+			// problematic, can't turn the object reference by collectionjsonarray into an array
+			console.log('WARNING: json leaf is not an array, should not happen!');
+			collectionjsonarray[0] = json;
+		}
+		else {
+			collectionjsonarray.push(json);
 		}
 		
-		collectionjsonarray.push(json);
 		
 	}
 	

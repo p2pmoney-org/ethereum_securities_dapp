@@ -1,0 +1,49 @@
+
+<div id="TransactionsView" ng-controller="TransactionsViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'Order Id' | transl}}</td>
+	     	<td>{{'Status' | transl}}</td>
+	     	<td>{{'From' | transl}}</td>
+	     	<td>{{'To' | transl}}</td>
+	     	<td>{{'Nature' | transl}}</td>
+	     	<td>{{'Issuance number' | transl}}</td>
+	     	<td>{{'Number of shares' | transl}}</td>
+	     	<td>{{'Consideration' | transl}}</td>
+	     	<td>{{'Currency' | transl}}</td>
+  	    	<td>&nbsp;</td>
+    	</tr>
+        
+		<!-- local transactions --> 
+        <tr ng-repeat="transaction in localtransactions" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td><a ui-sref="home.stockledgers.transactions.modify({uuid: stockledgeruuid, index: transaction.index})">{{transaction.orderid}}</a></td>
+			<td>{{transaction.statusstring}}</td>
+	     	<td>{{transaction.from}}</td>
+			<td>{{transaction.to}}</td>
+			<td>{{transaction.nature}}</td>
+			<td>{{transaction.issuancenumber}}</td>
+			<td>{{transaction.numberofshares}}</td>
+			<td>{{transaction.consideration}}</td>
+			<td>{{transaction.currency}}</td>
+	        <td class="table-contract-list-action-td"><a ui-sref="home.stockledgers.transactions.delete({uuid: stockledgeruuid, index: transaction.index})">{{'remove from list' | transl}}</a></td>
+        </tr>
+    
+		<!-- chain (published) transactions --> 
+        <tr ng-repeat="transaction in chaintransactions" class="{{$odd ? 'table-contract-list-tr-chain-odd' : 'table-contract-list-tr-chain-even'}}">
+			<td><a ui-sref="home.stockledgers.transactions.view({uuid: stockledgeruuid, index: transaction.index})">{{transaction.orderid}}</a></td>
+			<td>{{transaction.statusstring}}</td>
+	     	<td>{{transaction.from}}</td>
+			<td>{{transaction.to}}</td>
+			<td>{{transaction.nature}}</td>
+			<td>{{transaction.issuancenumber}}</td>
+			<td>{{transaction.numberofshares}}</td>
+			<td>{{transaction.consideration}}</td>
+			<td>{{transaction.currency}}</td>
+ 			<td>&nbsp;</td>
+        </tr>
+
+    </table>
+
+</div>

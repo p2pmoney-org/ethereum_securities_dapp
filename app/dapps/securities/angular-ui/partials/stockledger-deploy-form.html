@@ -1,0 +1,41 @@
+
+<form name="StockLedgerDeployForm" ng-controller="StockLedgerDeployFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="uuid" ng-model="stockledger.uuid" required>
+ 	
+ 	<div>
+	
+	<span id="walletused-span" class="form-from-span">
+		<label for="walletused">{{'Wallet used:' | transl}}</label>
+		<input type="text" class="form-walletused-input" name="walletused" ng-model="walletused.text" ng-change="handleWalletChange()" required><br>
+		<select ng-show="session.hassessionaccounts" class="form-wallet-select" ng-model="selectedfrom" ng-change="handleWalletSelectChange()"><option ng-repeat="account in fromaccounts" ng-value="account.uuid">{{account.description}}</option></select>
+  	</span>
+	
+ 	</div>
+ 	<div>
+
+	<span ng-show="!walletused.issessionaccount" id="walletpassword-span" class="token-form-walletpassword-span">
+		<label for="password">{{'Password:' | transl}}</label>
+		<input type="password" class="token-form-walletpassword-input" name="walletpassword" ng-model="password.text">
+ 	</span>
+ 	
+	<span id="gaslimit-span" class="gaslimit-span">
+		<label for="gaslimit">{{'Gas limit:' | transl}}</label>
+		<input type="text" class="form-gaslimit-input" name="gaslimit" ng-model="gaslimit.text" required>
+	</span>
+	
+	<span id="gasprice-span" class="gasprice-span">
+		<label for="gasprice">{{'Gas price:' | transl}}</label>
+		<input type="text" class="form-gasprice-input" name="gasprice" ng-model="gasprice.text" required>
+	</span>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Deploy' || transl}}</button>
+	</span>
+ 
+    </div>
+    
+    <div role="alert">
+    </div>
+</form>
+

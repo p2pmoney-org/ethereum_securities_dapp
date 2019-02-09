@@ -92,7 +92,7 @@ var ModuleControllers = class {
 			
 			// ether transfers does not support "in name of" transactions
 			// we necessarily use fromaccount as wallet
-			walletaddress = fromaccount.getAddress();
+			walletaddress = (fromaccount ? fromaccount.getAddress() : null);
 
 			if (walletaddress) {
 				

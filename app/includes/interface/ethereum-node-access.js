@@ -735,7 +735,16 @@ class EthereumNodeAccess {
 			try {
 				var web3 = self._getWeb3Instance();
 				
-				return web3.eth.isSyncing( function(err, res) {
+				if (self.web3_version == "1.0.x") {
+					// Web3 > 1.0
+					var funcname = web3.eth.isSyncing;
+				}
+				else {
+					// Web3 == 0.20.x
+					var funcname = web3.eth.getSyncing;
+				}
+
+				return funcname( function(err, res) {
 					if (!err) {
 						if (callback)
 							callback(null, res);
@@ -762,6 +771,223 @@ class EthereumNodeAccess {
 		return promise
 	}
 	
+	web3_isListening(callback) {
+		var self = this
+		var session = this.session;
+
+		var promise = new Promise(function (resolve, reject) {
+			try {
+				var web3 = self._getWeb3Instance();
+				
+				if (self.web3_version == "1.0.x") {
+					// Web3 > 1.0
+					var funcname = web3.eth.net.isListening;
+				}
+				else {
+					// Web3 == 0.20.x
+					var funcname = web3.net.getListening;
+				}
+
+				return funcname( function(err, res) {
+					if (!err) {
+						if (callback)
+							callback(null, res);
+						return resolve(res);
+					}
+					else {
+						if (callback)
+							callback('web3 error: ' + err, null);
+						
+						reject('web3 error: ' + err);
+					}
+				
+				});
+			}
+			catch(e) {
+				if (callback)
+					callback('exception: ' + e, null);
+				
+				reject('web3 exception: ' + e);
+			}
+			
+		});
+		
+		return promise
+	}
+	
+	web3_getNetworkId(callback) {
+		var self = this
+		var session = this.session;
+
+		var promise = new Promise(function (resolve, reject) {
+			try {
+				var web3 = self._getWeb3Instance();
+				
+				if (self.web3_version == "1.0.x") {
+					// Web3 > 1.0
+					var funcname = web3.eth.net.getId;
+				}
+				else {
+					// Web3 == 0.20.x
+					var funcname = web3.version.getNetwork;
+				}
+
+				
+				return funcname( function(err, res) {
+					if (!err) {
+						if (callback)
+							callback(null, res);
+						return resolve(res);
+					}
+					else {
+						if (callback)
+							callback('web3 error: ' + err, null);
+						
+						reject('web3 error: ' + err);
+					}
+				
+				});
+			}
+			catch(e) {
+				if (callback)
+					callback('exception: ' + e, null);
+				
+				reject('web3 exception: ' + e);
+			}
+			
+		});
+		
+		return promise
+	}
+	
+	web3_getPeerCount(callback) {
+		var self = this
+		var session = this.session;
+
+		var promise = new Promise(function (resolve, reject) {
+			try {
+				var web3 = self._getWeb3Instance();
+				
+				if (self.web3_version == "1.0.x") {
+					// Web3 > 1.0
+					var funcname = web3.eth.net.getPeerCount;
+				}
+				else {
+					// Web3 == 0.20.x
+					var funcname = web3.net.getPeerCount;
+				}
+
+				
+				return funcname( function(err, res) {
+					if (!err) {
+						if (callback)
+							callback(null, res);
+						return resolve(res);
+					}
+					else {
+						if (callback)
+							callback('web3 error: ' + err, null);
+						
+						reject('web3 error: ' + err);
+					}
+				
+				});
+			}
+			catch(e) {
+				if (callback)
+					callback('exception: ' + e, null);
+				
+				reject('web3 exception: ' + e);
+			}
+			
+		});
+		
+		return promise
+	}
+
+	// node
+	web3_getNodeInfo(callback) {
+		var self = this
+		var session = this.session;
+
+		var promises = [];
+		var promise;
+		
+		var issyncing;
+		var currentblock = -1;
+		var highestblock = -1;
+		
+		// islistening
+		promise = this.web3_isListening();
+		promises.push(promise);
+		
+		// networkid
+		promise = this.web3_getNetworkId();
+		promises.push(promise);
+
+		// peercount
+		promise = this.web3_getPeerCount();
+		promises.push(promise);
+
+		
+		// issyncing
+		promise = this.web3_isSyncing(function(error, result) {
+			var syncingobj;
+			
+			if (!error) {
+				if(result !== false) {
+					issyncing = true;
+					
+					var arr = [];
+
+					for(var key in result){
+					  arr[key] = result[key];
+					}
+					
+					syncingobj = arr;
+				}
+				else {
+					issyncing = false;
+					
+					syncingobj = false;
+				}
+			}
+			else {
+				issyncing = error;
+			}
+			return result;
+		});
+		promises.push(promise);
+		
+		// blocknumber
+		promise = this.web3_getBlockNumber();
+		promises.push(promise);
+		
+		// all promises
+		return Promise.all(promises).then(function(res) {
+			var islistening = res[0];
+			var networkid = res[1];
+			var peercount = res[2];
+			var syncingobj = res[3];
+			var blocknumber = res[4];
+			
+			currentblock = ((syncingobj !== false) && (syncingobj) && (syncingobj['currentBlock']) ? syncingobj['currentBlock'] : blocknumber);
+			highestblock = ((syncingobj !== false) && (syncingobj) && (syncingobj['highestBlock']) ? syncingobj['highestBlock'] : blocknumber);
+
+			var json = {islistening: islistening, 
+					networkid: networkid, 
+					peercount: peercount, 
+					issyncing: issyncing,
+					currentblock: currentblock,
+					highestblock: highestblock};
+			
+			if (callback)
+				callback(null, json);
+			
+			return json
+		});
+	}
+
 	
 	// accounts
 	web3_getBalanceSync(address) {

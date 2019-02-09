@@ -1,0 +1,38 @@
+
+<div class="container">
+
+<h2>{{'Modify Issuance' | transl}}</h2>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" ng-controller="IssuanceModifyFormCtrl" >
+
+<div ng-if="issuance.islocalonly" class="div-form-tabs">
+	<div class="div-form-tab"><span>{{'Modify issuance' | transl}}</span></div>
+	<div class="div-form-selected-tab"><span><a ui-sref="home.stockledgers.issuances.deploy({uuid: stockledger.uuid, index: issuance.index})">{{'Deploy issuance' | transl}}</a></span></div>
+</div>
+
+<div class="div-form">
+
+<div ng-if="issuance.islocalonly" ng-include='"./dapps/securities/angular-ui/partials/issuance-modify-form.html"'></div>
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+<div class="band-separator"><hr></div>
+
+<div id="view-band" class="view-band">
+
+<div class="div-view-container" >
+
+<div ng-include='"./dapps/securities/angular-ui/partials/issuance-cover-view.html"'></div>
+
+</div><!-- div-view-container -->
+
+</div><!-- /.container -->

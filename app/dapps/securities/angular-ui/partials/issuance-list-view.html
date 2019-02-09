@@ -1,0 +1,43 @@
+
+<div id="IssuancesView" ng-controller="IssuancesViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'Description' | transl}}</td>
+	     	<td>{{'Status' | transl}}</td>
+	     	<td>{{'Number of shares' | transl}}</td>
+	     	<td>{{'Percent of capital' | transl}}</td>
+	     	<td>{{'Name (public)' | transl}}</td>
+	     	<td>{{'Code (public)' | transl}}</td>
+	     	<td>{{'Chain description (crypted)' | transl}}</td>
+  	    	<td>&nbsp;</td>
+    	</tr>
+        
+		<!-- local issuances --> 
+        <tr ng-repeat="issuance in localissuances" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td><a ui-sref="home.stockledgers.issuances.modify({uuid: stockledgeruuid, index: issuance.index})">{{issuance.localdescription}}</a></td>
+			<td>{{issuance.statusstring}}</td>
+	     	<td>{{issuance.numberofshares}}</td>
+			<td>{{issuance.percentofcapital}}</td>
+			<td>{{issuance.publicname}}</td>
+			<td>{{issuance.publiccode}}</td>
+			<td>{{issuance.crypteddescription}}</td>
+	        <td class="table-contract-list-action-td"><a ui-sref="home.stockledgers.issuances.delete({uuid: stockledgeruuid, index: issuance.index})">{{'remove from list' | transl}}</a></td>
+        </tr>
+    
+		<!-- chain (published) issuances --> 
+        <tr ng-repeat="issuance in chainissuances" class="{{$odd ? 'table-contract-list-tr-chain-odd' : 'table-contract-list-tr-chain-even'}}">
+			<td><a ui-sref="home.stockledgers.issuances.view({uuid: stockledgeruuid, index: issuance.index})">{{issuance.localdescription}}</a></td>
+			<td>{{issuance.statusstring}}</td>
+	     	<td>{{issuance.numberofshares}}</td>
+			<td>{{issuance.percentofcapital}}</td>
+			<td>{{issuance.publicname}}</td>
+			<td>{{issuance.publiccode}}</td>
+			<td>{{issuance.crypteddescription}}</td>
+ 			<td>&nbsp;</td>
+        </tr>
+
+    </table>
+
+</div>

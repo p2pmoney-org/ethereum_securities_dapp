@@ -379,6 +379,9 @@ class StakeHolder{
 			return array;
 		
 		for (var i = 0; i < jsonarray.length; i++) {
+			if (!jsonarray[i])
+				continue;
+			
 			var identifier = jsonarray[i]['identifier'];
 			var stakeholder = module.createBlankStakeHolderObject(session);
 			

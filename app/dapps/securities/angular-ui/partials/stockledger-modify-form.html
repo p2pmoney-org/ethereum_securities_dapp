@@ -1,0 +1,48 @@
+
+
+ <form name="StockLedgerModifyForm" ng-controller="StockLedgerModifyFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="uuid" ng-model="stockledger.uuid" required>
+ 	
+	<div >
+	
+	<span>
+		<label for="name">{{'Enter private description for this ledger:' | transl}}</label>
+		<input type="text" class="token-form-ledgerdescription-input" name="ledgerdescription" ng-model="ledgerdescription.text" required>
+		
+ 	</span>
+ 	
+	<span>
+		<label for="symbol">{{'Enter public name for this ledger (e.g. Distributed Stock Ledger):' | transl}}</label>
+		<input type="text" class="token-form-ledgername-input" name="ledgername" ng-model="ledgername.text" required>
+		
+ 	</span>
+ 	
+	</div>
+	 
+	<div>	
+	 
+	<span>
+		<label for="decimals">{{'Enter address of owner:' | transl}}</label>
+		<input type="text" class="token-form-owneraddress-input" name="owneraddress" ng-model="owneraddress.text">
+		
+ 	</span>
+ 	
+	<span>
+		<label for="totalsupply">{{'Enter identifier for the owner (email phone number,...):' | transl}}</label>
+		<input type="text" class="token-form-owneridentifier-input" name="owneridentifier" ng-model="owneridentifier.text" required>
+		
+ 	</span>
+ 	 	
+  	<span class="form-actions">
+            <button type="submit" >{{'Modify' || transl}}</button>
+	</span>
+ 
+    </div>
+ 
+ 	<div>
+	
+ 	</div>
+    
+ </form>
+

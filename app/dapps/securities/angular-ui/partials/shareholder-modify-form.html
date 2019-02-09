@@ -1,0 +1,22 @@
+ 
+ <form name="ShareHolderModifyForm" ng-controller="ShareHolderModifyFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="stockledgeruuid" ng-model="stockledger.uuid" required>
+ 	<input type="hidden" name="shareholderindex" ng-model="shareholder.index" required>
+ 	
+	<div>
+	
+	<span>
+		<label for="shldridentifier">{{'Enter shareholder identifier (email, phone number,..):' | transl}}</label>
+		<input type="text" class="token-form-shldridentifier-input" name="shldridentifier" ng-model="shldridentifier.text" required>
+		
+ 	</span>
+ 	
+  	<span class="form-actions">
+            <button type="submit" >{{'Modify' || transl}}</button>
+	</span>
+ 
+ 	</div>
+    
+ </form>
+

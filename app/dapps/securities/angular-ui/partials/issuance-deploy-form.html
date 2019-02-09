@@ -1,0 +1,62 @@
+ <form name="IssuanceDeployForm" ng-controller="IssuanceDeployFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="stockledgeruuid" ng-model="stockledger.uuid" required>
+ 	
+	<div>
+	
+	<span>
+		<label for="issuancename">{{'Enter public name of issuance:' | transl}}</label>
+		<input type="text" class="token-form-issuancename-input" name="issuancename" ng-model="issuancename.text" required>
+		
+ 	</span>
+ 	
+ 	<span>
+		<label for="issuancedescription">{{'Enter private description of issuance:' | transl}}</label>
+		<input type="text" class="token-form-issuancedescription-input" name="issuancedescription" ng-model="issuancedescription.text" required>
+		
+ 	</span>
+ 	
+  	</div>
+ 	<div>
+ 
+  	<span>
+		<label for="numberofshares">{{'Enter number of shares issued in this issuance:' | transl}}</label>
+		<input type="text" class="token-form-numberofshares-input" name="numberofshares" ng-model="numberofshares.text" required>
+		
+ 	</span>
+ 
+  	<span>
+		<label for="percentofcapital">{{'Enter percent of final capital of this issuance (20 000 = 20%):' | transl}}</label>
+		<input type="text" class="token-form-percentofcapital-input" name="percentofcapital" ng-model="percentofcapital.text" required>
+		
+ 	</span>
+ 
+ 	</div>
+    
+  	<div>
+ 	
+	<span id="walletused-span" class="form-from-span">
+		<label for="walletused">{{'Wallet used:' | transl}}</label>
+		<input type="text" class="form-walletused-input" name="walletused" ng-model="walletused.text" ng-change="handleWalletChange()" required><br>
+		<select ng-show="session.hassessionaccounts" class="form-wallet-select" ng-model="selectedfrom" ng-change="handleWalletSelectChange()"><option ng-repeat="account in fromaccounts" ng-value="account.uuid">{{account.description}}</option></select>
+ 	</span>
+	
+	<span ng-show="!walletused.issessionaccount" id="walletpassword-span" class="token-form-walletpassword-span">
+		<label for="password">{{'Password:' | transl}}</label>
+		<input autocomplete="new-password" type="password" class="token-form-walletpassword-input" name="walletpassword" ng-model="password.text">
+ 	</span>
+ 	
+	<span id="gaslimit-span" class="gaslimit-span">
+		<label for="gaslimit">{{'Gas limit:' | transl}}</label>
+		<input type="text" class="form-gaslimit-input" name="gaslimit" ng-model="gaslimit.text" required>
+	</span>
+	
+	<span id="gasprice-span" class="gasprice-span">
+		<label for="gasprice">{{'Gas price:' | transl}}</label>
+		<input type="text" class="form-gasprice-input" name="gasprice" ng-model="gasprice.text" required>
+	</span>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Deploy' || transl}}</button>
+	</span>
+ </form>

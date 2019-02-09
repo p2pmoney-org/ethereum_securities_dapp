@@ -1,36 +1,29 @@
 <!doctype html>
 <html>
 <head>
-
-    <link rel="stylesheet" href="./js-ui/css/bootstrap.min.css">
-    <link href="./js-ui/css/app.css" rel="stylesheet">
+	<title>Securities DAPP</title>
+ 
+    <link rel="stylesheet" href="./angular-ui/css/bootstrap.min.css">
+   
+	<link href="./angular-ui/css/app.css" rel="stylesheet">
+ 	<link href="./dapps/securities/angular-ui/css/securities.css" rel="stylesheet">
+ 
+  <!-- App source code -->
+  <script type="text/javascript" src="./includes/bootstrap.js"></script>
 
 </head>
 <body>
 
-    <div id="top-band" class="top-band">
-    	<div  class="headtitle">Securities Contracts App</div>
-    	<div>&nbsp;</div>
-    	<div id="message-zone" class="messagezone">
-        You have a message: press F5 if this message does not disappear after a few seconds.
-        </div>
-    </div>
+	<div ng-include='"./angular-ui/templates/header.html"'></div>
+	<div ng-include='"./angular-ui/templates/menubar.html"'></div>
+	<div ng-include='"./angular-ui/templates/breadcrumb.html"'></div>
     
-     <div id="breadcrumb-band" class="breadcrumb-band">
-    </div>
-     
-    <div class="band-separator"><hr></div>
-    
- 
-    <div id="form-band"  class="form-band">
-    </div>
-    
-    <div class="band-separator"><hr></div>
-    
-    <div id="view-band" class="view-band">
-    </div>
+	<!-- <div ng-view></div>ng-view -->
+	<div ui-view='main'></div><!-- ui-view -->
+	
 
-  <!-- App source code -->
-  <script type="text/javascript" src="./includes/bootstrap.js"></script>
+
+	<div ng-include='"./angular-ui/templates/footer.html"'></div>
+	
 </body>
 </html>

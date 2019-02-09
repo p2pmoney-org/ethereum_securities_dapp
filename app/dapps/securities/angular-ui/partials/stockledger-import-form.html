@@ -1,0 +1,27 @@
+
+ <form name="StockLedgerImportForm" ng-controller="StockLedgerImportFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<div>
+	
+ 	<span>
+	    <label for="address">{{'Contract address:' | transl}}</label>
+		<input type="text" class="form-address-input" name="address" ng-model="address.text" required>
+ 	</span>
+    
+	<span>
+		<label for="description">{{'Description:' | transl}}</label>
+		<input type="text" class="form-description-input" name="description" ng-model="description.text">
+ 	</span>
+	
+ 	
+  	<span class="form-actions">
+		<button type="submit" >{{'Import' || transl}}</button>
+	</span>
+ 
+    </div>
+    
+    <div role="alert">
+    </div>
+
+
+ </form>

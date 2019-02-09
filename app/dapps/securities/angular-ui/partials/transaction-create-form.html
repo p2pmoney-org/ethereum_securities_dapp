@@ -1,0 +1,52 @@
+<form name="TransactionCreateForm" ng-controller="TransactionCreateFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="stockledgeruuid" ng-model="stockledger.uuid" required>
+ 	
+  	<div>
+	
+	<span id="from-span" class="from-span">
+		<label for="from">{{'From:' | transl}}</label>
+		<select class="form-select" ng-model="selectedshldrfrom" ng-change="handleFromChange()"><option ng-repeat="shldr in fromshldrs" ng-value="shldr.address">{{shldr.description}}</option></select>
+ 	</span>
+	
+ 	<span id="to-span" class="to-span">
+		<label for="to">{{'To:' | transl}}</label>
+		<select class="form-select" ng-model="selectedshldrto" ng-change="handleToChange()"><option ng-repeat="shldr in toshldrs" ng-value="shldr.address">{{shldr.description}}</option></select>
+ 	</span>
+	
+ 	</div>
+
+	<div>
+	
+ 	<span id="issuancenumber-span" class="to-span">
+		<label for="to">{{'Issuance:' | transl}}</label>
+		<select class="form-issuance-select" ng-model="selectedissuancenumber" ng-change="handleIssuanceChange()"><option ng-repeat="issuance in issuances" ng-value="issuance.number">{{issuance.description}}</option></select>
+ 	</span>
+	
+	<span>
+		<label for="numberofshares">{{'Enter number of shares transferred:' | transl}}</label>
+		<input type="text" class="token-form-numberofshares-input" name="numberofshares" ng-model="numberofshares.text" required>
+		
+ 	</span>
+ 	
+ 	<span>
+		<label for="consideration">{{'Enter the total amount:' | transl}}</label>
+		<input type="text" class="token-form-consideration-input" name="consideration" ng-model="consideration.text" required>
+		
+ 	</span>
+ 	
+ 	<span>
+		<label for="currency">{{'Enter currency (e.g. EUR, USD,..):' | transl}}</label>
+		<input type="text" class="token-form-currency-input" name="currency" ng-model="currency.text" required>
+		
+ 	</span>
+ 	
+ 
+  	<span class="form-actions">
+            <button type="submit" >{{'Create' || transl}}</button>
+	</span>
+ 
+ 	</div>
+    
+ </form>
+

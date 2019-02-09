@@ -194,10 +194,10 @@ class StockTransaction {
 			
 	}
 
-	saveLocalJson() {
+	saveLocalJson(callback) {
 		var persistor = this.getStockLedgerObject().getContractLocalPersistor();
 		
-		persistor.saveStockTransactionJson(this);
+		persistor.saveStockTransactionJson(this, callback);
 	}
 	
 		
@@ -406,6 +406,9 @@ class StockTransaction {
 			return array;
 		
 		for (var i = 0; i < jsonarray.length; i++) {
+			if (!jsonarray[i])
+				continue;
+			
 			var stocktransaction= module.createBlankStockTransactionObject(session, stockledger);
 			
 			stocktransaction.initFromLocalJson(jsonarray[i]);

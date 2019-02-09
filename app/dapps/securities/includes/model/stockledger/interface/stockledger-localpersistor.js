@@ -9,7 +9,7 @@ class StockLedgerLocalPersistor {
 		this.commonmodule = this.session.getGlobalObject().getModuleObject('common');
 	}
 	
-	saveStockledgerJson(stockledger) {
+	saveStockledgerJson(stockledger, callback) {
 		var session = this.session;
 		var keys = ['contracts'];
 		
@@ -26,9 +26,14 @@ class StockLedgerLocalPersistor {
 		else {
 			commonmodule.insertLocalJsonLeaf(session, keys, null, null, json);
 		}
+		
+		// save contracts
+		var contractsjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+		
+		commonmodule.saveLocalJson(session, keys, contractsjson, callback);
 	}
 	
-	saveStockHolderJson(stockholder) {
+	saveStockHolderJson(stockholder, callback) {
 		var session = this.session;
 		var keys = ['contracts'];
 		
@@ -46,9 +51,14 @@ class StockLedgerLocalPersistor {
 			var parentuuid = stockholder.getStockLedgerObject().getUUID();
 			commonmodule.insertLocalJsonLeaf(session, keys, parentuuid, 'stakeholders', json);
 		}
+		
+		// save contracts
+		var contractsjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+		
+		commonmodule.saveLocalJson(session, keys, contractsjson, callback);
 	}
 	
-	saveStockIssuanceJson(stockissuance) {
+	saveStockIssuanceJson(stockissuance, callback) {
 		var session = this.session;
 		var keys = ['contracts'];
 		
@@ -66,9 +76,14 @@ class StockLedgerLocalPersistor {
 			var parentuuid = stockissuance.getStockLedgerObject().getUUID();
 			commonmodule.insertLocalJsonLeaf(session, keys, parentuuid, 'issuances', json);
 		}
+		
+		// save contracts
+		var contractsjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+		
+		commonmodule.saveLocalJson(session, keys, contractsjson, callback);
 	}
 	
-	saveStockTransactionJson(stocktransaction) {
+	saveStockTransactionJson(stocktransaction, callback) {
 		var session = this.session;
 		var keys = ['contracts'];
 		
@@ -86,6 +101,11 @@ class StockLedgerLocalPersistor {
 			var parentuuid = stocktransaction.getStockLedgerObject().getUUID();
 			commonmodule.insertLocalJsonLeaf(session, keys, parentuuid, 'transactions', json);
 		}
+		
+		// save contracts
+		var contractsjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+		
+		commonmodule.saveLocalJson(session, keys, contractsjson, callback);
 	}
 	
 }

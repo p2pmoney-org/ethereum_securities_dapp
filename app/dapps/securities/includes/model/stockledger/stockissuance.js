@@ -180,10 +180,10 @@ class StockIssuance{
 		this.signature = orgObj.signature; 
 	}
 	
-	saveLocalJson() {
+	saveLocalJson(callback) {
 		var persistor = this.getStockLedgerObject().getContractLocalPersistor();
 		
-		persistor.saveStockIssuanceJson(this);
+		persistor.saveStockIssuanceJson(this, callback);
 	}
 	
 	getIssuanceIndex() {
@@ -378,6 +378,9 @@ class StockIssuance{
 			return array;
 		
 		for (var i = 0; i < jsonarray.length; i++) {
+			if (!jsonarray[i])
+				continue;
+			
 			var stockissuance = module.createBlankStockIssuanceObject(session, stockledger);
 			
 			stockissuance.initFromLocalJson(jsonarray[i]);

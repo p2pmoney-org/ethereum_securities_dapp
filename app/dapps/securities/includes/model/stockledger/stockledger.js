@@ -58,6 +58,16 @@ class StockLedger {
 		
 		this.localstocktransactionarray = [];
 		this.chainstocktransactionarray = [];
+		
+		// Contracts class
+		var global = session.getGlobalObject();
+		var commonmodule = global.getModuleObject('common');
+		
+		this.Contracts = commonmodule.Contracts;
+		
+		this.savedstatus = this.Contracts.STATUS_LOCAL;
+		
+		this.livestatus = this.Contracts.STATUS_LOCAL;
 	}
 	
 	getSecuritiesModuleObject() {
@@ -255,6 +265,7 @@ class StockLedger {
 			var localstakeholderarray = securitiesmodule.getStockHoldersFromJsonArray(session, this, json['stakeholders']);
 			
 			for (var i = 0; i < localstakeholderarray.length; i++) {
+				if (localstakeholderarray[i])
 				this.addLocalStakeHolder(localstakeholderarray[i]);
 			}
 		}
@@ -266,6 +277,7 @@ class StockLedger {
 			var localissuancearray = securitiesmodule.getStockIssuancesFromJsonArray(session, this, json['issuances']);
 			
 			for (var i = 0; i < localissuancearray.length; i++) {
+				if (localissuancearray[i])
 				this.addLocalIssuance(localissuancearray[i]);
 			}
 		}
@@ -277,6 +289,7 @@ class StockLedger {
 			var localtransactionarray = securitiesmodule.getStockTransactionsFromJsonArray(session, this, json['transactions']);
 			
 			for (var i = 0; i < localtransactionarray.length; i++) {
+				if (localtransactionarray[i])
 				this.addLocalTransaction(localtransactionarray[i]);
 			}
 		}
@@ -315,7 +328,7 @@ class StockLedger {
 			for (var i = 0; i < this.localstakeholderarray.length; i++) {
 				var stakeholder = this.localstakeholderarray[i];
 				
-				if (stakeholder.isLocalOnly()) {
+				if (stakeholder.isLocal()) {
 					var jsonelement = stakeholder.getLocalJson();
 					console.log('json is  ' + jsonelement);
 					jsonarray.push(jsonelement);
@@ -333,7 +346,7 @@ class StockLedger {
 			for (var i = 0; i < this.localstockissuancearray.length; i++) {
 				var issuance = this.localstockissuancearray[i];
 				
-				if (issuance.isLocalOnly()) {
+				if (issuance.isLocal()) {
 					var jsonelement = issuance.getLocalJson();
 					console.log('json is  ' + jsonelement);
 					jsonarray.push(jsonelement);
@@ -351,7 +364,7 @@ class StockLedger {
 			for (var i = 0; i < this.localstocktransactionarray.length; i++) {
 				var transaction = this.localstocktransactionarray[i];
 				
-				if (transaction.isLocalOnly()) {
+				if (transaction.isLocal()) {
 					var jsonelement = transaction.getLocalJson();
 					console.log('json is  ' + jsonelement);
 					jsonarray.push(jsonelement);
@@ -368,10 +381,10 @@ class StockLedger {
 		return json;
 	}
 	
-	saveLocalJson() {
+	saveLocalJson(callback) {
 		var persistor = this.getContractLocalPersistor();
 		
-		persistor.saveStockledgerJson(this);
+		persistor.saveStockledgerJson(this, callback);
 	}
 	
 	//
@@ -457,7 +470,16 @@ class StockLedger {
 	}
 	
 	getLocalStakeHolders() {
-		return this.localstakeholderarray;
+		var array = [];
+		
+		for (var i = 0; i < this.localstakeholderarray.length; i++) {
+			var item = this.localstakeholderarray[i];
+			
+			if (item.getStatus() != this.Contracts.STATUS_ON_CHAIN)
+			array.push(item);
+		}
+		
+		return array;
 	}
 	
 	addLocalStakeHolder(stakeholder) {
@@ -468,6 +490,41 @@ class StockLedger {
 		stakeholder.setStakeHolderIndex(key);
 	}
 	
+	hasPendingStakeHolders() {
+		var i;
+		var item;
+
+		for (i = 0; i < this.localstakeholderarray.length; i++) {
+			item = this.localstakeholderarray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	checkPendingStakeHolders() {
+		var itemstoremove = [];
+		var i;
+		var item;
+		
+		// collect pending items that have been deployed
+		for (i = 0; i < this.localstakeholderarray.length; i++) {
+			item = this.localstakeholderarray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING)) {
+				var referenceid = item.getLocalOrderID();
+				var chainitem = this.getChainStakeHolderFromOrderID(referenceid);
+				
+				if (chainitem)  {
+					item.setStatus(this.Contracts.STATUS_ON_CHAIN);
+					itemstoremove.push(item);
+				}
+			}
+		}
+	}
+
 	findLocalStakeHolderFromOrderId(orderid) {
 		var stakeholder;
 		var i;
@@ -484,6 +541,19 @@ class StockLedger {
 	
 	getChainStakeHolders() {
 		return this.chainstakeholderarray;
+	}
+	
+	getChainStakeHolderFromOrderID(referenceid) {
+		var i;
+		var item;
+
+		for (i = 0; i < this.chainstakeholderarray.length; i++) {
+			item = this.chainstakeholderarray[i];
+			
+			if ((item) && (item.getChainOrderID() == referenceid))
+				return item;
+		}
+		
 	}
 	
 	getChainStakeHolderFromAddress(address) {
@@ -563,7 +633,16 @@ class StockLedger {
 	
 	
 	getLocalIssuances() {
-		return this.localstockissuancearray;
+		var array = [];
+		
+		for (var i = 0; i < this.localstockissuancearray.length; i++) {
+			var item = this.localstockissuancearray[i];
+			
+			if (item.getStatus() != this.Contracts.STATUS_ON_CHAIN)
+			array.push(item);
+		}
+		
+		return array;
 	}
 	
 	addLocalIssuance(issuance) {
@@ -574,6 +653,41 @@ class StockLedger {
 		issuance.setIssuanceIndex(key);
 	}
 	
+	hasPendingIssuances() {
+		var i;
+		var item;
+
+		for (i = 0; i < this.localstockissuancearray.length; i++) {
+			item = this.localstockissuancearray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	checkPendingIssuances() {
+		var itemstoremove = [];
+		var i;
+		var item;
+		
+		// collect pending items that have been deployed
+		for (i = 0; i < this.localstockissuancearray.length; i++) {
+			item = this.localstockissuancearray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING)) {
+				var referenceid = item.getLocalOrderID();
+				var chainitem = this.getChainIssuanceFromOrderID(referenceid);
+				
+				if (chainitem)  {
+					item.setStatus(this.Contracts.STATUS_ON_CHAIN);
+					itemstoremove.push(item);
+				}
+			}
+		}
+	}
+
 	findLocalIssuanceFromOrderId(orderid) {
 		var issu;
 		var i;
@@ -589,6 +703,19 @@ class StockLedger {
 	
 	getChainIssuances() {
 		return this.chainstockissuancearray;
+	}
+	
+	getChainIssuanceFromOrderID(referenceid) {
+		var i;
+		var item;
+
+		for (i = 0; i < this.chainstockissuancearray.length; i++) {
+			item = this.chainstockissuancearray[i];
+			
+			if ((item) && (item.getChainOrderID() == referenceid))
+				return item;
+		}
+		
 	}
 	
 	addChainIssuanceAt(issuance, index) {
@@ -656,7 +783,16 @@ class StockLedger {
 	}
 	
 	getLocalTransactions() {
-		return this.localstocktransactionarray;
+		var array = [];
+		
+		for (var i = 0; i < this.localstocktransactionarray.length; i++) {
+			var item = this.localstocktransactionarray[i];
+			
+			if (item.getStatus() != this.Contracts.STATUS_ON_CHAIN)
+			array.push(item);
+		}
+		
+		return array;
 	}
 	
 	addLocalTransaction(transaction) {
@@ -667,6 +803,41 @@ class StockLedger {
 		transaction.setTransactionIndex(key);
 	}
 	
+	hasPendingTransactions() {
+		var i;
+		var item;
+
+		for (i = 0; i < this.localstocktransactionarray.length; i++) {
+			item = this.localstocktransactionarray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	checkPendingTransactions() {
+		var itemstoremove = [];
+		var i;
+		var item;
+		
+		// collect pending items that have been deployed
+		for (i = 0; i < this.localstocktransactionarray.length; i++) {
+			item = this.localstocktransactionarray[i];
+			
+			if ((item) && (item.getStatus() == this.Contracts.STATUS_PENDING)) {
+				var referenceid = item.getLocalOrderID();
+				var chainitem = this.getChainTransactionFromOrderID(referenceid);
+				
+				if (chainitem)  {
+					item.setStatus(this.Contracts.STATUS_ON_CHAIN);
+					itemstoremove.push(item);
+				}
+			}
+		}
+	}
+
 	findLocalTransactionFromOrderId(orderid) {
 		var tx;
 		var i;
@@ -681,6 +852,19 @@ class StockLedger {
 	
 	getChainTransactions() {
 		return this.chainstocktransactionarray;
+	}
+	
+	getChainTransactionFromOrderID(referenceid) {
+		var i;
+		var item;
+
+		for (i = 0; i < this.chainstocktransactionarray.length; i++) {
+			item = this.chainstocktransactionarray[i];
+			
+			if ((item) && (item.getChainOderID() == referenceid))
+				return item;
+		}
+		
 	}
 	
 	addChainTransactionAt(transaction, index) {
@@ -709,78 +893,40 @@ class StockLedger {
 	}
 	
 	getStatus() {
-		return this.status;
+		// 4 local saved status STATUS_LOCAL, STATUS_LOST, STATUS_CANCELLED, STATUS_REJECTED
+		// 2 local saved transient status STATUS_SENT, STATUS_PENDING
+		// 1 chain saved status STATUS_DEPLOYED
+		return this.savedstatus;
 	}
 	
-	checkStatus(callback) {
-		if (this.address == null) {
-			var status = this.getStatus();
-			
-			if (callback)
-				callback(null, status);
-			
-			return status;
-		}
-		
-		var self = this;
-		
-		this.getChainContractVersion(function(err, res) {
-			if (res) {
-				self.setStatus(Securities.STATUS_ON_CHAIN);
-			}
-			
-			if ((err) || (!res)) {
-				var currenttatus = self.getStatus();
-				
-				switch(currenttatus) {
-				case Securities.STATUS_LOCAL:
-					case Securities.STATUS_LOST:
-					case Securities.STATUS_NOT_FOUND:
-					case Securities.STATUS_SENT:
-					case Securities.STATUS_PENDING:
-					case Securities.STATUS_CANCELLED:
-					case Securities.STATUS_REJECTED:
-						break;
-					
-					case Securities.STATUS_DEPLOYED:
-					case Securities.STATUS_ON_CHAIN:
-						self.setStatus(Securities.STATUS_NOT_FOUND);
-						break;
-					default:
-						self.setStatus(Securities.STATUS_UNKOWN);
-						break;
-				}
-				
-				if (currenttatus == Securities.STATUS_ON_CHAIN)
-				self.setStatus(Securities.STATUS_LOST);
-			}
-			
-			var status = self.getStatus();
-			
-			if (callback)
-				callback(null, status);
-			
-			return status;
-		});
+	getLiveStatus() {
+		// 3 local live status STATUS_LOCAL, STATUS_SENT, STATUS_PENDING
+		// 2 chain live status STATUS_NOT_FOUND, STATUS_ON_CHAIN
+		return this.livestatus;
 	}
 	
 	setStatus(status) {
 		switch(status) {
-			case Securities.STATUS_LOST:
-			case Securities.STATUS_NOT_FOUND:
-			case Securities.STATUS_LOCAL:
-			case Securities.STATUS_SENT:
-			case Securities.STATUS_PENDING:
-			case Securities.STATUS_DEPLOYED:
-			case Securities.STATUS_CANCELLED:
-			case Securities.STATUS_REJECTED:
-			case Securities.STATUS_ON_CHAIN:
-				this.status = status;
+			case this.Contracts.STATUS_LOST:
+			case this.Contracts.STATUS_LOCAL:
+			case this.Contracts.STATUS_SENT:
+			case this.Contracts.STATUS_PENDING:
+			case this.Contracts.STATUS_DEPLOYED:
+			case this.Contracts.STATUS_CANCELLED:
+			case this.Contracts.STATUS_REJECTED:
+				this.savedstatus = status;
 				break;
 			default:
 				// do not change for a unknown status
 				break;
 		}
+	}
+	
+	checkStatus(callback) {
+		var Contracts = this.Contracts;
+		var chaintestfunction = (this.getChainContractVersion).bind(this);
+		
+		return Contracts.checkStatus(this, chaintestfunction, callback);
 	}
 	
 	getContractIndex() {
@@ -866,15 +1012,6 @@ class StockLedger {
 		return this.contractinterface;
 	}
 	
-	getContractInstance() {
-		if (this.contractinstance)
-			return this.contractinstance;
-		
-		this.contractinstance = this.getContractInterface().getContractInstance();
-		
-		return this.contractinstance;
-	}
-	
 	
 	// deployment
 	validateLedgerDeployment(payingaccount, owningaccount, gas, gasPrice, callback) {
@@ -923,15 +1060,27 @@ class StockLedger {
 		
 		self.setLocalSubmissionDate(new Date().getTime());
 		
-		var promise = contractinterface.deploy(contractowner, contractownerpublkey,	cryptedowneridentifier,	ledgername,	cryptedledgerdescription, payingaccount, owningaccount, gas, gasPrice)
+		var transactionuuid = this.getUUID();
+		
+		var promise = contractinterface.deploy(contractowner, contractownerpublkey,	cryptedowneridentifier,	ledgername,	cryptedledgerdescription, payingaccount, owningaccount, gas, gasPrice, transactionuuid, function (err, res) {
+			console.log('StockLedger.deploy transaction committed, transaction hash is: ' + res);
+			
+			self.setStatus(self.Contracts.STATUS_PENDING);
+		})
 		.then(function(res) {
-			console.log('StockLedger.deploy promise of deployment resolved, result is ' + res);
+			console.log('StockLedger.deploy promise of deployment resolved, address is ' + res);
 			
-			self.setStatus(Securities.STATUS_PENDING); // we'll set to deploy when we see the contract through an activate
-			self.setAddress(contractinterface.getAddress());
-			
-			if (callback)
-				callback(null, res);
+			if (res) {
+				self.setAddress(contractinterface.getAddress());
+				self.setStatus(self.Contracts.STATUS_DEPLOYED);
+				
+				if (callback)
+					callback(null, res);
+			}
+			else {
+				if (callback)
+					callback('error deploying stock ledger ' + ledgername, null);
+			}
 			
 			return res;
 		});
@@ -970,47 +1119,39 @@ class StockLedger {
 		if (!this.validateAccountRegistration(payingaccount, gas, gasPrice, account, callback))
 			return;
 		
-		var promise = this.finalizeInit(function (res) {
-			if (!res)
-				return callback("contract did not finalize its initialization", null);
-
-			return res;
-			
-		}).then(function (res) {
-			var callfunc = function(contractint) {
-				
-				var contractinterface = self.getContractInterface();
-
-				var _acct_address = account.getAddress();
-				var _rsa_pubkey = account.getRsaPublicKey();
-				var _ece_pubkey = account.getAesPublicKey();
-				
-				var _acct_privkey = account.getPrivateKey();
-				
-				var contractowneraccount = self.getSyncChainOwnerAccount();
-				
-				if (!contractowneraccount.canDoRsaEncryption) {
-					throw 'Can not encrypt data for the owner of the contract';
-				}
-				
-				var _cocrypted_acct_privkey = account.rsaEncryptString(_acct_privkey, contractowneraccount);
-				
-				console.log('registering a shareholder with address ' + _acct_address);
-				return contractinterface.registerAccount(_acct_address, _rsa_pubkey, _ece_pubkey, _cocrypted_acct_privkey,
-						payingaccount, gas, gasPrice);
-				
-			 };
+		var _acct_address = account.getAddress();
+		var _rsa_pubkey = account.getRsaPublicKey();
+		var _ece_pubkey = account.getAesPublicKey();
 		
-			 if (self.contractinterface)
-			 return callfunc(self.contractinterface);
+		var _acct_privkey = account.getPrivateKey();
 		
-		})
+		var contractowneraccount = self.getSyncChainOwnerAccount();
+		
+		if (!contractowneraccount.canDoRsaEncryption) {
+			throw 'Can not encrypt data for the owner of the contract';
+		}
+		
+		var _cocrypted_acct_privkey = account.rsaEncryptString(_acct_privkey, contractowneraccount);
+		
+		console.log('registering a shareholder with address ' + _acct_address);		
+		
+		var contractinterface = this.getContractInterface();
+		
+		var transactionuuid = account.getUUID();
+		
+		var promise = contractinterface.registerAccount(_acct_address, _rsa_pubkey, _ece_pubkey, _cocrypted_acct_privkey,
+				payingaccount, gas, gasPrice, transactionuuid)
 		.then(function (res) {
-	    	console.log('returning from registerAccount with return ' + res);
-	    	if (callback)
-				callback(null, res);
-	    	
-	    	return res;
+			console.log('StockLedger.registerAccount returns ' + res);
+			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.registerAccount returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
@@ -1042,6 +1183,7 @@ class StockLedger {
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to register shareholder: ' + stakeholder.getLocalIdentifier();
 		
 		// we validate we are signed-in
+		var global = GlobalClass.getGlobalObject();
 		var session = this.session;
 		
 		if (session.isAnonymous())
@@ -1062,9 +1204,6 @@ class StockLedger {
 					throw 'address ' + shldraddress + ' does not correspond to a registered account, impossible to register shareholder: ' + stakeholder.getLocalIdentifier();
 				}
 				else {
-					/*var sessionaccountaddress = session.getSessionAccountAddress();
-					
-					if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {*/
 					if (!this.isStakeHolder(session)) {
 						throw 'not signed-in as a shareholder of the contract, impossible to register new shareholder: ' + stakeholder.getLocalIdentifier();
 					}
@@ -1081,7 +1220,9 @@ class StockLedger {
 			}
 		}
 		else {
-			if (!session.ownsContract(this))
+			var stockledgermodule = global.getModuleObject('securities');
+
+			if (!stockledgermodule.ownsContract(this))
 				throw 'session needs to be signed-in as the contract owner to register shareholder: ' + stakeholder.getLocalIdentifier();
 		}
 		
@@ -1177,10 +1318,12 @@ class StockLedger {
 				stakeholder.setStatus(Securities.STATUS_SENT);
 				stakeholder.setLocalSubmissionDate(_registration_date);
 				
+				var transactionuuid = stakeholder.getUUID();
+
 				return contractinterface.registerStakeHolder(_shldr_address, _shldr_rsa_pubkey, _cocrypted_shldr_privkey, _cocrypted_shldr_identifier, 
 						_registration_date,	_creatoraddress, _crtcrypted_shldr_description_string, _crtcrypted_shldr_identifier,
 						_orderid, _signature, _shldrcrypted_shldr_description_string, _shldrcrypted_shldr_identifier,
-						payingaccount, gas, gasPrice);
+						payingaccount, gas, gasPrice, transactionuuid);
 				
 			 };
 		
@@ -1280,9 +1423,11 @@ class StockLedger {
 				issuance.setStatus(Securities.STATUS_SENT);
 				issuance.setLocalSubmissionDate(_registration_date);
 				
+				var transactionuuid = issuance.getUUID();
+
 				return contractinterface.registerIssuance(_name, _cocrypted_issuance_description, _numberofshares, _percentofcapital, 
 						_registration_date, _orderid, _signature, _type, _code,
-						payingaccount, gas, gasPrice);
+						payingaccount, gas, gasPrice, transactionuuid);
 				
 			 };
 		
@@ -1324,9 +1469,6 @@ class StockLedger {
 
 		if (!session.isSessionAccount(owningaccount)) {
 			// trying to register a transaction while not being owner of the contract
-			/*var sessionaccountaddress = session.getSessionAccountAddress();
-			
-			if (!this.getChainStakeHolderFromAddress(sessionaccountaddress)) {*/
 			if (!this.isStakeHolder(session)) {
 				throw 'only registered shareholders of the contract can register transactions';
 			}
@@ -1335,6 +1477,16 @@ class StockLedger {
 					throw 'shareholders can not register transactions with a nature of ' + stocktransaction.getLocalNature();
 				}
 			}
+		}
+		
+		if (!stocktransaction) {
+			throw 'no transaction object passed in argument';
+		}
+		else {
+			var nature = stocktransaction.getLocalNature();
+			
+			if (!nature)
+				throw 'nature of transaction has not been defined';
 		}
 		
 		
@@ -1430,9 +1582,11 @@ class StockLedger {
 				stocktransaction.setStatus(Securities.STATUS_SENT);
 				stocktransaction.setLocalSubmissionDate(_registration_date);
 				
+				var transactionuuid = stocktransaction.getUUID();
+
 				return contractinterface.registerTransaction(_numberofshares, _from, _to, _nature, _issuancenumber, _orderid, 
 						_registration_date, _consideration, _currency, _creatoraddress, _signature,
-						payingaccount, gas, gasPrice);
+						payingaccount, gas, gasPrice, transactionuuid);
 				
 			 };
 		
@@ -1529,10 +1683,10 @@ class StockLedger {
 		
 		var promises = []
 		
-		var promiseowner = this.getContractInstance().activate().then(function (contractinstance) {
+		var promiseowner = this.getContractInterface().getContractInstance().activate().then(function (contractinstance) {
 
-			if (self.contractinstance)
-			return self.getContractInstance().method_call("owner", [])
+			if (self.contractinterface)
+			return self.contractinterface.getContractInstance().method_call("owner", [])
 		
 		}).then(function(res) {
 	    	
@@ -1543,10 +1697,10 @@ class StockLedger {
 		
 		promises.push(promiseowner);
 		
-		var promiseownerpubkey = this.getContractInstance().activate().then(function (contractinstance) {
+		var promiseownerpubkey = this.getContractInterface().getContractInstance().activate().then(function (contractinstance) {
 			
-			if (self.contractinstance)
-			return self.getContractInstance().method_call("owner_pubkey", [])
+			if (self.contractinterface)
+			return self.contractinterface.getContractInstance().method_call("owner_pubkey", [])
 			
 		}).then(function(res) {
 	    	
@@ -1591,36 +1745,33 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (res) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-				
-
-				var promise2 = self.getContractInterface().getNextOrderId().then(function(res) {
-			    	
-			    	console.log('returning from next_orderid with return ' + res);
-			    	
-			    	if (callback)
-						callback(null, res);
-						
-			    	return res;
-			    });
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
-		
+		})
+		.then(function (res) {
+			return contractinterface.getNextOrderId();
+		})
+		.then(function (res) {
+			console.log('StockLedger.getChainNextOrderId returns ' + res);
+			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.getChainNextOrderId returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
+
 	}
 	
 	
@@ -1643,6 +1794,7 @@ class StockLedger {
 	    });
 		
 		return promise;
+		
 	}
 	
 	getChainLedgerDescription(callback) {
@@ -1803,38 +1955,33 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInterface().getAccountCount().then(function(res) {
-			    	
-			    	console.log('returning from getAccountCount with return ' + res);
-			    	
-			    	self.contract_version = res;
-					
-			    	if (callback)
-						callback(null, res);
-			    	
-			    	return res;
-			    });
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getAccountCount();
+		})
+		.then(function (res) {
+			console.log('StockLedger.getChainAccountCount returns ' + res);
 			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.getChainAccountCount returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
-		
+
 	}
 	
 	getChainAccountAt(index, callback) {
@@ -1846,25 +1993,20 @@ class StockLedger {
 		
 		var owner = this.localowner;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (res) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInstance().method_call("getAccountAt", [index]);
-			    
-				return promise2;
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getAccountAt(index);
+		})
+		.then(function(res_array) {
 			
-		}).then( function(res_array) {
 			if (!res_array) {
 				if (callback)
 					callback('getAccountAt no result retrieved', null);
@@ -1874,10 +2016,10 @@ class StockLedger {
 			
 			console.log('returning from getAccountAt with res_array ' + res_array);
 
-			var _acct_address = (res_array && res_array[0] ? res_array[0] : null);
-			var _rsa_pubkey = (res_array && res_array[1] ? res_array[1] : null);
-			var _ece_pubkey = (res_array && res_array[2] ? res_array[2] : null);
-			var _cocrypted_acct_privkey = (res_array && res_array[3] ? res_array[3] : null);
+			var _acct_address = res_array['acct_address'];
+			var _rsa_pubkey = res_array['rsa_pubkey'];
+			var _ece_pubkey = res_array['ece_pubkey'];
+			var _cocrypted_acct_privkey = res_array['cocrypted_acct_privkey'];
 			
 			var _acct_privkey = null;
 
@@ -1913,10 +2055,12 @@ class StockLedger {
 
 	    	if (callback)
 				callback(null, account);
+
+			
 		});
 		
 		return promise;
-		
+
 	}
 	
 	getChainAccountList(callback) {
@@ -1925,30 +2069,26 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
+		})
+		.then(function (res) {
+			return self.getChainAccountCount(function (err, count) {
+				if (!count)
+				return callback(null, []);
 
-				return self.getChainAccountCount(function (err, res) {
-					var count = res;
-
-					console.log("count of account is " + count);
-					
-					return res;
-				});
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
-			
-		}).then(function(res) {
-			var count = res;
+				return count;
+				
+			});
+		})
+		.then(function (count) {
+			console.log("count of accounts is " + count);
 			
 			console.log("creating list of " + count + " promises to get accounts at each index");
 			
@@ -1964,11 +2104,17 @@ class StockLedger {
 				
 		    	if (callback)
 				return callback(null, self.chainaccountarray);
-	    	});			
-		});
+	    	});
+			
+		})
+		.then(function(res) {
+	    	console.log("StockLedger.getChainAccountList array is now complete");
+	    	
+	    	// if we have pending objects, we check if some have been deployed
+    	});
 		
 		return promise;
-		
+
 	}
 	
 	
@@ -1980,38 +2126,33 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInterface().getShareHolderCount().then(function(res) {
-			    	
-			    	console.log('returning from getShareHolderCount with return ' + res);
-			    	
-			    	self.contract_version = res;
-					
-			    	if (callback)
-						callback(null, res);
-			    	
-			    	return res;
-			    });
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getShareHolderCount();
+		})
+		.then(function (res) {
+			console.log('StockLedger.getChainStakeHolderCount returns ' + res);
 			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.getChainStakeHolderCount returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
-		
+
 	}
 	
 	getChainStakeHolderAt(index, callback) {
@@ -2025,26 +2166,20 @@ class StockLedger {
 		
 		var owner = this.localowner;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (res) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInstance().method_call("getShareHolderAt", [index]);
-				//var promise2 = contractInstance.getShareHolderAt.call(index);
-			    
-				return promise2;
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getShareHolderAt(index);
+		})
+		.then(function(res_array) {
 			
-		}).then( function(res_array) {
 			if (!res_array) {
 				if (callback)
 					callback('getShareHolderAt no result retrieved', null);
@@ -2053,12 +2188,12 @@ class StockLedger {
 			}
 			
 			// address, cocrypted_shldr_key, cocrypted_shldr_identifier, registration_date, block_date
-			var address = (res_array && res_array[0] ? res_array[0] : null);
-			var shldr_rsa_pubkey = (res_array && res_array[1] ? res_array[1] : null);
-			var cocrypted_shldr_privkey = (res_array && res_array[2] ? res_array[2] : null);
-			var cocrypted_shldr_identifier = (res_array && res_array[3] ? res_array[3] : null);
-			var registration_date = (res_array && res_array[4] ? res_array[4] : null);
-			var block_date = (res_array && res_array[5] ? res_array[5] : null);
+			var address = res_array['address'];
+			var shldr_rsa_pubkey = res_array['shldr_rsa_pubkey'];
+			var cocrypted_shldr_privkey = res_array['cocrypted_shldr_privkey'];
+			var cocrypted_shldr_identifier = res_array['cocrypted_shldr_identifier'];
+			var registration_date = res_array['registration_date'];
+			var block_date = res_array['block_date'];
 			
 			console.log('returning from getShareHolderAt with res_array ' + res_array);
 			console.log('returning from getShareHolderAt with address ' + address + ' rsa publickey ' + shldr_rsa_pubkey + ' cocrypted ' + cocrypted_shldr_privkey + ' regdate ' + registration_date + ' block date ' + block_date);
@@ -2074,18 +2209,18 @@ class StockLedger {
 
 			// because of Compiler error "Stack too deep, try using less variables." we must make a second call
 	    	// to get the rest of the variables
-	    	var callfunc = function(instance) {
-				var contractInstance = instance;
+	    	var callfunc = function(contractinterface) {
 
-				var promise2 = self.getContractInstance().method_call("getShareHolderExtraAt", [index]);
+				var promise2 = contractinterface.getShareHolderExtraAt(index);
 				//var promise2 = contractInstance.getShareHolderAt.call(index);
 			    
 				return promise2;
 			 };
 				
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
-		}).then(function(res_array) {
+			 if (contractinterface)
+			 return callfunc(contractinterface);
+		})
+		.then(function(res_array) {
 			if (!res_array) {
 				if (callback)
 					callback('getShareHolderExtraAt no result retrieved', null);
@@ -2094,13 +2229,13 @@ class StockLedger {
 			}
 			
 	    	
-			var creator = (res_array && res_array[0] ? res_array[0] : null);
-			var crtcrypted_shldr_description_string = (res_array && res_array[1] ? res_array[1] : null);
-			var crtcrypted_shldr_identifier = (res_array && res_array[2] ? res_array[2] : null);
-			var orderid = (res_array && res_array[3] ? res_array[3] : null);
-			var signature = (res_array && res_array[4] ? res_array[4] : null);
-			var shldrcrypted_shldr_description = (res_array && res_array[5] ? res_array[5] : null);
-			var shldrcrypted_shldr_identifier = (res_array && res_array[6] ? res_array[6] : null);
+			var creator = res_array['creator'];
+			var crtcrypted_shldr_description_string = res_array['crtcrypted_shldr_description_string'];
+			var crtcrypted_shldr_identifier = res_array['crtcrypted_shldr_identifier'];
+			var orderid = res_array['orderid'];
+			var signature = res_array['signature'];
+			var shldrcrypted_shldr_description = res_array['shldrcrypted_shldr_description'];
+			var shldrcrypted_shldr_identifier = res_array['shldrcrypted_shldr_identifier'];
 
 			console.log('returning from getShareHolderExtraAt with res_array ' + res_array);
 			console.log('returning from getShareHolderExtraAt with creator ' + creator + ' orderid ' + orderid);
@@ -2131,7 +2266,8 @@ class StockLedger {
 			 callback(null, stakeholder);
 	    	
 	    	return stakeholder;
-	    });
+			
+		});
 		
 		return promise;
 		
@@ -2143,29 +2279,26 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
+		})
+		.then(function (res) {
+			return self.getChainStakeHolderCount(function (err, count) {
+			if (!count)
+				return callback(null, []);
 
-				return self.getChainStakeHolderCount(function (err, res) {
-					var count = res;
-					console.log("count of stakeholders is " + count);
-					
-					return res;
-				});
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+			return count;
+			});
 			
-		}).then(function(res) {
-			var count = res;
+		}).then(function (count) {
+			console.log("count of stakeholders is " + count);
+			
 			console.log("creating list of " + count + " promises to get stakeholders at each index");
 			
 			var promises = [];
@@ -2177,14 +2310,23 @@ class StockLedger {
 			
 			return Promise.all(promises).then(function(res) {
 		    	console.log("all getChainStakeHolderAt promises have been resolved, array is now complete");
-				
-		    	if (callback)
-				return callback(null, self.chainstakeholderarray);
-	    	});			
-		});
+	    	});
+			
+		})
+		.then(function(res) {
+	    	console.log("StockLedger.getChainStakeHolderList array is now complete");
+	    	
+	    	// if we have pending objects, we check if some have been deployed
+	    	if (self.hasPendingStakeHolders()) {
+	    		self.checkPendingStakeHolders();
+	    	}
+	    	
+	    	if (callback)
+			return callback(null, self.chainstakeholderarray);
+    	});
 		
 		return promise;
-		
+
 	}
 	
 	// issuances
@@ -2200,25 +2342,22 @@ class StockLedger {
     	
 		var owner = this.localowner;
 		
+		var owner = this.localowner;
+		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInstance().method_call("getIssuanceAt", [index]);
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getIssuanceAt(index);
+		})
+		.then(function(res_array) {
 			
-		}).then(function(res_array) {
 			if (!res_array) {
 				if (callback)
 					callback('getChainIssuanceAt no result retrieved', null);
@@ -2228,17 +2367,17 @@ class StockLedger {
 			
 			console.log('returning from getChainIssuanceAt with return ' + res_array);
 			
-	    	var numberofshares = res_array[0];
-	    	var percentofcapital = res_array[1]; 
-	    	var issuance_date = res_array[2]; 
-	    	var block_date = res_array[3]; 
-	    	var name = res_array[4]; 
-	    	var cocrypted_description = res_array[5]; 
-	    	var cancel_date = res_array[6]; 
-	    	var cancel_block_date = res_array[7];
+	    	var numberofshares = res_array['numberofshares'];
+	    	var percentofcapital = res_array['percentofcapital']; 
+	    	var issuance_date = res_array['issuance_date']; 
+	    	var block_date = res_array['block_date']; 
+	    	var name = res_array['name']; 
+	    	var cocrypted_description = res_array['cocrypted_description']; 
+	    	var cancel_date = res_array['cancel_date']; 
+	    	var cancel_block_date = res_array['cancel_block_date'];
 	    	
-	    	var orderid = res_array[8]; 
-	    	var signature = res_array[9]; 
+	    	var orderid = res_array['orderid']; 
+	    	var signature = res_array['signature']; 
 
 	    	
 	    	issuance.setChainPosition(index);
@@ -2254,31 +2393,31 @@ class StockLedger {
 	    	
 	    	issuance.setChainOrderId(orderid);
 	    	issuance.setChainSignature(signature);
-	    	
-				
-			var callfunc = function(instance) {
-				var contractInstance = instance;
 
-				var promise2 = self.getContractInstance().method_call("getIssuanceExtraAt", [index]);
+			// because of Compiler error "Stack too deep, try using less variables." we must make a second call
+	    	// to get the rest of the variables
+	    	var callfunc = function(contractinterface) {
+
+				var promise2 = contractinterface.getIssuanceExtraAt(index);
 			    
 				return promise2;
 			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
-			 
-	    }).then(function(res_array) {
+				
+			 if (contractinterface)
+			 return callfunc(contractinterface);
+		})
+		.then(function(res_array) {
 			if (!res_array) {
 				if (callback)
-					callback('getChainIssuanceExtraAt no result retrieved', null);
+					callback('getIssuanceExtraAt no result retrieved', null);
 				
 				return;
 			}
 			
 			console.log('returning from getChainIssuanceExtraAt with return ' + res_array);
 			
-	    	var type = res_array[0];
-	    	var code = res_array[1]; 
+	    	var type = res_array['type'];
+	    	var code = res_array['code']; 
 
 	    	
 	    	issuance.setChainType(type);
@@ -2301,7 +2440,8 @@ class StockLedger {
 				callback(null, issuance);
 			
 	    	return issuance;
-	    });
+			
+		});
 		
 		return promise;
 		
@@ -2313,37 +2453,33 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInterface().getIssuanceCount().then(function(res) {
-			    	
-			    	console.log('returning from getIssuanceCount with return ' + res);
-			    	
-			    	self.contract_version = res;
-					
-			    	if (callback)
-						callback(null, res);
-						
-			    });
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getIssuanceCount();
+		})
+		.then(function (res) {
+			console.log('StockLedger.getChainIssuanceCount returns ' + res);
 			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.getChainIssuanceCount returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
-		
+
 	}
 	
 	getChainIssuanceList(callback) {
@@ -2352,42 +2488,54 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
+		})
+		.then(function (res) {
+			return self.getChainStakeHolderCount(function (err, count) {
+			if (!count)
+				return callback(null, []);
 
-				return self.getChainIssuanceCount(function (err, res) {
-					var count = res;
-					console.log("count of issuances is " + count);
-					var promises = [];
-					
-					for (var i = 0; i < count; i++) {
-						var promise = self.getChainIssuanceAt(i);
-						promises.push(promise);
-					}
-					
-					return Promise.all(promises).then(function(res) {
-				    	console.log("all getChainIssuanceAt promises have been resolved, array is now complete");
-						
-				    	if (callback)
-							callback(null, self.chainstockissuancearray);
-			    	});
-				});
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+			return count;
+			});
+		})
+		.then(function (count) {
+			console.log("count of issuances is " + count);
 			
-		});
+			console.log("creating list of " + count + " promises to get issuances at each index");
+			
+			var promises = [];
+			
+			for (var i = 0; i < count; i++) {
+				var promise = self.getChainIssuanceAt(i);
+				promises.push(promise);
+			}
+			
+			return Promise.all(promises).then(function(res) {
+		    	console.log("all getChainIssuanceAt promises have been resolved, array is now complete");
+	    	});
+			
+		})
+		.then(function(res) {
+	    	console.log("StockLedger.getChainIssuanceList array is now complete");
+	    	
+	    	// if we have pending objects, we check if some have been deployed
+	    	if (self.hasPendingIssuances()) {
+	    		self.checkPendingIssuances();
+	    	}
+			
+	    	if (callback)
+			return callback(null, self.chainstockissuancearray);
+    	});
 		
 		return promise;
-		
+
 	}
 	
 	// transactions
@@ -2403,53 +2551,47 @@ class StockLedger {
     	
 		var owner = this.localowner;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInstance().method_call("getTransactionAt", [index]);
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getTransactionAt(index);
+		})
+		.then(function(res_array) {
 			
-		}).then(function(res_array) {
 			if (!res_array) {
 				if (callback)
-					callback('getChainTransactionAt no result retrieved', null);
+					callback('getTransactionAt no result retrieved', null);
 				
 				return;
 			}
 			
-	    	
-			console.log('returning from getChainTransactionAt with return ' + res_array);
+			console.log('returning from getTransactionAt with return ' + res_array);
 			
-	    	var from = res_array[0];
-	    	var to = res_array[1];
+	    	var from = res_array['from'];
+	    	var to = res_array['to'];
 			
-	    	var transactiondate = res_array[2]; // unix time
-	    	var block_date = res_array[3]; 
+	    	var transactiondate = res_array['transactiondate']; // unix time
+	    	var block_date = res_array['block_date']; 
 			
-	    	var nature = res_array[4]; // 0 creation, 1 registered transfer, 2 shareholder record (e.g. signed endorsement)
+	    	var nature = res_array['nature']; // 0 creation, 1 registered transfer, 2 shareholder record (e.g. signed endorsement)
 			
-	    	var issuancenumber = res_array[5]; // 1 based
-	    	var orderid = res_array[6]; // unique, provided by caller
+	    	var issuancenumber = res_array['issuancenumber']; // 1 based
+	    	var orderid = res_array['orderid']; // unique, provided by caller
 
-	    	var numberofshares = res_array[7];
+	    	var numberofshares = res_array['numberofshares'];
 			
-	    	var consideration = res_array[8];
-	    	var currency = res_array[9];
+	    	var consideration = res_array['consideration'];
+	    	var currency = res_array['currency'];
 	    	
-	    	var creator = res_array[10];
-	    	var signature = res_array[11];
+	    	var creator = res_array['creator'];
+	    	var signature = res_array['signature'];
 	    	
 	    	transaction.setChainPosition(index);
 	    	
@@ -2484,7 +2626,8 @@ class StockLedger {
 				callback(null, transaction);
 			
 	    	return 	transaction;
-	    });
+			
+		});
 		
 		return promise;
 		
@@ -2496,37 +2639,33 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
-
-				var promise2 = self.getContractInterface().getTransactionCount().then(function(res) {
-			    	
-			    	console.log('returning from getTransactionCount with return ' + res);
-			    	
-			    	self.contract_version = res;
-					
-			    	if (callback)
-						callback(null, res);
-						
-			    });
-			    
-				return promise2;
-			 };
-		
-			 if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+		})
+		.then(function (res) {
+			return contractinterface.getTransactionCount();
+		})
+		.then(function (res) {
+			console.log('StockLedger.getChainTransactionCount returns ' + res);
 			
+			if (callback) {
+				if (res)
+					callback(null, res);
+				else
+					callback('StockLedger.getChainTransactionCount returned null result', null);
+			}
+			
+			return res;
 		});
 		
 		return promise;
-		
+
 	}
 	
 	getChainTransactionList(callback) {
@@ -2535,42 +2674,54 @@ class StockLedger {
 		var self = this;
 		var session = this.session;
 		
+		var contractinterface = this.getContractInterface();
+		
 		var promise = this.finalizeInit(function (res) {
 			if (!res)
 				return callback("contract did not finalize its initialization", null);
 
 			return res;
 			
-		}).then(function (contractinstance) {
-			var callfunc = function(instance) {
-				var contractInstance = instance;
+		})
+		.then(function (res) {
+			return self.getChainTransactionCount(function (err, count) {
+			if (!count)
+				return callback(null, []);
 
-				return self.getChainTransactionCount(function (err, res) {
-					var count = res;
-					console.log("count of transactions is " + count);
-					var promises = [];
-					
-					for (var i = 0; i < count; i++) {
-						var promise = self.getChainTransactionAt(i);
-						promises.push(promise);
-					}
-					
-					return Promise.all(promises).then(function(res) {
-				    	console.log("all getChainTransactionAt promises have been resolved, array is now complete");
-						
-				    	if (callback)
-							callback(null, self.chainstocktransactionarray);
-			    	});
-				});
-			 };
-		
-			if (self.contractinstance)
-			 return callfunc(self.contractinstance);
+			return count;
+			});
 			
-		});
+		}).then(function (count) {
+			console.log("count of transactions is " + count);
+			
+			console.log("creating list of " + count + " promises to get transactions at each index");
+			
+			var promises = [];
+			
+			for (var i = 0; i < count; i++) {
+				var promise = self.getChainTransactionAt(i);
+				promises.push(promise);
+			}
+			
+			return Promise.all(promises).then(function(res) {
+		    	console.log("all getChainTransactionAt promises have been resolved, array is now complete");
+	    	});
+			
+		})
+		.then(function(res) {
+	    	console.log("StockLedger.getChainTransactionAt array is now complete");
+	    	
+	    	// if we have pending objects, we check if some have been deployed
+	    	if (self.hasPendingTransactions()) {
+	    		self.checkPendingTransactions();
+	    	}
+			
+	    	if (callback)
+			return callback(null, self.chainstocktransactionarray);
+    	});
 		
 		return promise;
-		
+
 	}
 }
 

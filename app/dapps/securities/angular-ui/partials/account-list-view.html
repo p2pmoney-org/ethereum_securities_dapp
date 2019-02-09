@@ -1,0 +1,21 @@
+
+<div id="AccountsView" ng-controller="AccountsViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'Address' | transl}}</td>
+	     	<td>{{'Public key (ece)' | transl}}</td>
+	     	<td>{{'Public key (rsa)' | transl}}</td>
+    	</tr>
+        
+		<!-- chain (generated) accounts --> 
+        <tr ng-repeat="account in chainaccounts" class="{{$odd ? 'table-contract-list-tr-chain-odd' : 'table-contract-list-tr-chain-even'}}">
+			<td>{{account.address}}</td>
+			<td>{{account.publicecekey}}</td>
+ 			<td>{{account.publicrsakey}}</td>
+        </tr>
+
+    </table>
+
+</div>

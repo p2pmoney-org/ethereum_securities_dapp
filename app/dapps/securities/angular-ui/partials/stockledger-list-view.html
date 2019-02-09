@@ -1,0 +1,40 @@
+
+<div id="StockLedgersViewCtrl" ng-controller="StockLedgersViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'description' | transl}}</td>
+	    	<td>{{'contract type' | transl}}</td>
+	    	<td>{{'status' | transl}}</td>
+	    	<td>{{'contract address' | transl}}</td>
+ 	    	<td>{{'owner address' | transl}}</td>
+ 	    	<td>{{'owner identifier' | transl}}</td>
+ 	    	<td>&nbsp;</td>
+    	</tr>
+        
+		<!-- local contracts --> 
+        <tr ng-repeat="stockledger in localstockledgers" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td><a ui-sref="home.stockledgers.modify({uuid: stockledger.uuid})">{{stockledger.localdescription}}</a></td>
+	        <td>{{stockledger.contracttype}}</td>
+	        <td>{{stockledger.statusstring}}</td>
+	        <td>{{stockledger.contractaddress}}</td>
+	        <td>{{stockledger.owneraddress}}</td>
+	        <td>{{stockledger.owneridentifier}}</td>
+	        <td class="table-contract-list-action-td"><a ui-sref="home.stockledgers.delete({uuid: stockledger.uuid})">{{'remove from list' | transl}}</a></td>
+        </tr>
+    
+		<!-- chain contracts --> 
+        <tr ng-repeat="stockledger in chainstockledgers" class="{{$odd ? 'table-contract-list-tr-chain-odd' : 'table-contract-list-tr-chain-even'}}">
+			<td><a ui-sref="home.stockledgers.view({uuid: stockledger.uuid})">{{stockledger.localdescription}}</a></td>
+	        <td>{{stockledger.contracttype}}</td>
+	        <td>{{stockledger.statusstring}}</td>
+	        <td>{{stockledger.contractaddress}}</td>
+	        <td>{{stockledger.owneraddress}}</td>
+	        <td>{{stockledger.owneridentifier}}</td>
+	        <td class="table-contract-list-action-td"><a ui-sref="home.stockledgers.delete({uuid: stockledger.uuid})">{{'remove from list' | transl}}</a></td>
+        </tr>
+
+    </table>
+
+</div>

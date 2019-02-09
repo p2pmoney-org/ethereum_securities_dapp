@@ -1,0 +1,38 @@
+
+<div class="container">
+
+<h2>{{'Deploy Transaction' | transl}}</h2>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" ng-controller="TransactionDeployFormCtrl" >
+
+<div ng-if="transaction.islocalonly" class="div-form-tabs">
+	<div class="div-form-tab"><span><a ui-sref="home.stockledgers.transactions.modify({uuid: stockledger.uuid, index: transaction.index})">{{'Modify transaction' | transl}}</a></span></div>
+	<div class="div-form-selected-tab"><span>{{'Deploy transaction' | transl}}</span></div>
+</div>
+
+<div class="div-form">
+
+<div ng-if="transaction.islocalonly" ng-include='"./dapps/securities/angular-ui/partials/transaction-deploy-form.html"'></div>
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+<div class="band-separator"><hr></div>
+
+<div id="view-band" class="view-band">
+
+<div class="div-view-container" >
+
+<div ng-include='"./dapps/securities/angular-ui/partials/transaction-cover-view.html"'></div>
+
+</div><!-- div-view-container -->
+
+</div><!-- /.container -->

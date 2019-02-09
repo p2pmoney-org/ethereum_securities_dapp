@@ -1,0 +1,38 @@
+
+<div class="container">
+
+<h2>{{'Deploy Shareholder' | transl}}</h2>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" ng-controller="ShareHolderDeployFormCtrl" >
+
+<div ng-if="shareholder.islocalonly" class="div-form-tabs">
+	<div class="div-form-tab"><span><a ui-sref="home.stockledgers.shareholders.modify({uuid: stockledger.uuid, index: shareholder.index})">{{'Modify shareholder' | transl}}</a></span></div>
+	<div class="div-form-selected-tab"><span>{{'Deploy shareholder' | transl}}</span></div>
+</div>
+
+<div class="div-form">
+
+<div ng-if="shareholder.islocalonly" ng-include='"./dapps/securities/angular-ui/partials/shareholder-deploy-form.html"'></div>
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+<div class="band-separator"><hr></div>
+
+<div id="view-band" class="view-band">
+
+<div class="div-view-container" >
+
+<div ng-include='"./dapps/securities/angular-ui/partials/shareholder-cover-view.html"'></div>
+
+</div><!-- div-view-container -->
+
+</div><!-- /.container -->

@@ -18,16 +18,6 @@ var Module = class {
 	init() {
 		console.log('module init called for ' + this.name);
 		
-		var commonmodule = this.global.getModuleObject('common');
-		
-		var contracts = commonmodule.getContractsObject();
-		
-		// register StockLedger in the contracts global object
-		contracts.registerContractClass('StockLedger', this.StockLedger);
-		
-		// force refresh of list
-		commonmodule.getContractsObject(true);
-		
 		this.isready = true;
 	}
 	
@@ -75,6 +65,39 @@ var Module = class {
 		return this.isloading;
 	}
 
+	// optional  module functions
+	registerHooks() {
+		console.log('module registerHooks called for ' + this.name);
+		
+		var global = this.global;
+		
+		global.registerHook('postFinalizeGlobalScopeInit_hook', 'securities', this.postFinalizeGlobalScopeInit_hook);
+	}
+	
+	//
+	// hooks
+	//
+	postFinalizeGlobalScopeInit_hook(result, params) {
+		console.log('postFinalizeGlobalScopeInit_hook called for ' + this.name);
+		
+		var global = this.global;
+
+		var commonmodule = this.global.getModuleObject('common');
+		
+		var contracts = commonmodule.getContractsObject();
+		
+		// register StockLedger in the contracts global object
+		contracts.registerContractClass('StockLedger', this.StockLedger);
+		
+		// force refresh of list
+		commonmodule.getContractsObject(true);
+		
+
+		result.push({module: 'securities', handled: true});
+		
+		return true;
+	}
+
 	//
 	// control
 	//
@@ -115,6 +138,25 @@ var Module = class {
 		return this.session;
 	}
 	
+	// stock ledgers
+	_filterLocalContracts(contracts) {
+		var array = [];
+		
+		if (!contracts)
+			return array;
+		
+		var locals = contracts.getLocalOnlyContractObjects();
+
+		for (var i = 0; i < locals.length; i++) {
+			var local = locals[i];
+			
+			if (local.getContractType() == 'StockLedger')
+			array.push(local);
+		}
+
+		return array;
+	}
+	
 	_filterContracts(contracts) {
 		var array = [];
 		
@@ -126,14 +168,103 @@ var Module = class {
 		for (var i = 0; i < contractarray.length; i++) {
 			var contract = contractarray[i];
 			
-			if (contract.getContractType() == 'TokenERC20')
+			if (contract.getContractType() == 'StockLedger')
 			array.push(contract);
 		}
 
 		return array;
 	}
 	
-	getStockLedgers(bForceRefresh, callback) {
+	getStockLedgers(session, bForceRefresh, callback) {
+		var global = this.global;
+		var self = this;
+		
+		var commonmodule = global.getModuleObject('common');
+		
+		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+			if (callback) {
+				var array = self._filterContracts(contracts);
+				
+				callback(null, array);
+			}
+		});
+		
+		var array = this._filterContracts(contracts);
+		
+		return array;
+	}
+	
+	getLocalStockLedgers(session, bForceRefresh, callback) {
+		var global = this.global;
+		var self = this;
+		
+		var commonmodule = global.getModuleObject('common');
+		
+		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+			if (callback) {
+				var array = self._filterLocalContracts(contracts);
+				
+				callback(null, array);
+			}
+		});
+		
+		var array = this._filterLocalContracts(contracts);
+		
+		return array;
+	}
+	
+	getChainStockLedgers(session, bForceRefresh) {
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		var contracts = commonmodule.getContractsObject(bForceRefresh);
+		
+		var array = [];
+		
+		var chains = contracts.getChainContractObjects();
+
+		for (var i = 0; i < chains.length; i++) {
+			var chain = chains[i];
+			
+			if (chain.getContractType() == 'StockLedger')
+			array.push(chain);
+		}
+
+		return array;
+	}
+	
+	findChainERC20Token(noticebookarray, address) {
+		if (!address)
+			return;
+		
+		var addr = address.trim().toLowerCase();
+		
+		for (var i = 0; i < noticebookarray.length; i++) {
+			var bookaddress = noticebookarray[i].getAddress().trim().toLowerCase();
+			if (bookaddress == addr)
+				return noticebookarray[i];
+		}
+	}
+	
+	_filterContracts(contracts) {
+		var array = [];
+		
+		if (!contracts)
+			return array;
+		
+		var contractarray = contracts.getContractObjectsArray();
+
+		for (var i = 0; i < contractarray.length; i++) {
+			var contract = contractarray[i];
+			
+			if (contract.getContractType() == 'StockLedger')
+			array.push(contract);
+		}
+
+		return array;
+	}
+	
+	getStockLedgers(session, bForceRefresh, callback) {
 		var global = this.global;
 		var self = this;
 		
@@ -173,6 +304,10 @@ var Module = class {
 	
 	createBlankStockHolderObject(session, stockledger) {
 		return new this.StockHolder(session, stockledger);
+	}
+	
+	getStockHolderObjectFromAddress(stockledger, address) {
+		return stockledger.getChainStakeHolderFromAddress(address);
 	}
 	
 	getStockHoldersFromJsonArray(session, stockledger, jsonarray) {

@@ -1,0 +1,44 @@
+<div class="container">
+
+<h2>{{'List of Issuances' | transl}}</h2>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" ng-controller="IssuanceCreateFormCtrl" >
+
+<div class="div-form-tabs">
+	<div class="div-form-selected-tab"><span>{{'Create issuance' | transl}}</span></div>
+	
+</div>
+
+
+<div class="div-form">
+
+<div ng-include='"./dapps/securities/angular-ui/partials/issuance-create-form.html"'></div>
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+<div class="band-separator"><hr></div>
+
+
+<div id="view-band" class="view-band">
+
+<div class="div-view-container" >
+
+<div ng-include='"./dapps/securities/angular-ui/partials/issuance-list-view.html"'></div>
+
+</div><!-- div-view-container -->
+
+</div><!-- view-band -->
+
+
+
+</div>
+<!-- /.container -->

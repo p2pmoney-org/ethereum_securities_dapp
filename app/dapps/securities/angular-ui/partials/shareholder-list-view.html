@@ -1,0 +1,40 @@
+
+<div id="ShareHoldersView" ng-controller="ShareHoldersViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'Identifier' | transl}}</td>
+	     	<td>{{'Status' | transl}}</td>
+	     	<td>{{'Address' | transl}}</td>
+	     	<td>{{'Public key (rsa)' | transl}}</td>
+	     	<td>{{'Private key (crypted)' | transl}}</td>
+	     	<td>{{'Identifier (crypted)' | transl}}</td>
+  	    	<td>&nbsp;</td>
+    	</tr>
+        
+		<!-- local notices --> 
+        <tr ng-repeat="shareholder in localshareholders" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td><a ui-sref="home.stockledgers.shareholders.modify({uuid: stockledgeruuid, index: shareholder.index})">{{shareholder.identifier}}</a></td>
+			<td>{{shareholder.statusstring}}</td>
+	     	<td>{{shareholder.address}}</td>
+			<td>{{shareholder.publicrsakey}}</td>
+			<td>{{shareholder.privatecryptedkey}}</td>
+			<td>{{shareholder.cryptedidentifier}}</td>
+	        <td class="table-contract-list-action-td"><a ui-sref="home.stockledgers.shareholders.delete({uuid: stockledgeruuid, index: shareholder.number})">{{'remove from list' | transl}}</a></td>
+        </tr>
+    
+		<!-- chain (published) notices --> 
+        <tr ng-repeat="shareholder in chainshareholders" class="{{$odd ? 'table-contract-list-tr-chain-odd' : 'table-contract-list-tr-chain-even'}}">
+			<td><a ui-sref="home.stockledgers.shareholders.view({uuid: stockledgeruuid, index: shareholder.index})">{{shareholder.identifier}}</a></td>
+			<td>{{shareholder.statusstring}}</td>
+	     	<td>{{shareholder.address}}</td>
+			<td>{{shareholder.publicrsakey}}</td>
+			<td>{{shareholder.privatecryptedkey}}</td>
+			<td>{{shareholder.cryptedidentifier}}</td>
+ 			<td>&nbsp;</td>
+        </tr>
+
+    </table>
+
+</div>

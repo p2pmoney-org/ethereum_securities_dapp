@@ -1,0 +1,59 @@
+
+<form name="AccountCreateForm" ng-controller="AccountCreateFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="stockledgeruuid" ng-model="stockledger.uuid" required>
+ 	
+   	<div>
+	
+ 	<span id="address-span" class="address-span">
+		<label for="description">{{'Address:' | transl}}</label>
+		<input type="text" class="form-address-input" name="address" ng-model="address.text" required>
+		
+ 	</span>
+
+	<span id="privkey-span" class="privkey-span">
+		<label for="privatekey">{{'Copy private key before registering this account:' | transl}}</label>
+		<input type="text" class="form-privatekey-input" name="privatekey" ng-model="privatekey.text">
+		
+ 	</span>
+ 	
+   	<span class="form-actions">
+             <button type="button" ng-click="generatePrivateKey()" >{{'Generate a Key' || transl}}</button>
+	</span>
+ 
+    </div>
+    
+ 	<div>
+	
+	<span id="walletused-span" class="form-from-span">
+		<label for="walletused">{{'Wallet used:' | transl}}</label>
+		<input type="text" class="form-walletused-input" name="walletused" ng-model="walletused.text" ng-change="handleWalletChange()" required><br>
+		<select ng-show="session.hassessionaccounts" class="form-wallet-select" ng-model="selectedfrom" ng-change="handleWalletSelectChange()"><option ng-repeat="account in fromaccounts" ng-value="account.uuid">{{account.description}}</option></select>
+		
+ 	</span>
+	
+
+	<span ng-show="!walletused.issessionaccount" id="walletpassword-span" class="token-form-walletpassword-span">
+		<label for="password">{{'Password:' | transl}}</label>
+		<input type="password" class="token-form-walletpassword-input" name="walletpassword" ng-model="password.text">
+ 	</span>
+ 	
+	<span id="gaslimit-span" class="gaslimit-span">
+		<label for="gaslimit">{{'Gas limit:' | transl}}</label>
+		<input type="text" class="form-gaslimit-input" name="gaslimit" ng-model="gaslimit.text" required>
+	</span>
+	
+	<span id="gasprice-span" class="gasprice-span">
+		<label for="gasprice">{{'Gas price:' | transl}}</label>
+		<input type="text" class="form-gasprice-input" name="gasprice" ng-model="gasprice.text" required>
+	</span>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Deploy' || transl}}</button>
+	</span>
+ 
+    </div>
+    
+    <div role="alert">
+    </div>
+</form>

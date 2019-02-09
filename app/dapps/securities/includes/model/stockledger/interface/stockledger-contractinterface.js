@@ -54,7 +54,8 @@ class StockLedgerContractInterface {
 	}
 	
 	deploy(contractowner, contractownerpublkey,	cryptedowneridentifier,	ledgername,	cryptedledgerdescription,
-			payingaccount, owningaccount, gas, gasPrice, callback) {
+			payingaccount, owningaccount, gas, gasPrice,
+			transactionuuid, callback) {
 		var self = this;
 		var session = this.session;
 
@@ -69,7 +70,7 @@ class StockLedgerContractInterface {
 		
 		var contractinstance = this.getContractInstance();
 		
-		var params = [];
+		/*var params = [];
 		
 		params.push(contractowner);
 		params.push(contractownerpublkey);
@@ -77,14 +78,33 @@ class StockLedgerContractInterface {
 		params.push(ledgername);
 		params.push(cryptedledgerdescription);
 
-		var promise = contractinstance.contract_new(params, payingaccount, gas, gasPrice)
-		.then(function(res) {
-			console.log('StockLedgerContractInterface.deploy promise of deployment should be resolved');
-			
-			self.setAddress(contractinstance.getAddress());
+		var promise = contractinstance.contract_new(params, payingaccount, gas, gasPrice)*/
+		var contracttransaction = contractinstance.getContractTransactionObject(payingaccount, gas, gasPrice);
+		
+		var args = [];
+		
+		args.push(contractowner);
+		args.push(contractownerpublkey);
+		args.push(cryptedowneridentifier);
+		args.push(ledgername);
+		args.push(cryptedledgerdescription);
+		
+		contracttransaction.setArguments(args);
+		
+		contracttransaction.setContractTransactionUUID(transactionuuid);
+		
+		var promise = contractinstance.contract_new_send(contracttransaction, function(err, res) {
+			console.log('StockLedgerContractInterface.deploy callback called, result is: ' + res);
 			
 			if (callback)
 				callback(null, res);
+			
+			return res;
+		})
+		.then(function(res) {
+			console.log('StockLedgerContractInterface.deploy promise of deployment resolved, result is: ' + res);
+			
+			self.setAddress(contractinstance.getAddress());
 			
 			return res;
 		});
@@ -215,7 +235,8 @@ class StockLedgerContractInterface {
 
 	// accounts
 	registerAccount(_acct_address, _rsa_pubkey, _ece_pubkey, _cocrypted_acct_privkey,
-			payingaccount, gas, gasPrice, callback) {
+			payingaccount, gas, gasPrice,
+			transactionuuid, callback) {
 		var self = this;
 		var session = this.session;
 
@@ -225,7 +246,7 @@ class StockLedgerContractInterface {
 		
 		var contractinstance = this.getContractInstance();
 
-		var params = [];
+		/*var params = [];
 		
 		params.push(_acct_address);
 		params.push(_rsa_pubkey);
@@ -234,9 +255,26 @@ class StockLedgerContractInterface {
 		
 		var value = null;
 		var txdata = null;
-		var nonce = null;
+		var nonce = null;*/
 		
-		var promise = contractinstance.method_sendTransaction('registerAccount', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var contracttransaction = contractinstance.getContractTransactionObject(payingaccount, gas, gasPrice);
+		
+		var args = [];
+
+		args.push(_acct_address);
+		args.push(_rsa_pubkey);
+		args.push(_ece_pubkey);
+		args.push(_cocrypted_acct_privkey);
+		
+		contracttransaction.setArguments(args);
+		
+		contracttransaction.setContractTransactionUUID(transactionuuid);
+
+		contracttransaction.setMethodName('registerAccount');
+
+		//var promise = contractinstance.method_sendTransaction('registerAccount', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		
+		var promise = contractinstance.method_send(contracttransaction, callback)
 		.then(function(res) {
 			console.log('StockLedgerContractInterface.registerAccount promise of publish should be resolved');
 			
@@ -273,7 +311,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getAccountAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getAccountAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 			ret['acct_address'] = (res_array && res_array[0] ? res_array[0] : null);
@@ -294,7 +339,8 @@ class StockLedgerContractInterface {
 	registerStakeHolder(_shldr_address, _shldr_rsa_pubkey, _cocrypted_shldr_privkey, _cocrypted_shldr_identifier, 
 			_registration_date,	_creatoraddress, _crtcrypted_shldr_description_string, _crtcrypted_shldr_identifier,
 			_orderid, _signature, _shldrcrypted_shldr_description_string, _shldrcrypted_shldr_identifier,
-			payingaccount, gas, gasPrice, callback) {
+			payingaccount, gas, gasPrice,
+			transactionuuid, callback) {
 		
 		var self = this;
 		var session = this.session;
@@ -305,7 +351,7 @@ class StockLedgerContractInterface {
 		
 		var contractinstance = this.getContractInstance();
 
-		var params = [];
+		/*var params = [];
 		
 		params.push(_shldr_address);
 		params.push(_shldr_rsa_pubkey);
@@ -322,9 +368,35 @@ class StockLedgerContractInterface {
 
 		var value = null;
 		var txdata = "orderid=" + _orderid;
-		var nonce = null;
+		var nonce = null;*/
 		
-		var promise = contractinstance.method_sendTransaction('registerShareHolder', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var contracttransaction = contractinstance.getContractTransactionObject(payingaccount, gas, gasPrice);
+		
+		var args = [];
+
+		args.push(_shldr_address);
+		args.push(_shldr_rsa_pubkey);
+		args.push(_cocrypted_shldr_privkey);
+		args.push(_cocrypted_shldr_identifier);
+		args.push(_registration_date);
+		args.push(_creatoraddress);
+		args.push(_crtcrypted_shldr_description_string);
+		args.push(_crtcrypted_shldr_identifier);
+		args.push(_orderid);
+		args.push(_signature);
+		args.push(_shldrcrypted_shldr_description_string);
+		args.push(_shldrcrypted_shldr_identifier);
+
+		contracttransaction.setArguments(args);
+		
+		contracttransaction.setData("orderid=" + _orderid);
+		
+		contracttransaction.setContractTransactionUUID(transactionuuid);
+
+		contracttransaction.setMethodName('registerShareHolder');
+		
+		//var promise = contractinstance.method_sendTransaction('registerShareHolder', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var promise = contractinstance.method_send(contracttransaction, callback)
 		.then(function(res) {
 			console.log('StockLedgerContractInterface.registerStakeHolder promise of publish should be resolved');
 			
@@ -360,7 +432,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getShareHolderAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getShareHolderAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 			ret['address'] = (res_array && res_array[0] ? res_array[0] : null);
@@ -389,7 +468,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getShareHolderExtraAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getShareHolderExtraAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 			ret['creator'] = (res_array && res_array[0] ? res_array[0] : null);
@@ -412,7 +498,8 @@ class StockLedgerContractInterface {
 	// issuances
 	registerIssuance(_name, _cocrypted_issuance_description, _numberofshares, _percentofcapital, 
 			_registration_date, _orderid, _signature, _type, _code,
-			payingaccount, gas, gasPrice, callback) {
+			payingaccount, gas, gasPrice,
+			transactionuuid, callback) {
 		var self = this;
 		var session = this.session;
 		
@@ -422,7 +509,7 @@ class StockLedgerContractInterface {
 		
 		var contractinstance = this.getContractInstance();
 
-		var params = [];
+		/*var params = [];
 		
 		params.push(_name);
 		params.push(_cocrypted_issuance_description);
@@ -436,9 +523,32 @@ class StockLedgerContractInterface {
 
 		var value = null;
 		var txdata = "orderid=" + _orderid;
-		var nonce = null;
+		var nonce = null;*/
 		
-		var promise = contractinstance.method_sendTransaction('registerIssuance', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var contracttransaction = contractinstance.getContractTransactionObject(payingaccount, gas, gasPrice);
+		
+		var args = [];
+
+		args.push(_name);
+		args.push(_cocrypted_issuance_description);
+		args.push(_numberofshares);
+		args.push(_percentofcapital);
+		args.push(_registration_date);
+		args.push(_orderid);
+		args.push(_signature);
+		args.push(_type);
+		args.push(_code);
+
+		contracttransaction.setArguments(args);
+		
+		contracttransaction.setData("orderid=" + _orderid);
+		
+		contracttransaction.setContractTransactionUUID(transactionuuid);
+
+		contracttransaction.setMethodName('registerIssuance');
+		
+		//var promise = contractinstance.method_sendTransaction('registerIssuance', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var promise = contractinstance.method_send(contracttransaction, callback)
 		.then(function(res) {
 			console.log('StockLedgerContractInterface.registerIssuance promise of publish should be resolved');
 			
@@ -473,7 +583,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getIssuanceAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getIssuanceAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 	    	ret['numberofshares'] = res_array[0];
@@ -507,7 +624,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getIssuanceExtraAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getIssuanceExtraAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 			ret['type'] = res_array[0];
@@ -525,7 +649,8 @@ class StockLedgerContractInterface {
 	// transactions
 	registerTransaction(_numberofshares, _from, _to, _nature, _issuancenumber, _orderid, 
 			_registration_date, _consideration, _currency, _creatoraddress, _signature,
-			payingaccount, gas, gasPrice, callback) {
+			payingaccount, gas, gasPrice,
+			transactionuuid, callback) {
 		var self = this;
 		var session = this.session;
 		
@@ -535,7 +660,7 @@ class StockLedgerContractInterface {
 		
 		var contractinstance = this.getContractInstance();
 
-		var params = [];
+		/*var params = [];
 		
 		params.push(_numberofshares);
 		params.push(_from);
@@ -551,9 +676,34 @@ class StockLedgerContractInterface {
 
 		var value = null;
 		var txdata = "orderid=" + _orderid;
-		var nonce = null;
+		var nonce = null;*/
 		
-		var promise = contractinstance.method_sendTransaction('registerTransaction', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var contracttransaction = contractinstance.getContractTransactionObject(payingaccount, gas, gasPrice);
+		
+		var args = [];
+
+		args.push(_numberofshares);
+		args.push(_from);
+		args.push(_to);
+		args.push(_nature);
+		args.push(_issuancenumber);
+		args.push(_orderid);
+		args.push(_registration_date);
+		args.push(_consideration);
+		args.push(_currency);
+		args.push(_creatoraddress);
+		args.push(_signature);
+
+		contracttransaction.setArguments(args);
+		
+		contracttransaction.setData("orderid=" + _orderid);
+		
+		contracttransaction.setContractTransactionUUID(transactionuuid);
+
+		contracttransaction.setMethodName('registerTransaction');
+		
+		//var promise = contractinstance.method_sendTransaction('registerTransaction', params, payingaccount, value, gas, gasPrice, txdata, nonce, callback)
+		var promise = contractinstance.method_send(contracttransaction, callback)
 		.then(function(res) {
 			console.log('StockLedgerContractInterface.registerTransaction promise of publish should be resolved');
 			
@@ -588,7 +738,14 @@ class StockLedgerContractInterface {
 		params.push(index);
 		
 		var promise = contractinstance.method_call("getTransactionAt", params)
-		.then(function(res) {
+		.then(function(res_array) {
+			
+			if (!res_array) {
+				if (callback)
+					callback('no result returned in getTransactionAt', null);
+				
+				return;
+			}
 			
 			var ret = [];
 	    	ret['from'] = res_array[0];

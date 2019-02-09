@@ -85,8 +85,17 @@ var Account = class {
 		this.accountencryption = this.session.getAccountEncryptionInstance(this);
 	}
 	
-	getAccountUUID() {
+	getUUID() {
+		if (this.accountuuid)
+			return this.accountuuid;
+		
+		this.accountuuid = this.session.getUUID();
+		
 		return this.accountuuid;
+	}
+	
+	getAccountUUID() {
+		return this.getUUID();
 	}
 	
 	setAccountUUID(uuid) {

@@ -37,6 +37,7 @@ var RestConnection = class {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
 			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1')) {
+			    		//console.log('RestConnection.rest_get response is ' + JSON.stringify(jsonresponse));
 			    		callback(null, jsonresponse);
 			    	}
 			    	else {
@@ -85,7 +86,7 @@ var RestConnection = class {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
 			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1')) {
-			    		console.log('RestConnection.rest_post response is ' + JSON.stringify(jsonresponse));
+			    		//console.log('RestConnection.rest_post response is ' + JSON.stringify(jsonresponse));
 			    		callback(null, jsonresponse);
 			    	}
 			    	else  {

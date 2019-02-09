@@ -1,0 +1,20 @@
+ <form name="ShareHolderCreateForm" ng-controller="ShareHolderCreateFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<input type="hidden" name="stockledgeruuid" ng-model="stockledger.uuid" required>
+ 	
+	<div>
+	
+	<span>
+		<label for="shldridentifier">{{'Enter shareholder identifier (email, phone number,..):' | transl}}</label>
+		<input type="text" class="token-form-shldridentifier-input" name="shldridentifier" ng-model="shldridentifier.text" required>
+		
+ 	</span>
+ 	
+  	<span class="form-actions">
+            <button type="submit" >{{'Create' || transl}}</button>
+	</span>
+ 
+ 	</div>
+    
+ </form>
+

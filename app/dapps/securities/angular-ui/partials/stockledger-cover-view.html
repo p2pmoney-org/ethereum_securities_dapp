@@ -1,0 +1,105 @@
+<div id="StockLedgerView" ng-controller="StockLedgerViewCtrl">
+    
+    <table class="table-contract">
+    
+		<!-- local part -->
+		<tr class='tr-local'>
+	    	<td class='td-label'>{{'uuid is:' | transl}}</td>
+	    	<td>{{stockledgeruuid}}</td>
+		</tr>
+	    	
+		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Description is:' | transl}}</td>
+	    	<td>{{localdescription.text}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Contract address is:' | transl}}</td>
+	    	<td>{{address.text}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Owner is:' | transl}}</td>
+	    	<td>{{localowner.text}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Owner identifier is:' | transl}}</td>
+	    	<td>{{localowneridentifier.text}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Creation date is:' | transl}}</td>
+	    	<td>{{localcreationdate.text}}</td>
+		</tr>
+	    	
+  		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Submission date is:' | transl}}</td>
+	    	<td>{{localsubmissiondate.text}}</td>
+		</tr>
+	    	
+  		<tr class='tr-local'>
+	    	<td class='td-label'>{{'Local status is:' | transl}}</td>
+	    	<td>{{status.text}}</td>
+		</tr>
+	    	
+ 		<!-- chain part -->
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Live status is:' | transl}}</td>
+	    	<td>{{livestatus.text}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Ledger name is:' | transl}}</td>
+	    	<td>{{chainname.text}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Ledger description is:' | transl}}</td>
+	    	<td>{{chaindescription.text}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Number of accounts registered:' | transl}}</td>
+	    	<td><a ui-sref="home.stockledgers.accounts({uuid: stockledgeruuid})">{{accountcount.text}}</a></td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Number of shareholders:' | transl}}</td>
+	    	<td><a ui-sref="home.stockledgers.shareholders({uuid: stockledgeruuid})">{{shareholdercount.text}}</a></td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Number of issuances:' | transl}}</td>
+	    	<td><a ui-sref="home.stockledgers.issuances({uuid: stockledgeruuid})">{{issuancecount.text}}</a></td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Number of transactions:' | transl}}</td>
+	    	<td><a ui-sref="home.stockledgers.transactions({uuid: stockledgeruuid})">{{transactioncount.text}}</a></td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Owner is:' | transl}}</td>
+	    	<td>{{chainowner.text}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Owner public key (rsa) is:' | transl}}</td>
+	    	<td>{{chainownerrsapublickey.text}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Contract object name is:' | transl}}</td>
+	    	<td>{{chaincontractname.text}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'Contract version is:' | transl}}</td>
+	    	<td>{{chaincontractversion.text}}</td>
+		</tr>
+	    	
+    
+    </table>
+
+</div>
