@@ -12,9 +12,13 @@ var ModuleControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.getSessionObject();
 		
-		var displayname = (session.isSessionAccountAddress(address) ? 'You' : address);
+		var isYou = session.isSessionAccountAddress(address);
+		var displayname = address;
 		
-		if (displayname != 'You') {
+		if (isYou) {
+			displayname = global.t('You' );
+		}
+		else {
 			var ownsContract = securitiesmodule.ownsContract(contract);
 			
 			if (ownsContract) {
@@ -34,6 +38,37 @@ var ModuleControllers = class {
 		
 	    return displayname;
 	}
+	
+	getTransactionStakeholderDisplayName(address, transaction, contract) {
+		var securitiesmodule = this.module;
+		var global = securitiesmodule.global;
+		var commonmodule = global.getModuleObject('common');
+		var session = commonmodule.getSessionObject();
+
+		var isCreator = securitiesmodule.isTransactionCreator(transaction);
+		
+		var displayname = address;
+		
+		if (isCreator) {
+			var transactiontoaddress = transaction.getChainTo();
+			
+			if (session.areAddressesEqual(address, transactiontoaddress)) {
+				var stakeholder = contract.getChainStakeHolderFromAddress(transactiontoaddress);
+				
+				// in case we created it
+				displayname = securitiesmodule.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
+			}
+			else {
+				displayname = this.getStakeholderDisplayName(address, contract);
+			}
+		}
+		else {
+			displayname = this.getStakeholderDisplayName(address, contract);
+		}
+		
+		return displayname;
+	}
+
 	
 	
 	//

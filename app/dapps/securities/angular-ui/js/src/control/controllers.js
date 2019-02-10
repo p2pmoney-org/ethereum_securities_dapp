@@ -1597,10 +1597,10 @@ var DAPPControllers = class {
 	    tx.statusstring = statusstring;
 
 	    var chainfrom = (isOnChain==false ? transaction.getLocalFrom() : transaction.getChainFrom());
-	    var chainfromdisplay = stockledgermodule.getControllersObject().getStakeholderDisplayName(chainfrom, stockledgercontract);
+	    var chainfromdisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(chainfrom, transaction, stockledgercontract);
 	    
 	    var chainto = (isOnChain==false ? transaction.getLocalTo() : transaction.getChainTo());
-	    var chaintodisplay = stockledgermodule.getControllersObject().getStakeholderDisplayName(chainto, stockledgercontract);
+	    var chaintodisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(chainto, transaction, stockledgercontract);
 
 	    tx.from = chainfromdisplay;
 	    tx.to = chaintodisplay;
@@ -1791,16 +1791,16 @@ var DAPPControllers = class {
 			    // local data
 			    //
 				
-			    var localfrom = (isOnChain==false ? transaction.getLocalFrom() : 'on chain');
-			    var localto = (isOnChain==false ? transaction.getLocalTo() : 'on chain');
-			    var localissuancenumber = (isOnChain==false ? transaction.getLocalIssuanceNumber() : 'on chain');
-			    var localnumberofshares = (isOnChain==false ? transaction.getLocalNumberOfShares() : 'on chain');
-			    var localconsideration = (isOnChain==false ? transaction.getLocalConsideration() : 'on chain');
-			    var localcurrency = (isOnChain==false ? transaction.getLocalCurrency() : 'on chain');
+			    var localfrom = (isOnChain==false ? transaction.getLocalFrom() : global.t('on chain'));
+			    var localto = (isOnChain==false ? transaction.getLocalTo() : global.t('on chain'));
+			    var localissuancenumber = (isOnChain==false ? transaction.getLocalIssuanceNumber() : global.t('on chain'));
+			    var localnumberofshares = (isOnChain==false ? transaction.getLocalNumberOfShares() : global.t('on chain'));
+			    var localconsideration = (isOnChain==false ? transaction.getLocalConsideration() : global.t('on chain'));
+			    var localcurrency = (isOnChain==false ? transaction.getLocalCurrency() : global.t('on chain'));
 
-			    var localorderid = (isOnChain==false ? (isLocalOnly ? "local only" : transaction.getLocalOrderId()) : 'on chain');
+			    var localorderid = (isOnChain==false ? (isLocalOnly ? global.t('local only') : transaction.getLocalOrderId()) : global.t('on chain'));
 				var localcreationdate = transaction.getLocalCreationDate();
-				var localsubmissiondate = (transaction.getLocalSubmissionDate() ? transaction.getLocalSubmissionDate() : (isLocalOnly ? 'not deployed yet' : 'imported'));
+				var localsubmissiondate = (transaction.getLocalSubmissionDate() ? transaction.getLocalSubmissionDate() : (isLocalOnly ? global.t('not deployed yet') : global.t('imported')));
 
 				$scope.localsender = { text: localfrom};
 				$scope.localrecipient = { text: localto};
@@ -1816,7 +1816,7 @@ var DAPPControllers = class {
 			    //
 			    // chain data
 			    //
-			    var local_label = (isLocalOnly ? 'local only' : 'local');
+			    var local_label = (isLocalOnly ? global.t('local only') : global.t('local'));
 			    
 			    var contractowneraccount = contract.getSyncChainOwnerAccount();
 			    

@@ -349,6 +349,14 @@ var Module = class {
 		return session.isSessionAccount(contractowneraccount);
 	}
 	
+	isTransactionCreator(transaction) {
+		var session = this._getSessionObject();
+
+		var creatoraddress = transaction.getChainCreatorAddress();
+		
+		return session.isSessionAccountAddress(creatoraddress);
+	}
+	
 	
 	// decryption (asymmetric)
 	decryptContractStakeHolderIdentifier(contract, stakeholder) {

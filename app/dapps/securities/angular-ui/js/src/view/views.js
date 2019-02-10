@@ -135,16 +135,16 @@ var DAPPViews = class {
 
 	
 	revealContractStakeHolderIdentifier(ownsContract, securitiesmodule, session, contract, stakeholder) {
-		if (ownsContract) {
-			// global.getStakeholderDisplayName(chainto, contract)
-			return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder);
+		var stakeholderaddress = stakeholder.getAddress();
+		var isYou = session.isSessionAccountAddress(stakeholderaddress);
+		
+		if (isYou) {
+			return '\xa0\xa0\xa0---->\xa0\xa0\xa0You';
 		}
 		else {
-			var stakeholderaddress = stakeholder.getAddress();
-			var isYou = session.isSessionAccountAddress(stakeholderaddress);
-			
-			if (isYou) {
-				return '\xa0\xa0\xa0---->\xa0\xa0\xa0You';
+			if (ownsContract) {
+				// global.getStakeholderDisplayName(chainto, contract)
+				return '\xa0\xa0\xa0---->\xa0\xa0\xa0' + securitiesmodule.decryptContractStakeHolderIdentifier(contract, stakeholder);
 			}
 			else {
 				return '';
