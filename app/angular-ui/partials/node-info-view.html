@@ -1,0 +1,38 @@
+<div id="NodeInfoView" ng-controller="NodeInfoViewCtrl">
+    
+    <table class="table-contract">
+    
+		<tr class='tr-local'>
+	    	<td class='td-label'>{{'listening' | transl}}</td>
+	    	<td>{{nodeinfo.islistening}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'network id' | transl}}</td>
+	    	<td>{{nodeinfo.networkid}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'peer count' | transl}}</td>
+	    	<td>{{nodeinfo.peercount}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'syncing' | transl}}</td>
+	    	<td>{{nodeinfo.issyncing}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'current block' | transl}}</td>
+	    	<td>{{nodeinfo.currentblock}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'highest block' | transl}}</td>
+	    	<td>{{nodeinfo.highestblock}}</td>
+		</tr>
+	    	
+     
+    </table>
+
+</div>

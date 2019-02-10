@@ -1,0 +1,56 @@
+<div class="container">
+
+<h2>{{'Ethereum accounts' | transl}}</h2>
+
+
+<h3>{{'Add a third party ethereum account' | transl}}</h3>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" ng-controller="ethAccountFormCtrl" >
+
+<div class="div-form">
+
+<div ng-include='"./angular-ui/partials/eth-account-import-form.html"'></div>
+
+</div><!-- div-form -->
+
+
+<div class="band-separator"><hr></div>
+
+
+<h3>{{'or add a personal ethereum account' | transl}}</h3>
+ 
+<div class="div-form">
+
+<div ng-include='"./angular-ui/partials/eth-account-create-form.html"'></div>
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+
+
+<div class="band-separator"><hr></div>
+
+
+
+<div id="view-band" class="view-band">
+
+<div class="div-view-container" >
+
+<div ng-include='"./angular-ui/partials/eth-account-list-view.html"'></div>
+
+</div><!-- div-view-container -->
+
+</div><!-- view-band -->
+
+
+
+</div>
+<!-- /.container -->

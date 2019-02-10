@@ -1,0 +1,37 @@
+<div class="container">
+<h2>{{'Login' | transl}}</h2>
+
+<div id="form-band" class="form-band">
+
+<div class="div-form-container" >
+
+
+
+<form name="logoutForm" id="logoutForm" ng-controller="LogoutFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<div>
+	
+	<span>
+		{{'Are you sure you want to log out?' | transl}}
+		
+ 	</span>
+ 	
+  	<span class="form-actions">
+            <button type="submit" >{{'Yes' || transl}}</button>
+	</span>
+
+    </div>
+     
+ </form>
+
+
+</div><!-- div-form -->
+
+<!-- cue messages (e.g. wallet balance -->
+<div class="div-form-cue"></div>
+
+</div><!-- div-form-container -->
+
+</div><!-- form-band -->
+
+</div><!-- /.container -->

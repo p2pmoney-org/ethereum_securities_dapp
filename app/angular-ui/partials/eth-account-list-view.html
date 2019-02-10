@@ -1,0 +1,22 @@
+<div id="EthAccountsView" ng-controller="EthAccountsViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'address' | transl}}</td>
+	    	<td>{{'type' | transl}}</td>
+	    	<td>{{'description' | transl}}</td>
+	     	<td>{{'balance' | transl}}</td>
+     	</tr>
+        
+        <tr ng-repeat="ethaccount in ethaccounts" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td><a ui-sref="home.account.eth-accounts.view({uuid: ethaccount.uuid})">{{ethaccount.address}}</a></td>
+			<td>{{ethaccount.type}}</td>
+			<td>{{ethaccount.description}}</td>
+			<td>{{ethaccount.balance}}</td>
+       </tr>
+
+    </table>
+
+</div>
+

@@ -1,0 +1,1 @@
+placeholder folder to push interfaces when overloading a dapp structure

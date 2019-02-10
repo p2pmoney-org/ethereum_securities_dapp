@@ -1,0 +1,40 @@
+<div id="EthAccountView" ng-controller="EthAccountViewCtrl">
+    
+    <table class="table-contract">
+    
+		<!-- local part -->
+		<tr class='tr-local'>
+	    	<td class='td-label'>{{'uuid' | transl}}</td>
+	    	<td>{{ethaccount.uuid}}</td>
+		</tr>
+	    	
+  		<tr class='tr-local'>
+	    	<td class='td-label'>{{'description' | transl}}</td>
+	    	<td>{{ethaccount.description}}</td>
+		</tr>
+	    	
+  		<tr class='tr-local'>
+	    	<td class='td-label'>{{'type' | transl}}</td>
+	    	<td>{{ethaccount.type}}</td>
+		</tr>
+	    	
+ 		<!-- chain part -->
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'address' | transl}}</td>
+	    	<td>{{ethaccount.address}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'public key' | transl}}</td>
+	    	<td>{{ethaccount.public_key}}</td>
+		</tr>
+	    	
+   		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'rsa public key' | transl}}</td>
+	    	<td>{{ethaccount.rsa_public_key}}</td>
+		</tr>
+	    	
+    
+    </table>
+
+</div>

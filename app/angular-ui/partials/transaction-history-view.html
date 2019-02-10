@@ -1,0 +1,24 @@
+<div id="TransactionHistoryView" ng-controller="TransactionHistoryViewCtrl">
+    
+    <table class="table-contract-list">
+    
+		<tr>
+	    	<td>{{'date' | transl}}</td>
+	    	<td>{{'from' | transl}}</td>
+	    	<td>{{'to' | transl}}</td>
+	     	<td>{{'value' | transl}}</td>
+ 	     	<td>{{'status' | transl}}</td>
+     	</tr>
+        
+        <tr ng-repeat="transaction in transactions" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
+			<td>{{transaction.date}}</td>
+			<td>{{transaction.from}}</td>
+			<td>{{transaction.to}}</td>
+			<td>{{transaction.value}}</td>
+			<td>{{transaction.status}}</td>
+       </tr>
+
+    </table>
+
+</div>
+

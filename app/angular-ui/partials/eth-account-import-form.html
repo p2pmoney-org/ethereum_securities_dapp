@@ -1,0 +1,31 @@
+<form name="createEthAccountForm" id="createEthAccounForm" ng-controller="ethAccountFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<div>
+	
+	<span id="address-span" class="address-span">
+		<label for="address">{{'Please enter the ethereum address of the third party account:' | transl}}</label>
+		<input type="text" class="form-address-input"  name="address" ng-model="address.text" required>
+		
+ 	</span>
+ 	
+ 	</div>
+ 	
+  	<div>
+	
+	<span id="description-span" class="description-span">
+		<label for="description">{{'Please enter a description helping you manage the different ethereum accounts:' | transl}}</label>
+		<input type="text" class="form-description-input" name="address" ng-model="description.text" required>
+		
+ 	</span>
+
+ 	</div>
+ 	
+  	<div>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Add' || transl}}</button>
+ 	</span>
+
+    </div>
+     
+ </form>

@@ -1,0 +1,32 @@
+ <form name="createEthAccountForm" id="createEthAccounForm" ng-controller="ethAccountFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<div>
+	
+	<span id="privkey-span" class="privkey-span">
+		<label for="privatekey">{{'Please enter your private key. It will be saved in an encrypted way using (one of) your crypto key(s):' | transl}}</label>
+		<input type="text" class="form-privatekey-input" name="privatekey" ng-model="privatekey.text">
+		
+ 	</span>
+ 	
+ 	</div>
+ 	
+  	<div>
+	
+ 	<span id="description-span" class="description-span">
+		<label for="description">{{'Please enter a description helping you manage the different ethereum accounts:' | transl}}</label>
+		<input type="text" class="form-description-input" name="description" ng-model="description.text" required>
+		
+ 	</span>
+
+  	</div>
+ 	
+  	<div>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Add' || transl}}</button>
+            <button type="button" ng-click="generatePrivateKey()" >{{'Generate a Key' || transl}}</button>
+	</span>
+
+    </div>
+     
+ </form>

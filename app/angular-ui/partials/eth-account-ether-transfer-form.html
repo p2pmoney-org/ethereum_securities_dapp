@@ -1,0 +1,51 @@
+
+<form name="etherTransferForm" ng-controller="EtherTransferFormCtrl" ng-submit="handleSubmit()">
+ 
+ 	<div>
+	
+	<span id="walletused-span" class="form-walletused-span">
+		<label for="walletused">{{'From:' | transl}}</label>
+		<input type="text" class="form-walletused-input"  name="walletused" ng-model="walletused.text" required><br>
+		<select class="form-from-select" ng-model="selectedfrom" ng-change="handleFromChange()"><option ng-repeat="account in fromaccounts" ng-value="account.uuid">{{account.description}}</option></select>
+ 	</span>
+	
+ 	<span id="to-span" class="form-to-span">
+		<label for="to">{{'To:' | transl}}</label>
+		<input type="text" class="form-to-input" name="to" ng-model="to.text" required><br>
+		<select class="form-from-select" ng-model="selectedto" ng-change="handleToChange()"><option ng-repeat="account in toaccounts" ng-value="account.uuid">{{account.description}}</option></select>
+		
+ 	</span>
+	
+  	<span id="amount-span" class="form-amount-span">
+		<label for="amount">{{'Amount:' | transl}}</label>
+		<input type="text"  class="form-amount-input" name="amount" ng-model="amount.text" required>
+ 	</span>
+	
+ 	</div>
+ 	<div>
+
+	<span id="password-span" class="form-walletpassword-span">
+		<label for="password">{{'Password:' | transl}}</label>
+		<input type="password" class="form-walletpassword-input" name="password" ng-model="password.text">
+ 	</span>
+ 	
+	<span id="gaslimit-span" class="form-gaslimit-span">
+		<label for="gaslimit">{{'Gas limit:' | transl}}</label>
+		<input type="text" class="form-gaslimit-input" name="gaslimit" ng-model="gaslimit.text" required>
+	</span>
+	
+	<span id="gasprice-span" class="form-gasprice-span">
+		<label for="gasprice">{{'Gas price:' | transl}}</label>
+		<input type="text" class="form-gasprice-input" name="gasprice" ng-model="gasprice.text" required>
+	</span>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Transfer' || transl}}</button>
+	</span>
+ 
+    </div>
+    
+    <div role="alert">
+    </div>
+</form>
+

@@ -1,0 +1,17 @@
+ <form name="loginForm" id="loginForm" ng-controller="LoginFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<div>
+	
+	<span id="privkey-span" class="privkey-span">
+		<label for="privatekey">{{'Please enter your private key. It will be kept in memory until a refresh in your browser:' | transl}}</label>
+		<input type="password"  class="form-password-input" name="privatekey" ng-model="privatekey.text" required>
+		
+ 	</span>
+ 	
+  	<span class="form-actions">
+            <button type="submit" >{{'Login' || transl}}</button>
+	</span>
+
+    </div>
+     
+ </form>

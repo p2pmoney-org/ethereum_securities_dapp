@@ -1,0 +1,26 @@
+<header>
+    <div class="container">
+		<div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+            <!-- Home -->
+            <div id="home-link-div" ng-controller="HomeLinkCtrl">
+            <a class="navbar-brand" id="home-link" ui-sref="home">{{'Home' | transl}}</a>
+			</div>
+		</div><!-- class="navbar-header">
+
+        <!-- Login -->
+		<div class="nav navbar-nav navbar-right">
+		
+			<div class="div-identity" id="login-link-div"  ng-controller="LoginViewCtrl">
+			<login-link></login-link>
+			</div>
+		</div>
+
+    </div><!-- /.container -->
+</header>

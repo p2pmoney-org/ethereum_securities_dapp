@@ -1,0 +1,54 @@
+<nav class="menubar">
+    <div class="container" ng-controller="MenuBarCtrl">
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav navbar-right">
+            
+                 <!-- dapps dynamic list -->
+                 <li ng-repeat="menuitem in menuitems" class="dropdown">
+					<a class="dropdown-toggle" data-toggle="dropdown">{{menuitem.label}}<b class="caret"></b></a>
+					<ul class="dropdown-menu">
+                        <li ng-repeat="child in menuitem.children"><a ui-sref="{{child.state}}">{{child.label}}</a>
+                        </li>
+                    </ul>
+				</li>
+               
+                  <!-- standard menu items -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown">{{'My Account' | transl}} <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li ng-if="!session.isanonymous"><a ui-sref="home.account">{{'Info' | transl}}</a>
+                        </li>
+                        
+                        <li ng-if="!session.isanonymous"><a ui-sref="home.account.eth-accounts">{{'Ethereum accounts' | transl}}</a>
+                        </li>
+                        
+                        <li ng-if="!session.isanonymous"><a ui-sref="home.account.cryptokeys">{{'Crypto Keys' | transl}}</a>
+                        </li>
+                        
+                         <li ng-if="!session.isanonymous"><a ui-sref="home.account.transfer">{{'Transfer Ethers' | transl}}</a>
+                        </li>
+                        
+                         <li ng-if="!session.isanonymous"><a ui-sref="home.account.transaction-history">{{'Transaction History' | transl}}</a>
+                        </li>
+                        
+                        <li ng-if="session.isanonymous"><a ui-sref="home.login">{{'Login' | transl}}</a>
+                        </li>
+                        <li ng-if="!session.isanonymous"><a ui-sref="home.logout">{{'Logout' | transl}}</a>
+                        </li>
+                    </ul>
+                </li>
+                
+				<li>
+                    <a class="dropdown-toggle" data-toggle="dropdown" ui-sref="home.about">{{'About' | transl}}</a>
+                </li>
+  
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+        
+        
+    </div>
+    <!-- /.container -->
+</nav>

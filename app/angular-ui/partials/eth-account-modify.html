@@ -1,0 +1,21 @@
+<form name="modifyEthAccountForm" id="modifyEthAccounForm" ng-controller="ethAccountModifyFormCtrl" ng-submit="handleSubmit()">
+  	
+  	<input type="hidden" name="uuid" ng-model="accountuuid" required>
+ 
+  	<span id="description-span" class="description-span">
+		<label for="description">{{'Please enter a description helping you manage the different ethereum accounts:' | transl}}</label>
+		<input type="text" class="form-description-input" name="description" ng-model="description.text" required>
+		
+ 	</span>
+
+  	</div>
+ 	
+  	<div>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Save' || transl}}</button>
+ 	</span>
+
+    </div>
+     
+ </form>
