@@ -74,6 +74,7 @@ var Transaction = class {
 	
 	// async
 	findTransactionHash(callback) {
+		var session = this.session;
 		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		var promise = EthereumNodeAccess.web3_findTransaction(this.transactionuuid, function(err, res) {
@@ -85,11 +86,30 @@ var Transaction = class {
 		return promise;
 	}
 	
-	getTransaction(callback) {
+	/*getTransaction(callback) {
+		return this.getEthTransaction();
+	}*/
+	
+	getEthTransaction(callback) {
+		var session = this.session;
 		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
 		
 		
 		var promise = EthereumNodeAccess.web3_getTransaction(this.txhash, function(err, res) {
+			
+			if (callback)
+				callback(err, res);
+		});
+		
+		return promise;
+	}
+	
+	getEthTransactionReceipt(callback) {
+		var session = this.session;
+		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+		
+		
+		var promise = EthereumNodeAccess.web3_getTransactionReceipt(this.txhash, function(err, res) {
 			
 			if (callback)
 				callback(err, res);

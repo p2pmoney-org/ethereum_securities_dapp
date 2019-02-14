@@ -134,6 +134,38 @@ var ModuleControllers = class {
 		}
 	}
 	
+	// transactions
+	getTransactionObjectFromUUID(session, transactionuuid, callback) {
+		var module = this.module;
+		
+		var global = module.global;
+		var commonmodule = global.getModuleObject('common');
+
+
+		commonmodule.getTransactionList(function(err, transactionarray) {
+			var transaction = null;
+			
+			if (transactionarray) {
+				
+				for (var i = 0; i < transactionarray.length; i++) {
+					var tx = transactionarray[i];
+					
+					if (tx && (tx.getTransactionUUID() == transactionuuid)) {
+						transaction = tx;
+						
+						break;
+					}
+				}
+				
+			}
+			
+			
+			if (callback)
+				callback((transaction ? null : 'could not find transaction with uuid ' + transactionuuid), transaction);
+		});
+	}
+	
+	
 	// contracts
 	
 	// deployment

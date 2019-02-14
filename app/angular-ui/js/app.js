@@ -1,6 +1,6 @@
 'use strict';
 
-class App {
+var App = class {
 	constructor() {
 		this.angular_app = null;
 		
@@ -47,7 +47,7 @@ class App {
 		// registering controllers
 		var controllers = global.getModuleObject('mvc').getControllersObject();
 		
-		controllers.registerControllers(app);
+		controllers.registerControllers(dapp_app);
 		
 		
 		// manual boostrap
@@ -138,12 +138,12 @@ class App {
 //
 //bootstrap of App
 //
-var app = new App();
+var dapp_app = new App();
 
 // initialization of App
-app.init();
+dapp_app.init();
 
-app.run();
+dapp_app.run();
 
 
 /*

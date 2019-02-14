@@ -1,0 +1,78 @@
+<div id="EthTransactionView" ng-controller="EthTransactionViewCtrl">
+    
+    <table class="table-contract">
+    
+		<!-- local part -->
+		<tr class='tr-local'>
+	    	<td class='td-label'>{{'uuid' | transl}}</td>
+	    	<td>{{transaction.uuid}}</td>
+		</tr>
+	    	
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'date' | transl}}</td>
+	    	<td>{{transaction.date}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'from' | transl}}</td>
+	    	<td>{{transaction.from}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'to' | transl}}</td>
+	    	<td>{{transaction.to}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'value' | transl}}</td>
+	    	<td>{{transaction.value}}</td>
+		</tr>
+	    	
+ 		<tr class='tr-local'>
+	    	<td class='td-label'>{{'status' | transl}}</td>
+	    	<td>{{transaction.status}}</td>
+		</tr>
+	    	
+	    	
+ 		<!-- chain part -->
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'transaction hash' | transl}}</td>
+	    	<td>{{transaction.transactionhash}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'gas limit' | transl}}</td>
+	    	<td>{{transaction.gaslimit}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'gas price' | transl}}</td>
+	    	<td>{{transaction.gasprice}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'block number' | transl}}</td>
+	    	<td>{{transaction.blocknumber}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'gas used' | transl}}</td>
+	    	<td>{{transaction.gasused}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'cost' | transl}}</td>
+	    	<td>{{transaction.cost}}</td>
+		</tr>
+	    	
+  		<tr class='tr-chain'>
+	    	<td class='td-label'>{{'receipt status' | transl}}</td>
+	    	<td>{{transaction.chainstatus}}</td>
+		</tr>
+	    	
+	    	
+    
+    </table>
+
+</div>

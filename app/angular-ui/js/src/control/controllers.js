@@ -77,12 +77,16 @@ class Controllers {
 			controllers.prepareEthAccountsView($scope, $state, $stateParams);
 		}]);
 		
+		angular_app.controller("EthAccountViewCtrl",  ['$scope', '$state', '$stateParams', function ($scope, $state, $stateParams) {
+			controllers.prepareEthAccountView($scope, $state, $stateParams);
+		}]);
+		
 		angular_app.controller("TransactionHistoryViewCtrl",  ['$scope', '$state', '$stateParams', function ($scope, $state, $stateParams) {
 			controllers.prepareTransactionHistoryView($scope, $state, $stateParams);
 		}]);
 		
-		angular_app.controller("EthAccountViewCtrl",  ['$scope', '$state', '$stateParams', function ($scope, $state, $stateParams) {
-			controllers.prepareEthAccountView($scope, $state, $stateParams);
+		angular_app.controller("EthTransactionViewCtrl",  ['$scope', '$state', '$stateParams', function ($scope, $state, $stateParams) {
+			controllers.prepareEthTransactionView($scope, $state, $stateParams);
 		}]);
 		
 		
@@ -187,6 +191,8 @@ class Controllers {
 	        ncyBreadcrumb: { label: global.t('Transfer') }})
 	    .state('home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: './angular-ui/templates/transaction-history.html', controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Tx History') }})
+	    .state('home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: './angular-ui/templates/transaction-view.html', controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Tx') }})
 	    .state('home.login', {url: '/login', views: {'main@': {templateUrl: './angular-ui/templates/login.html', controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Login') }})
 	    .state('home.logout', {url: '/logout', views: {'main@': {templateUrl: './angular-ui/templates/logout.html', controller: "PageRequestHandler",}},
@@ -654,6 +660,8 @@ class Controllers {
 					var tx = transactionarray[i];
 					var transaction = [];
 					
+					transaction.uuid = tx.getTransactionUUID();
+					
 					transaction.unixdate = new Date(tx.getCreationDate()).getTime() / 1000;
 					transaction.date = global.formatDate(new Date(tx.getCreationDate()), 'YYYY-mm-dd HH:MM:SS');
 					transaction.transactionuuid = tx.getTransactionUUID();
@@ -677,6 +685,122 @@ class Controllers {
 		});
 
 		$scope.transactions = transactions;
+	}
+	
+	prepareEthTransactionView($scope, $state, $stateParams) {
+		console.log("Controllers.prepareEthTransactionView called");
+		
+	    var transactionuuid = $stateParams.uuid;
+
+		var global = this.global;
+		var self = this;
+		var app = this.getAppObject();
+		
+		var commonmodule = global.getModuleObject('common');
+		var commoncontrollers = commonmodule.getControllersObject();
+		
+		var session = commonmodule.getSessionObject();
+
+		var transaction = [];
+		
+		$scope.transaction = transaction;
+		
+		transaction.uuid = global.t('loading...');
+		
+		transaction.date = global.t('loading...');
+		transaction.from = global.t('loading...');
+		transaction.to = global.t('loading...');
+		transaction.value = global.t('loading...');
+		transaction.status = global.t('loading...');
+
+		transaction.transactionhash = global.t('loading...');
+		
+		transaction.gaslimit = global.t('loading...');
+		transaction.gasprice = global.t('loading...');
+
+		transaction.blocknumber = global.t('loading...');
+		transaction.gasused = global.t('loading...');
+		transaction.cost = global.t('loading...');
+		transaction.chainstatus = global.t('loading...');
+
+		
+		commoncontrollers.getTransactionObjectFromUUID(session, transactionuuid, function (err, tx) {
+			if (tx) {
+				transaction.uuid = tx.getTransactionUUID();
+				
+				transaction.unixdate = new Date(tx.getCreationDate()).getTime() / 1000;
+				transaction.date = global.formatDate(new Date(tx.getCreationDate()), 'YYYY-mm-dd HH:MM:SS');
+				transaction.from = tx.getFrom();
+				transaction.to = tx.getTo();
+				transaction.ethervalue = parseFloat(tx.getValue());
+				transaction.value = ( transaction.ethervalue ? transaction.ethervalue.toFixed(2) + ' Ether' : '');
+				transaction.status = tx.getStatus();
+				
+				transaction.transactionhash = tx.getTransactionHash();
+				
+				tx.getEthTransaction(function(err, ethtx) {
+					
+					if (ethtx) {
+						transaction.gaslimit = ethtx.gas;
+						transaction.gasprice = commoncontrollers.getEtherStringFromWei(ethtx.gasPrice, 8) + ' Ether';
+
+						tx.getEthTransactionReceipt(function(err, ethtxreceipt) {
+							
+							if (ethtxreceipt) {
+								transaction.blocknumber = ethtxreceipt.blockNumber;
+								transaction.gasused = ethtxreceipt.gasUsed;
+								transaction.cost = commoncontrollers.getEtherStringFromWei(ethtx.gasPrice * ethtxreceipt.gasUsed, 8) + ' Ether';
+								transaction.chainstatus = (ethtxreceipt.status ? global.t('success') : global.t('fail'));
+							}
+							else {
+								transaction.blocknumber = global.t('no receipt on chain');
+								transaction.gasused = global.t('no receipt on chain');
+								transaction.cost = global.t('no receipt on chain');
+								transaction.chainstatus = global.t('no receipt on chain');
+							}
+							
+							$scope.$apply();
+						});
+						
+					}
+					else {
+						transaction.gaslimit = global.t('no transaction on chain');
+						transaction.gasprice = global.t('no transaction on chain');
+
+						transaction.blocknumber = global.t('no transaction on chain');
+						transaction.gasused = global.t('no transaction on chain');
+						transaction.cost = global.t('no transaction on chain');
+						transaction.chainstatus = global.t('no transaction on chain');
+					}
+					
+					$scope.$apply();
+				});
+
+				
+			}
+			else {
+				transaction.uuid = global.t('not found');
+				transaction.transactionhash = global.t('not found');
+				
+				transaction.date = global.t('not found');
+				transaction.from = global.t('not found');
+				transaction.to = global.t('not found');
+				transaction.value = global.t('not found');
+				transaction.status = global.t('not found');
+				
+				transaction.gaslimit = global.t('not found');
+				transaction.gasprice = global.t('not found');
+
+				transaction.blocknumber = global.t('not found');
+				transaction.gasused = global.t('not found');
+				transaction.cost = global.t('not found');
+				transaction.chainstatus = global.t('not found');
+			}
+			
+			$scope.$apply();
+		});
+		
+		
 	}
 	
 	
@@ -1186,6 +1310,7 @@ class Controllers {
 		console.log("Controllers.handleEtherTransferSubmit called");
 		
 		var global = this.global;
+		var app = this.getAppObject();
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.getSessionObject();
 

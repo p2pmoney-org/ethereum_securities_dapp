@@ -11,7 +11,7 @@
      	</tr>
         
         <tr ng-repeat="transaction in transactions" class="{{$odd ? 'table-contract-list-tr-local-odd' : 'table-contract-list-tr-local-even'}}">
-			<td>{{transaction.date}}</td>
+			<td><a ui-sref="home.account.transaction-history.tx({uuid: transaction.uuid})">{{transaction.date}}</a></td>
 			<td>{{transaction.from}}</td>
 			<td>{{transaction.to}}</td>
 			<td>{{transaction.value}}</td>
