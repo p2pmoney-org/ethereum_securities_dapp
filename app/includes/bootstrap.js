@@ -74,9 +74,20 @@ class Bootstrap {
 		console.log = this.orgconsolelog ; 
 	}
 	
+	getMvcUI() {
+		if (this.mvcui === undefined)
+			return 'angularjs-1.x';
+		else 
+			return this.mvcui;
+	}
+	
+	setMvcUI(mvcui) {
+		this.mvcui = mvcui;
+	}
+	
 	
 	// static
-	static getBookstrapObject() {
+	static getBootstrapObject() {
 		return BootstrapObject;
 	}
 }
@@ -95,39 +106,17 @@ class ScriptLoader {
 		
 		this.loadstarted = false;
 		this.loadfinished = false;
+		
+		this.eventlisteners = Object.create(null);; // map events to arrays of listeners
 	}
 	
 	// scripts loading
-	static createScriptLoadPromise(file, posttreatment) {
-		var promise = new Promise(function(resolve, reject) {
-			console.log('starting load of script ' + file);
-			var script  = document.createElement('script');
-			script.src  = file;
-			script.type = 'text/javascript';
-			script.defer = true;
-
-			script.onload = function(){
-				console.log('script ' + file + ' is now loaded');
-				
-				if (posttreatment)
-					posttreatment();
-				
-				return resolve(true);
-			};
-
-			document.getElementsByTagName('head').item(0).appendChild(script);
-		});
-
-		return promise;
-		
-	}
-	
 	promise_include(entry)	{
 		var file = entry['file'];
 		var posttreatment = entry['posttreatment'];
 		
 		var promise = ScriptLoader.createScriptLoadPromise(file, posttreatment);
-
+		
 		return promise;
 	}
 	
@@ -215,8 +204,11 @@ class ScriptLoader {
 	}
 	
 	push_script(file, posttreatment) {
+		console.log('push_script: ' + file + ' for loader ' + this.loadername);
+		
 		if (!browserload) {
-			browserload = new BrowserLoad();
+			console.log('no automatic browser load triggered');
+			//browserload = new BrowserLoad();
 		}
 		
 		if (this.loadstarted)
@@ -234,10 +226,164 @@ class ScriptLoader {
 		return ScriptLoader.getScriptLoader(loadername, this);
 	}
 	
+	getParentLoader() {
+		if (this.parentloader)
+			return this.parentloader;
+		else
+			return this.getRootLoader();
+	}
+	
+	getRootLoader() {
+		return ScriptLoader.getRootScriptLoader();
+	}
+	
+	getBootstrapObject() {
+		return BootstrapObject;
+	}
+	
+	registerEventListener(eventname, listener) {
+		if (!eventname)
+			return;
+		
+		if ((eventname in this.eventlisteners) === false) {
+			this.eventlisteners[eventname] = [];
+		}
+
+		this.eventlisteners[eventname].push(listener);
+	}
+
+	signalEvent(eventname) {
+		console.log('signalEvent called for event ' + eventname);
+		if ((eventname in this.eventlisteners) === false)
+			return;
+		
+		for (var i = 0; i < this.eventlisteners[eventname].length; i++) {
+			var listener = this.eventlisteners[eventname][i];
+			
+			listener(eventname);
+		}
+	}
+	
 	// static
+	static _relativepath(from, to) {
+	    function trim(arr) {
+	        var start = 0;
+	        for (; start < arr.length; start++) {
+	          if (arr[start] !== '') break;
+	        }
+
+	        var end = arr.length - 1;
+	        for (; end >= 0; end--) {
+	          if (arr[end] !== '') break;
+	        }
+
+	        if (start > end) return [];
+	        return arr.slice(start, end - start + 1);
+	      }
+
+	      var fromParts = trim(from.split('/'));
+	      var toParts = trim(to.split('/'));
+
+	      var length = Math.min(fromParts.length, toParts.length);
+	      var samePartsLength = length;
+	      for (var i = 0; i < length; i++) {
+	        if (fromParts[i] !== toParts[i]) {
+	          samePartsLength = i;
+	          break;
+	        }
+	      }
+
+	      var outputParts = [];
+	      for (var i = samePartsLength; i < fromParts.length; i++) {
+	        outputParts.push('..');
+	      }
+
+	      outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+	      return outputParts.join('/');
+	}
+	
+	static _getPathName(url) {
+		var parser = document.createElement('a');
+		parser.href = url;
+		var pathname = parser.pathname;
+		return pathname;		
+	}
+	
+	static getDappdir() {
+		return this.dapp_dir;
+	}
+
+	static setDappdir(dapp_dir) {
+		this.dapp_dir = dapp_dir;
+	}
+
+	static createScriptLoadPromise(file, posttreatment) {
+		var self = this;
+		
+		var promise = new Promise(function(resolve, reject) {
+			console.log('starting load of script ' + file);
+			
+			if (!self.dapp_dir) {
+				var scripts = document.getElementsByTagName('script');
+				var scripturl = scripts[scripts.length-1].src;
+				var scriptpath = self._getPathName(scripturl);     
+				
+				var htmlpageurl= window.location.href;
+				var htmlpagepath = self._getPathName(htmlpageurl);
+				
+				self.dapp_dir = self._relativepath(htmlpagepath, scriptpath);
+				
+				// add leading ./
+				self.dapp_dir = './' + self.dapp_dir;
+				
+				// remove includes
+				self.dapp_dir = self.dapp_dir.substring( 0, self.dapp_dir.indexOf( "includes" ) );
+			}
+			
+			var script  = document.createElement('script');
+			script.src  = self.dapp_dir + file;
+			script.type = 'text/javascript';
+			script.defer = true;
+
+			script.onload = function(){
+				console.log('script ' + file + ' is now loaded');
+				
+				if (posttreatment)
+					posttreatment();
+				
+				return resolve(true);
+			};
+
+			document.getElementsByTagName('head').item(0).appendChild(script);
+		});
+
+		return promise;
+		
+	}
+	
+	static getRootScriptLoader() {
+		if (scriptloadermap['rootloader'])
+			return scriptloadermap['rootloader'];
+
+		var rootscriptloader  = new ScriptLoader();
+		
+		scriptloadermap['rootloader'] = rootscriptloader;
+		
+		rootscriptloader.loadername = 'rootloader';
+
+		rootscriptloader.loadstarted = true;
+		rootscriptloader.loadfinished = true;
+		
+		return rootscriptloader;
+	}
+	
 	static getScriptLoader(loadername, parentloader) {
 		if (!loadername)
 			throw 'script loaders need to have a name';
+		
+		if (loadername === 'rootloader')
+			throw 'script loader name is reserved: ' + loadername;
 		
 		if (ScriptLoader.findScriptLoader(loadername))
 			throw 'script loader ' + loadername + ' exists already, create under another name or use findScriptLoader to retrieve it';
@@ -267,12 +413,14 @@ window.ScriptLoader = ScriptLoader;
 else
 module.exports = ScriptLoader; // we are in node js
 
-// load browser-load.js
-var browserload = ScriptLoader.getScriptLoader('bootstrap');
+if (window.dapp_browser_no_load === undefined) {
+	// load browser-load.js
+	var browserload = ScriptLoader.getScriptLoader('bootstrap');
 
-browserload.push_script('./js/src/browser-load.js');
+	browserload.push_script('./js/src/browser-load.js');
 
 
-//perform load
-browserload.load_scripts();
+	//perform load
+	browserload.load_scripts();
+}
 

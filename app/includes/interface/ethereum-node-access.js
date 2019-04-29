@@ -2020,9 +2020,9 @@ class EthereumNodeAccess {
 				// Web3 == 0.20.x
 				// using spread operator
 				var ret = funcname.call(...params, __funcback)
-				.catch(err => {
+				/*.catch(err => {
 				    console.log('catched error in EthereumNodeAccess.web3_contract_dynamicMethodCall ' + err);
-				});
+				})*/;
 				
 			}
 		

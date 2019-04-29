@@ -14,7 +14,7 @@
 
 <div class="div-form">
 
-<div ng-if="shareholder.islocalonly" ng-include='"./dapps/securities/angular-ui/partials/shareholder-deploy-form.html"'></div>
+<div ng-if="shareholder.islocalonly" ng-include='utils.dapp_url("./dapps/securities/angular-ui/partials/shareholder-deploy-form.html")'></div>
 
 </div><!-- div-form -->
 
@@ -31,7 +31,7 @@
 
 <div class="div-view-container" >
 
-<div ng-include='"./dapps/securities/angular-ui/partials/shareholder-cover-view.html"'></div>
+<div ng-include='utils.dapp_url("./dapps/securities/angular-ui/partials/shareholder-cover-view.html")'></div>
 
 </div><!-- div-view-container -->
 

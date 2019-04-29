@@ -34,6 +34,26 @@ class Views {
 		return content;
 	}
 	
+	getTransactionStatusString(transaction) {
+		if (!transaction)
+			return;
+		
+		var global = this.global;
+
+		var status = transaction.getStatus();
+		
+		switch(status) {
+			case 'undefined':
+				return global.t('undefined');
+			case 'started':
+				return global.t('started');
+			case 'completed':
+				return global.t('committed');
+			default:
+				return status;
+		}
+	}
+	
 }
 
 GlobalClass.registerModuleClass('mvc', 'Views', Views);

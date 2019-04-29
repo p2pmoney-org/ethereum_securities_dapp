@@ -42,7 +42,7 @@ class Global {
 	setExecutionEnvironment(val) {
 		console.log('changing execution environment to ' + val);
 		
-		var bootstrap = Bootstrap.getBookstrapObject();
+		var bootstrap = this.getBootstrapObject();
 		
 		switch (val) {
 			case 'dev':
@@ -56,6 +56,14 @@ class Global {
 				this.execution_env = 'prod';
 				break;
 		};
+	}
+	
+	getBootstrapObject() {
+		return Bootstrap.getBootstrapObject();
+	}
+	
+	getRootScriptLoader() {
+		return ScriptLoader.getRootScriptLoader();
 	}
 	
 	isInNodejs() {
@@ -74,7 +82,11 @@ class Global {
 		this.inbrowser = choice;
 	}
 	
-	// initialization seuance
+	// initialization sequence
+	isReady() {
+		return this.initialized;
+	}
+	
 	initGlobalScope() {
 		if ( typeof window !== 'undefined' && window ) {
 			// if we are in browser and not node js
@@ -122,7 +134,6 @@ class Global {
 		// resolve initialization promises
 		var self = this;
 		
-		
 		Promise.all(this.initializationpromises).then(function(res) {
 			console.log('Global.finalizeGlobalScopeInit ' + res.length + ' promises resolved');
 			
@@ -141,6 +152,7 @@ class Global {
 	
 	finalizeGlobalScopeInit(callback) {
 		var xtra_execution_env = this.getXtraConfigValue('client_env');
+		var rootscriptloader = ScriptLoader.getRootScriptLoader();
 		
 		console.log('xtra_execution_env is ' + xtra_execution_env);
 		
@@ -164,6 +176,9 @@ class Global {
 		
 		this.initializing = true;
 		
+		// signal start of global initialization
+		rootscriptloader.signalEvent('on_global_object_initializing');
+
 		// ask registered modules to load now if they haven't started
 		this.loadAllModules();
 
@@ -178,6 +193,10 @@ class Global {
 
 		this._deferGlobalInit(0, function() {
 			console.log("Global object is now up and ready!");
+			
+			// signal end of global initialization
+			rootscriptloader.signalEvent('on_global_object_ready');
+
 			
 			if (callback)
 				callback(true);
@@ -457,6 +476,10 @@ class Global {
 	
 	invokeHooks(hookentry, result, inputparams) {
 		console.log('Global.invokeHooks called for ' + hookentry);
+		
+		if ((!this.isReady()) 
+				&& (hookentry != 'preFinalizeGlobalScopeInit_hook'))
+			throw 'Global object is not ready. No invoke of hooks can be done at this time: ' + hookentry;
 
 		var hookarray = this.getHookArray(hookentry);
 
@@ -497,7 +520,7 @@ class Global {
 			this.overrideconsolelog = true;
 			
 			// capture bootstrap log function
-			var bootstrap = Bootstrap.getBookstrapObject();
+			var bootstrap = this.getBootstrapObject();
 			this.orgconsolelog = bootstrap.log;
 			
 			var self = this;

@@ -24,7 +24,7 @@ var Contracts = class {
 	
 	static get STATUS_ON_CHAIN() { return 1000;}
 	
-	static checkStatus(contract, chaintestfunction, callback) {
+	static checkStatus(contract, chaintestfunction, contractinstance, callback) {
 		var self = contract;
 		
 		var promise = new Promise(function (resolve, reject) {
@@ -46,7 +46,7 @@ var Contracts = class {
 						var transactionuuid = self.getUUID();
 						callbacknow = false;
 						
-						var contractinstance = self.getContractInterface().getContractInstance();
+						//var contractinstance = self.getContractInterface().getContractInstance();
 						
 						contractinstance.findAddressFromUUID(transactionuuid, function(err, res) {
 							if (res) {
@@ -65,6 +65,8 @@ var Contracts = class {
 							else {
 								self.livestatus = status;
 							}
+							
+							contractinstance.setStatus(self.livestatus);
 						});
 					}
 						break; // in the process
@@ -77,7 +79,7 @@ var Contracts = class {
 						var transactionuuid = self.getUUID();
 						callbacknow = false;
 						
-						var contractinstance = self.getContractInterface().getContractInstance();
+						//var contractinstance = self.getContractInterface().getContractInstance();
 						
 						contractinstance.findAddressFromUUID(transactionuuid, function(err, res) {
 							if (res) {
@@ -93,6 +95,8 @@ var Contracts = class {
 							else {
 								self.livestatus = self.Contracts.STATUS_NOT_FOUND;
 							}
+							
+							contractinstance.setStatus(self.livestatus);
 						});
 					}
 						break; // reached a chain
@@ -186,6 +190,9 @@ var Contracts = class {
 
 					var status = self.getStatus();
 					
+					if (contractinstance)
+					contractinstance.setStatus(self.livestatus);
+
 					if (callback)
 						callback(null, status);
 					

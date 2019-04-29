@@ -7,6 +7,8 @@ var Module = class {
 		this.name = 'mvc';
 		
 		this.global = null; // put by global on registration
+		this.app = null;
+
 		this.isready = false;
 		this.isloading = false;
 	}
@@ -23,8 +25,22 @@ var Module = class {
 	loadModule(parentscriptloader, callback) {
 		console.log('loadModule called for module ' + this.name);
 
-		if (this.isloading)
+		if (this.isready) {
+			if (callback)
+				callback(null, this);
+			
 			return;
+		}
+
+		if (this.isloading) {
+			var error = 'calling loadModule while still loading for module ' + this.name;
+			console.log('error: ' + error);
+			
+			if (callback)
+				callback(error, null);
+			
+			return;
+		}
 			
 		this.isloading = true;
 
@@ -32,8 +48,10 @@ var Module = class {
 		var global = this.global;
 		var mvcmodule = global.getModuleObject('mvc');
 		
-		var modulescriptloader = global.getScriptLoader('mvcmoduleloader', parentscriptloader);
 
+		// mvc files
+		var modulescriptloader = parentscriptloader.getChildLoader('mvcmoduleloader');
+		
 		var moduleroot = './angular-ui/js/src';
 
 		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
@@ -70,12 +88,73 @@ var Module = class {
 		
 		var global = this.global;
 		
+		// initialization
+		global.registerHook('postFinalizeGlobalScopeInit_hook', 'mvc', this.postFinalizeGlobalScopeInit_hook);
+
+		// session
 		global.registerHook('creatingSession_hook', 'mvc', this.creatingSession_hook);
 	}
 	
 	//
 	// hooks
 	//
+	
+	postFinalizeGlobalScopeInit_hook(result, params) {
+		console.log('postFinalizeGlobalScopeInit_hook called for ' + this.name);
+		
+		var global = this.global;
+		
+		// angular libs
+		var rootscriptloader = ScriptLoader.getRootScriptLoader();
+		var modulescriptloader = ScriptLoader.findScriptLoader('mvcmoduleloader');
+		var angularscriptloader = modulescriptloader.getChildLoader('angularloader');
+		
+		/*angularscriptloader.push_script('./angular-ui/lib/angular-1.6.9.js');
+		//angularscriptloader.push_script('./angular-ui/lib/angular-1.7.0.js');
+
+		angularscriptloader.push_script('./angular-ui/lib/ui-bootstrap-tpls-2.5.0.js');
+		angularscriptloader.push_script('./angular-ui/lib/angular-ui-router-1.0.18.js');
+
+		angularscriptloader.push_script('./angular-ui/lib/angular-breadcrumb-0.5.0.js');*/
+		
+		console.log('loading angular libraries');
+		var angularlibs = [];
+		
+		angularlibs.push({modulename: 'angular', version: '1.6.9', script: './angular-ui/lib/angular-1.6.9.js'});
+		//angularlibs.push({modulename: 'angular', version: '1.7.0', script: './angular-ui/lib/angular-1.7.0.js'});
+		angularlibs.push({modulename: 'ui.bootstrap', version: '2.5.0', script: './angular-ui/lib/ui-bootstrap-2.5.0.js'});
+		angularlibs.push({modulename: 'ui.router', version: '1.0.18', script: './angular-ui/lib/angular-ui-router-1.0.18.js'});
+		angularlibs.push({modulename: 'ncy-angular-breadcrumb', version: '0.5.0', script: './angular-ui/lib/angular-breadcrumb-0.5.0.js'});
+		
+		// invoke hook if a module wants to alter angular libraries
+		var result = [];
+		
+		var params = [];
+		
+		params.push(angularlibs);
+
+		var ret = global.invokeHooks('alterAngularLibraries_hook', result, params);
+		
+		if (ret && result && result.length) {
+			console.log('alterAngularLibraries_hook overload handled by a module');			
+		}
+		
+		
+		for (var i = 0; i < angularlibs.length; i++) {
+			if ((angularlibs[i].disabled) && (angularlibs[i].disabled === true)) // simple way to prevent load
+				continue;
+			
+			angularscriptloader.push_script(angularlibs[i].script);
+		}
+
+		//perform load
+		angularscriptloader.load_scripts(function() {
+			// signal end of angular app
+			rootscriptloader.signalEvent('on_angular_ui_load_end');
+		});
+
+	}
+	
 	creatingSession_hook(result, params) {
 		console.log('creatingSession_hook called for ' + this.name);
 		
@@ -110,6 +189,14 @@ var Module = class {
 	
 	
 	// objects
+	getAppObject() {
+		return this.app;
+	}
+	
+	setAppObject(app) {
+		this.app = app;
+	}
+	
 	getControllersObject() {
 		if (this.controllers)
 			return this.controllers;
@@ -131,6 +218,15 @@ var Module = class {
 		
 		return this.views;
 	}
+	
+	// functions
+	getMvcInfo() {
+		var info = [];
+		
+		info['framework'] = 'angularjs-1.x';
+		
+		return info;
+	}
 
 }
 
@@ -138,4 +234,4 @@ GlobalClass.getGlobalObject().registerModuleObject(new Module());
 
 
 //dependencies
-//GlobalClass.getGlobalObject().registerModuleDepency('mvc', 'noticebook');
+GlobalClass.getGlobalObject().registerModuleDepency('mvc', 'common');

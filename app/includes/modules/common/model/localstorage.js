@@ -147,7 +147,7 @@ var LocalStorage = class {
 
 		var session = this.session;
 		var localjson = this.readLocalJson(keys);
-		console.log('local json is ' + JSON.stringify(localjson));
+		//console.log('local json is ' + JSON.stringify(localjson));
 		
 		this._replaceJsonLeaves(localjson, uuid, fieldname, json);
 		
@@ -230,7 +230,7 @@ var LocalStorage = class {
 		var entry = this.storagemap.getKeyJson(key);
 		
 		if ((entry) && (!bForceRefresh) && (bForceRefresh != true)) {
-			console.log("readLocalJson json in cache for key " + key.toString() + " is " + JSON.stringify(entry));
+			//console.log("readLocalJson json in cache for key " + key.toString() + " is " + JSON.stringify(entry));
 			
 			return entry;
 		}
@@ -273,7 +273,7 @@ var LocalStorage = class {
 		var storageaccess = this.getStorageAccessInstance();
 		var key = this.keystostring(keys);
 		
-		console.log("saveLocalJson: local storage json for key " + key.toString() + " is " + JSON.stringify(json));
+		//console.log("saveLocalJson: local storage json for key " + key.toString() + " is " + JSON.stringify(json));
 		
 		if (this.session.isAnonymous()) {
 			storageaccess.saveClientSideJson(keys, json);

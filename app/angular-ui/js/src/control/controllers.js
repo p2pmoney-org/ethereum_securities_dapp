@@ -6,6 +6,8 @@ class Controllers {
 		this.global = global;
 		this.app = null; // filled in registerControllers
 		
+		this.name = 'angularjs-1.x';
+		
 		var dappsmodule = global.getModuleObject('dapps');
 		this.dappscontrollers = (dappsmodule ? dappsmodule.getAngularControllers() : null);
 	}
@@ -158,49 +160,131 @@ class Controllers {
 		// registering states
 		//
 		
+		this.registerStates();
+	}
+	
+	registerStates() {
+		var global = this.global;
+		var app = this.app;
+		
+		var angular_app = app.getAngularApp();
+		
+		var dappscontrollers = this.dappscontrollers;
+		
+		var statearray = this.getStates();
+		
+		// get states of dapps controllers
+		for (var i = 0; i < (dappscontrollers ? dappscontrollers.length : 0); i++) {
+			if (dappscontrollers[i].getStates)
+				var controllerstates = dappscontrollers[i].getStates();
+			
+				if (controllerstates)
+				statearray = statearray.concat(controllerstates);
+		}
+		
+		// invoke hook if a module wants to modify states before registration
+		var result = [];
+		
+		var params = [];
+		
+		params.push(statearray);
+
+		var ret = global.invokeHooks('alterAngularStates_hook', result, params);
+		
+		if (ret && result && result.length) {
+			console.log('alterAngularStates_hook overload handled by a module');			
+		}
+		
 		angular_app.config(['$stateProvider', function ($stateProvider) {
-			controllers.registerStates($stateProvider);
+			for (var i = 0; i < statearray.length; i++) {
+				var state = statearray[i];
+				$stateProvider.state(...state);
+			}
+			/*controllers.registerStates($stateProvider);
 			
 			for (var i = 0; i < (dappscontrollers ? dappscontrollers.length : 0); i++) {
 				if (dappscontrollers[i].registerStates)
-					dappscontrollers[i].registerStates($stateProvider);
-			}
+					statearray = dappscontrollers[i].registerStates($stateProvider);
+			}*/
 		}]);
-		
 	}
 	
-	registerStates($stateProvider) {
+	/*registerStates($stateProvider) {
 		var global = this.global;
-
-		$stateProvider
-	    .state('root', { url: '/', views: {'main@': {templateUrl: './angular-ui/templates/home.html', controller: "PageRequestHandler", } },
-	          ncyBreadcrumb: { label: global.t('Home page') } })
-	    .state('home', { url: '/home', views: {'main@': {templateUrl: './angular-ui/templates/home.html', controller: "PageRequestHandler", } },
-	          ncyBreadcrumb: { label: global.t('Home page') } })
-	    .state('home.about', {url: '/about', views: {'main@': {templateUrl: './angular-ui/templates/about.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('About') }})
-	    .state('home.account', {url: '/account', views: {'main@': {templateUrl: './angular-ui/templates/account.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Account') }})
-	    .state('home.account.eth-accounts', {url: '/account/eth-accounts', views: {'main@': {templateUrl: './angular-ui/templates/eth-accounts.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Ethereum Accounts') }})
-	    .state('home.account.eth-accounts.view', {url: '/account/eth-accounts/view/:uuid', views: {'main@': {templateUrl: './angular-ui/templates/eth-account.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.account.cryptokeys', {url: '/account/cryptokeys', views: {'main@': {templateUrl: './angular-ui/templates/cryptokeys.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Crypto Keys') }})
-	    .state('home.account.transfer', {url: '/account/transfer', views: {'main@': {templateUrl: './angular-ui/templates/ether-transfer.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Transfer') }})
-	    .state('home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: './angular-ui/templates/transaction-history.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Tx History') }})
-	    .state('home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: './angular-ui/templates/transaction-view.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Tx') }})
-	    .state('home.login', {url: '/login', views: {'main@': {templateUrl: './angular-ui/templates/login.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Login') }})
-	    .state('home.logout', {url: '/logout', views: {'main@': {templateUrl: './angular-ui/templates/logout.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Logout') }})
-	    .state('home.example', { url: '/:id', views: { 'main@': {  templateUrl: 'example.html'}},
-	        data: { displayName: '{{ id }}' },
-	        resolve: {id: function ($stateParams) {return $stateParams.id} }  })
+		var app = this.app;
 		
+		$stateProvider
+	    .state('root', { url: '/', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
+	          ncyBreadcrumb: { label: global.t('Home page') } })
+	    .state('home', { url: '/home', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
+	          ncyBreadcrumb: { label: global.t('Home page') } })
+	    .state('home.about', {url: '/about', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/about.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('About') }})
+	    .state('home.account', {url: '/account', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/account.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Account') }})
+	    .state('home.account.eth-accounts', {url: '/account/eth-accounts', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-accounts.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Ethereum Accounts') }})
+	    .state('home.account.eth-accounts.view', {url: '/account/eth-accounts/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-account.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }})
+	    .state('home.account.cryptokeys', {url: '/account/cryptokeys', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/cryptokeys.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Crypto Keys') }})
+	    .state('home.account.transfer', {url: '/account/transfer', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/ether-transfer.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Transfer') }})
+	    .state('home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-history.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Tx History') }})
+	    .state('home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Tx') }})
+	    .state('home.login', {url: '/login', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/login.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Login') }})
+	    .state('home.logout', {url: '/logout', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/logout.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Logout') }})
+		
+	}*/
+	
+	getStates() {
+		var statearray = [];
+		
+		var global = this.global;
+		var app = this.app;
+
+		statearray
+	    .push(['root', { url: '/', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
+	          ncyBreadcrumb: { label: global.t('Home page') } }]);
+		statearray
+	    .push(['home', { url: '/home', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
+	          ncyBreadcrumb: { label: global.t('Home page') } }]);
+  		statearray
+	    .push(['home.about', {url: '/about', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/about.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('About') }}]);
+	  	statearray
+	    .push(['home.account', {url: '/account', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/account.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Account') }}]);
+	  	statearray
+	    .push(['home.account.eth-accounts', {url: '/account/eth-accounts', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-accounts.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Ethereum Accounts') }}]);
+	  	statearray
+	    .push(['home.account.eth-accounts.view', {url: '/account/eth-accounts/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-account.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }}]);
+	  	statearray
+	    .push(['home.account.cryptokeys', {url: '/account/cryptokeys', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/cryptokeys.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Crypto Keys') }}]);
+	  	statearray
+	    .push(['home.account.transfer', {url: '/account/transfer', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/ether-transfer.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Transfer') }}]);
+	  	statearray
+	    .push(['home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-history.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Tx History') }}]);
+	  	statearray
+	    .push(['home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Tx') }}]);
+	  	statearray
+	    .push(['home.login', {url: '/login', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/login.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Login') }}]);
+	  	statearray
+	    .push(['home.logout', {url: '/logout', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/logout.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Logout') }}]);
+
+	     return  statearray; 
 	}
 	
 	
@@ -214,6 +298,12 @@ class Controllers {
 		var global = GlobalClass.getGlobalObject();
 		
 		return global.t(string);
+	}
+	
+	dapp_url(path) {
+		var app = this.app;
+		
+		return app.getHtmlUrl(path);
 	}
 	
 	gotoHome() {
@@ -238,13 +328,16 @@ class Controllers {
 		
 		var gonow = function () {
 			var $injector = app.getAngularInjector();
-			var $state = $injector.get('$state');
 			
-			if ($state.current.name != pagestate) {
-				console.log("current state is " + $state.current.name);
-				console.log("jumping to " + pagestate);
+			if ($injector) {
+				var $state = $injector.get('$state');
 				
-				$state.go(pagestate, params);
+				if ($state.current.name != pagestate) {
+					console.log("current state is " + $state.current.name);
+					console.log("jumping to " + pagestate);
+					
+					$state.go(pagestate, params);
+				}
 			}
 		};
 		
@@ -266,6 +359,10 @@ class Controllers {
 		
 		$rootScope.global = global; // to give access to global object from anywhere in the view
 		
+		var controllers = this;
+		$rootScope.utils = {};
+		$rootScope.utils.dapp_url = function(path) {return controllers.dapp_url(path);};
+		
 		$rootScope.session = {};
 		$rootScope.session.isanonymous = session.isAnonymous();
 		$rootScope.session.sessionuuid = session.getSessionUUID();
@@ -286,6 +383,12 @@ class Controllers {
 	//
 	// Views
 	//
+	
+	_apply($scope) {
+		setTimeout(function() {
+		    $scope.$apply();
+		  }, 100);
+	}
 	
 	// templates elements
 	
@@ -465,6 +568,8 @@ class Controllers {
 		console.log("Controllers.prepareCryptoKeysView called");
 		
 		var global = this.global;
+		var self = this;
+		
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.getSessionObject();
 		
@@ -495,9 +600,7 @@ class Controllers {
 			
 			// putting $apply in a deferred call to avoid determining if callback is called
 			// from a promise or direct continuation of the code
-			setTimeout(function() {
-			    $scope.$apply();
-			  }, 100);
+			self._apply($scope);
 		});
 		
 		if (cryptokeyarray) {
@@ -525,6 +628,7 @@ class Controllers {
 		console.log("Controllers.prepareEthAccountsView called");
 		
 		var global = this.global;
+		var self = this;
 
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
@@ -534,8 +638,10 @@ class Controllers {
 		
 		var ethaccounts = [];
 		
+		$scope.ethaccounts = ethaccounts;
+		
 		// get list of all accounts (third party and personal)
-		var accountarray = session.getAccountObjects(true, function(err, accntarray) {
+		session.getAccountObjects(true, function(err, accntarray) {
 			// empty array
 			while(ethaccounts.length > 0) { ethaccounts.pop();}
 
@@ -582,32 +688,9 @@ class Controllers {
 			
 			// putting $apply in a deferred call to avoid determining if callback is called
 			// from a promise or direct continuation of the code
-			setTimeout(function() {
-			    $scope.$apply();
-			  }, 100);
+			self._apply($scope);
 		});
 		
-		if (accountarray) {
-			for (var i = 0; i < accountarray.length; i++) {
-				var account = accountarray[i];
-				
-				if (account) {
-					var ethaccount = [];
-					
-					ethaccount['uuid'] = account.getAccountUUID();
-
-					ethaccount['description'] = (account.getDescription() !== null ? account.getDescription() : account.getAddress());
-					ethaccount['type'] = (account.getPrivateKey() !== null ? global.t('personal') : global.t('3rd party'));
-					ethaccount['address'] = account.getAddress();
-					ethaccount['public_key'] = account.getPublicKey();
-					ethaccount['rsa_public_key'] = account.getRsaPublicKey();
-					
-					ethaccounts.push(ethaccount);
-				}
-			}
-		}
-		
-		$scope.ethaccounts = ethaccounts;
 	}
 	
 	prepareEthAccountView($scope, $state, $stateParams) {
@@ -647,9 +730,13 @@ class Controllers {
 		console.log("Controllers.prepareEthAccountsView called");
 		
 		var global = this.global;
+		var self = this;
+		
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.getSessionObject();
 		
+		var views = global.getModuleObject('mvc').getViewsObject();
+
 		var transactions = [];
 		
 		commonmodule.getTransactionList(function(err, transactionarray) {
@@ -670,7 +757,7 @@ class Controllers {
 					transaction.to = tx.getTo();
 					transaction.ethervalue = parseFloat(tx.getValue());
 					transaction.value = ( transaction.ethervalue ? transaction.ethervalue.toFixed(2) + ' Ether' : '');
-					transaction.status = tx.getStatus();
+					transaction.status = views.getTransactionStatusString(tx);
 					
 					transactions.push(transaction);
 				}
@@ -678,9 +765,12 @@ class Controllers {
 				// sort descending order
 				transactions.sort(function(a,b) {return (b.unixdate - a.unixdate);});
 				
-				// tell scope a value has changed
-				$scope.$apply();
+				// putting $apply in a deferred call to avoid determining if callback is called
+				// from a promise or direct continuation of the code
+				self._apply($scope);
 			}
+			
+			return transactionarray;
 			
 		});
 
@@ -700,6 +790,8 @@ class Controllers {
 		var commoncontrollers = commonmodule.getControllersObject();
 		
 		var session = commonmodule.getSessionObject();
+
+		var views = global.getModuleObject('mvc').getViewsObject();
 
 		var transaction = [];
 		
@@ -734,7 +826,7 @@ class Controllers {
 				transaction.to = tx.getTo();
 				transaction.ethervalue = parseFloat(tx.getValue());
 				transaction.value = ( transaction.ethervalue ? transaction.ethervalue.toFixed(2) + ' Ether' : '');
-				transaction.status = tx.getStatus();
+				transaction.status = views.getTransactionStatusString(tx);
 				
 				transaction.transactionhash = tx.getTransactionHash();
 				
@@ -1183,13 +1275,15 @@ class Controllers {
 			var accnt = accountarray[i];
 			
 			var address = accnt.getAddress();
-			var shortaddress = (address ? address.substring(0,4) + '...' + address.substring(address.length - 4,address.length) : '...');
+			var description = accnt.getDescription();
+
+			var shortaddress = (address ? (description ? address.substring(0,4) + '...' + address.substring(address.length - 4,address.length) : address) : '...');
 			
 			var account = [];
 			
 			account['uuid'] = accnt.getAccountUUID();
 			account['address'] = accnt.getAddress();
-			account['description'] = shortaddress + ' - ' + accnt.getDescription();
+			account['description'] = (description ? shortaddress + ' - ' + description : shortaddress);
 			
 			accounts.push(account);
 		}
@@ -1211,13 +1305,15 @@ class Controllers {
 			var accnt = sessionaccountarray[i];
 			
 			var address = accnt.getAddress();
-			var shortaddress = (address ? address.substring(0,4) + '...' + address.substring(address.length - 4,address.length) : '...');
+			var description = accnt.getDescription();
+			
+			var shortaddress = (address ? (description ? address.substring(0,4) + '...' + address.substring(address.length - 4,address.length) : address) : '...');
 			
 			var sessionaccount = [];
 			
 			sessionaccount['uuid'] = accnt.getAccountUUID();
 			sessionaccount['address'] = accnt.getAddress();
-			sessionaccount['description'] = shortaddress + ' - ' + accnt.getDescription();
+			sessionaccount['description'] = (description ? shortaddress + ' - ' + description : shortaddress);
 			
 			sessionaccounts.push(sessionaccount);
 		}

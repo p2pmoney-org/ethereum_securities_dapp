@@ -80,8 +80,9 @@ var RestConnection = class {
 	    xhttp.send(JSON.stringify(postdata));
 	    
 	    xhttp.onload = function(e) {
-		    if (xhttp.status == 200) {
+		    if ((xhttp.status == 200) ||  (xhttp.status == 201)) {
 			    //console.log('response text is ' + xhttp.responseText);
+		    	
 		    	if (callback) {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
@@ -129,12 +130,13 @@ var RestConnection = class {
 	    xhttp.send(JSON.stringify(postdata));
 	    
 	    xhttp.onload = function(e) {
-		    if (xhttp.status == 200) {
+		    if ((xhttp.status == 200) ||  (xhttp.status == 201)){
+			    //console.log('response text is ' + xhttp.responseText);
 		    	if (callback) {
 			    	var jsonresponse = JSON.parse(xhttp.responseText);
 			    		    		
 			    	if (jsonresponse['status'] && (jsonresponse['status'] == '1')) {
-			    		console.log('RestConnection.rest_post response is ' + JSON.stringify(jsonresponse));
+			    		//console.log('RestConnection.rest_put response is ' + JSON.stringify(jsonresponse));
 			    		callback(null, jsonresponse);
 			    	}
 			    	else  {

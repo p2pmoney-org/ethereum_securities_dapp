@@ -188,56 +188,83 @@ var DAPPControllers = class {
 		}]);
 	}
 
-	registerStates($stateProvider) {
-		var global = this.global;
+	getStates() {
+		var statearray = [];
 		
-		$stateProvider
-	    .state('home.stockledgers', {url: '/stockledgers', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledgers.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Stock Ledgers') }})
-	    .state('home.stockledgers.create', {url: '/create', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledger-create.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Create') }})
-	    .state('home.stockledgers.import', {url: '/import', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledger-import.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Import') }})
-	    .state('home.stockledgers.modify', {url: '/modify/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledger-modify.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Modify') }})
-	    .state('home.stockledgers.deploy', {url: '/deploy/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledger-deploy.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Publish') }})
-	    .state('home.stockledgers.view', {url: '/view/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/stockledger-view.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.stockledgers.delete', {url: '/delete/:uuid', views: {'main@': {controller: "StockLedgerRemoveRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Delete') }})
-	    .state('home.stockledgers.accounts', {url: '/accounts/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/accounts.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Accounts') }})
-	    .state('home.stockledgers.shareholders', {url: '/shareholders/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/shareholders.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Shareholders') }})
-	    .state('home.stockledgers.shareholders.modify', {url: '/modify/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/shareholder-modify.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Modify') }})
-	    .state('home.stockledgers.shareholders.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/shareholder-deploy.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Publish') }})
-	    .state('home.stockledgers.shareholders.view', {url: '/view/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/shareholder-view.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.stockledgers.shareholders.delete', {url: '/delete/:index', views: {'main@': {controller: "ShareHolderRemoveRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Delete') }})
-	    .state('home.stockledgers.issuances', {url: '/issuances/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/issuances.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Issuances') }})
-	    .state('home.stockledgers.issuances.modify', {url: '/modify/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/issuance-modify.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Modify') }})
-	    .state('home.stockledgers.issuances.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/issuance-deploy.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Publish') }})
-	    .state('home.stockledgers.issuances.view', {url: '/view/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/issuance-view.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.stockledgers.issuances.delete', {url: '/delete/:index', views: {'main@': {controller: "IssuanceRemoveRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Delete') }})
-	    .state('home.stockledgers.transactions', {url: '/transactions/:uuid', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/transactions.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Transactions') }})
-	    .state('home.stockledgers.transactions.modify', {url: '/modify/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/transaction-modify.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Modify') }})
-	    .state('home.stockledgers.transactions.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/transaction-deploy.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Publish') }})
-	    .state('home.stockledgers.transactions.view', {url: '/view/:index', views: {'main@': {templateUrl: './dapps/securities/angular-ui/templates/transaction-view.html', controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.stockledgers.transactions.delete', {url: '/delete/:index', views: {'main@': {controller: "TransactionRemoveRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Delete') }})
+		var global = this.global;
+		var app = this.app;
+		
+		statearray
+	    .push(['home.stockledgers', {url: '/stockledgers', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledgers.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Stock Ledgers') }}]);
+		statearray
+	    .push(['home.stockledgers.create', {url: '/create', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledger-create.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Create') }}]);
+		statearray
+	    .push(['home.stockledgers.import', {url: '/import', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledger-import.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Import') }}]);
+		statearray
+	    .push(['home.stockledgers.modify', {url: '/modify/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledger-modify.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Modify') }}]);
+		statearray
+	    .push(['home.stockledgers.deploy', {url: '/deploy/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledger-deploy.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Publish') }}]);
+		statearray
+	    .push(['home.stockledgers.view', {url: '/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/stockledger-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }}]);
+		statearray
+	    .push(['home.stockledgers.delete', {url: '/delete/:uuid', views: {'main@': {controller: "StockLedgerRemoveRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Delete') }}]);
+		statearray
+	    .push(['home.stockledgers.accounts', {url: '/accounts/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/accounts.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Accounts') }}]);
+		statearray
+	    .push(['home.stockledgers.shareholders', {url: '/shareholders/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/shareholders.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Shareholders') }}]);
+		statearray
+	    .push(['home.stockledgers.shareholders.modify', {url: '/modify/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/shareholder-modify.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Modify') }}]);
+		statearray
+	    .push(['home.stockledgers.shareholders.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/shareholder-deploy.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Publish') }}]);
+		statearray
+	    .push(['home.stockledgers.shareholders.view', {url: '/view/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/shareholder-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }}]);
+		statearray
+	    .push(['home.stockledgers.shareholders.delete', {url: '/delete/:index', views: {'main@': {controller: "ShareHolderRemoveRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Delete') }}]);
+		statearray
+	    .push(['home.stockledgers.issuances', {url: '/issuances/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/issuances.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Issuances') }}]);
+		statearray
+	    .push(['home.stockledgers.issuances.modify', {url: '/modify/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/issuance-modify.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Modify') }}]);
+		statearray
+	    .push(['home.stockledgers.issuances.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/issuance-deploy.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Publish') }}]);
+		statearray
+	    .push(['home.stockledgers.issuances.view', {url: '/view/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/issuance-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }}]);
+		statearray
+	    .push(['home.stockledgers.issuances.delete', {url: '/delete/:index', views: {'main@': {controller: "IssuanceRemoveRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Delete') }}]);
+		statearray
+	    .push(['home.stockledgers.transactions', {url: '/transactions/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/transactions.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Transactions') }}]);
+		statearray
+	    .push(['home.stockledgers.transactions.modify', {url: '/modify/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/transaction-modify.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Modify') }}]);
+		statearray
+	    .push(['home.stockledgers.transactions.deploy', {url: '/deploy/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/transaction-deploy.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Publish') }}]);
+		statearray
+	    .push(['home.stockledgers.transactions.view', {url: '/view/:index', views: {'main@': {templateUrl: app.getHtmlUrl('./dapps/securities/angular-ui/templates/transaction-view.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('View') }}]);
+		statearray
+	    .push(['home.stockledgers.transactions.delete', {url: '/delete/:index', views: {'main@': {controller: "TransactionRemoveRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Delete') }}]);
+		
+		return statearray;
 	}
 
 	

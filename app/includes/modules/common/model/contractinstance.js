@@ -161,14 +161,31 @@ var ContractInstance = class {
 		this.address = contractaddress;
 		
 		this.contractartifact = contractartifact;
+		
+		// Contracts class
+		var global = session.getGlobalObject();
+		var commonmodule = global.getModuleObject('common');
+		
+		this.Contracts = commonmodule.Contracts;
+
 
 		// operation
+		this.livestatus = this.Contracts.STATUS_ON_CHAIN;
+		
 		this.trufflecontract = null;
 		this.loadtrufflecontractpromise = null;
 
 		this.trufflecontractinstanceexists = null;
 		this.trufflecontractinstance = null;
 		this.trufflecontractinstancepromise = null;
+	}
+	
+	getStatus() {
+		return this.livestatus;
+	}
+	
+	setStatus(status) {
+		this.livestatus = status;
 	}
 	
 	
@@ -607,16 +624,23 @@ var ContractInstance = class {
 			var callfunc = function(instance) {
 				var contractInstance = instance;
 				
-				var promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, methodname, params)
-				.then(function(res) {
-			    	
-			    	console.log('returning from method_call ' +  methodname + ' with return ' + res);
-			    	
-			    	if (callback)
-						callback(null, res);
-						
-			    	return res;
-			    });
+				var promise2;
+				
+				if (self.getStatus() === self.Contracts.STATUS_ON_CHAIN) {
+					promise2 = EthereumNodeAccess.truffle_method_call(contractInstance, methodname, params)
+					.then(function(res) {
+				    	
+				    	console.log('returning from method_call ' +  methodname + ' with return ' + res);
+				    	
+				    	if (callback)
+							callback(null, res);
+							
+				    	return res;
+				    });
+				}
+				else {
+					promise2 = Promise.reject('contract not found on chain');
+				}
 			    
 				return promise2;
 			}

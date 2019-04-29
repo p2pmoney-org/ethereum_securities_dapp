@@ -10,6 +10,8 @@ var Session = class {
 		
 		this.sessionuuid = null;
 		
+		this.sessionvar = {};
+		
 		this.contracts = null;
 
 		// web3
@@ -87,6 +89,34 @@ var Session = class {
 		return Session.Config.getXtraValue(key);
 	}
 	
+	// session variable
+	setSessionVariable(key, value) {
+		var global = this.global;
+		
+		this.sessionvar[key] = value;
+	}
+	
+	getSessionVariable(key) {
+		if (key in this.sessionvar) {
+			return this.sessionvar[key];
+		}
+	}
+	
+	getSessionVariables() {
+		var array = [];
+		
+		for (var key in this.sessionvar) {
+		    if (!this.sessionvar[key]) continue;
+		    
+		    var entry = {};
+		    entry.key = key;
+		    entry.value = this.sessionvar[key];
+		    array.push(entry);
+		}
+		
+		return array;
+	}
+
 	// web 3
 	getWeb3ProviderUrl() {
 		return this.web3providerurl;
@@ -342,12 +372,14 @@ var Session = class {
 		
 		result.get = function(err, accountarray) {
 			if (!err) {
-				self.accountmap.empty();
-				
-				for (var i = 0; i < accountarray.length; i++) {
-					var account = accountarray[i];
+				if (accountarray && accountarray.length) {
+					self.accountmap.empty();
 					
-					self.accountmap.pushAccount(account);
+					for (var i = 0; i < accountarray.length; i++) {
+						var account = accountarray[i];
+						
+						self.accountmap.pushAccount(account);
+					}
 				}
 				
 				if (callback)

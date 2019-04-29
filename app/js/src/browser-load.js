@@ -1,16 +1,19 @@
-var rootscriptloader = window.ScriptLoader.getScriptLoader('rootloader');
+var bootstrapobject = Bootstrap.getBootstrapObject();
+var rootscriptloader = ScriptLoader.getRootScriptLoader();
 
 //include all global js files here 
-rootscriptloader.push_script('./js/src/config.js');
-rootscriptloader.push_script('./js/src/constants.js');
+var globalscriptloader = rootscriptloader.getChildLoader('globalloader');
 
-rootscriptloader.push_script('./includes/modules/common/global.js');
+globalscriptloader.push_script('./js/src/config.js');
+globalscriptloader.push_script('./js/src/constants.js');
 
-rootscriptloader.push_script('./js/src/xtra/xtra-config.js');
+globalscriptloader.push_script('./includes/modules/common/global.js');
+
+globalscriptloader.push_script('./js/src/xtra/xtra-config.js');
 
 
 // perform load
-rootscriptloader.load_scripts();
+globalscriptloader.load_scripts();
 
 
 //libs
@@ -33,7 +36,7 @@ libscriptloader.load_scripts();
 
 
 
-// modules
+// includes modules
 var modulescriptloader = libscriptloader.getChildLoader('moduleloader');
 var dappsscriptloader = modulescriptloader.getChildLoader('dappmodulesloader');
 
@@ -42,57 +45,72 @@ modulescriptloader.push_script('./includes/modules/common/module.js');
 //chain reader
 modulescriptloader.push_script('./includes/modules/chainreader/module.js');
 
-// dapps
-modulescriptloader.push_script('./dapps/module.js', function() {
-	// let /dapps/module push scripts in 'dappsloader' then load them
-	dappsscriptloader.load_scripts();
+// let /dapps/module push scripts in 'dappmodulesloader' then load them
+modulescriptloader.push_script('./dapps/module.js', function () {
+	console.log('dapps module loaded');
 });
 
-//perform load
-modulescriptloader.load_scripts();
 
 
-
-//app
-var angularscriptloader = dappsscriptloader.getChildLoader('angularloader');
-
-//angular
-var angular_app;
-
-angularscriptloader.push_script('./angular-ui/lib/angular-1.6.9.js');
-//angularscriptloader.push_script('./angular-ui/lib/angular-1.7.0.js');
-
-angularscriptloader.push_script('./angular-ui/lib/ui-bootstrap-2.5.0.js');
-
-angularscriptloader.push_script('./angular-ui/lib/angular-ui-router-1.0.18.js');
-
-angularscriptloader.push_script('./angular-ui/lib/angular-breadcrumb-0.5.0.js');
-
-//perform load
-angularscriptloader.load_scripts();
-
-//mvc
-var mvcscriptloader = angularscriptloader.getChildLoader('mvcloader');
-
-mvcscriptloader.push_script('./angular-ui/js/src/module.js', 
-	function() {
-		var global = GlobalClass.getGlobalObject();	
+//perform includes module load
+modulescriptloader.load_scripts(function () {
+	var global = GlobalClass.getGlobalObject();	
+	
+	// load common module now
+	global.loadModule('common', modulescriptloader, function() {
+		rootscriptloader.signalEvent('on_common_module_load_end');
 		
-		var allmodulesscriptloader = global.loadModule('mvc', modulescriptloader, function() {
-			// and finally loading the app
-			var appscriptloader = allmodulesscriptloader.getChildLoader('apploader');
+		// loading dapps pushed in 'dappmodulesloader'
+		dappsscriptloader.load_scripts(function() {
 			
-			appscriptloader.push_script('./angular-ui/js/app.js');
-
-			//perform load
-			appscriptloader.load_scripts();
+			global.loadModule('dapps', modulescriptloader, function() {
+				rootscriptloader.signalEvent('on_dapps_module_load_end');
+			});
+			
 		});
-		
 	});
 
-//perform load
-mvcscriptloader.load_scripts();
+	
+	
+});
 
+
+//mvc
+rootscriptloader.registerEventListener('on_dapps_module_load_end', function(eventname) {
+	var mvcui = bootstrapobject.getMvcUI();
+	
+	if (mvcui == 'angularjs-1.x') {
+		var mvcscriptloader = dappsscriptloader.getChildLoader('mvcloader');
+
+		mvcscriptloader.push_script('./angular-ui/js/src/module.js', 
+			function() {
+				var global = GlobalClass.getGlobalObject();	
+				
+				var allmodulesscriptloader = global.loadModule('mvc', modulescriptloader, function() {
+					// and finally loading the app
+					var appscriptloader = allmodulesscriptloader.getChildLoader('apploader');
+					
+					appscriptloader.push_script('./angular-ui/js/app.js');
+
+					//perform load
+					appscriptloader.load_scripts(function() {
+						// signal end of mvc module
+						rootscriptloader.signalEvent('on_mvc_module_load_end');
+					});
+					
+				});
+		});
+
+
+		//perform load
+		mvcscriptloader.load_scripts();
+	}
+});
+
+
+
+// signal end of browser load
+rootscriptloader.signalEvent('on_browser_load_end');
 
 
 

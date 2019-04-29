@@ -108,7 +108,7 @@ var Module = class {
 		var key = this.keystostring(keys);
 		var jsonstring = JSON.stringify(json);
 
-		console.log("saving in client side local storage json " + jsonstring + " for key " + key.toString());
+		//console.log("saving in client side local storage json " + jsonstring + " for key " + key.toString());
 		
 		localStorage.setItem(key, jsonstring);
 	}

@@ -14,7 +14,7 @@
 
 <div class="div-form">
 
-<div ng-if="transaction.islocalonly" ng-include='"./dapps/securities/angular-ui/partials/transaction-deploy-form.html"'></div>
+<div ng-if="transaction.islocalonly" ng-include='utils.dapp_url("./dapps/securities/angular-ui/partials/transaction-deploy-form.html")'></div>
 
 </div><!-- div-form -->
 
@@ -31,7 +31,7 @@
 
 <div class="div-view-container" >
 
-<div ng-include='"./dapps/securities/angular-ui/partials/transaction-cover-view.html"'></div>
+<div ng-include='utils.dapp_url("./dapps/securities/angular-ui/partials/transaction-cover-view.html")'></div>
 
 </div><!-- div-view-container -->
 
