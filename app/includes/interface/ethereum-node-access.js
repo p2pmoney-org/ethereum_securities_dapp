@@ -120,7 +120,10 @@ var Module = class {
 	getWeb3Provider(session) {
 		var Web3 = this.getWeb3Class(session);
 
-		var web3providerurl = session.getWeb3ProviderUrl();
+		var global = this.global;
+		var ethnodemodule = global.getModuleObject('ethnode');
+
+		var web3providerurl = ethnodemodule.getWeb3ProviderUrl();
 		var web3Provider = new Web3.providers.HttpProvider(web3providerurl);
 
 		return web3Provider;
@@ -414,11 +417,12 @@ class EthereumTransaction {
 		
 		var global = session.getGlobalObject();
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		this.value = 0;
 		
-		this.gas = commonmodule.getDefaultGasLimit();
-		this.gasPrice = commonmodule.getDefaultGasPrice();
+		this.gas = ethnodemodule.getDefaultGasLimit();
+		this.gasPrice = ethnodemodule.getDefaultGasPrice();
 		
 		this.data = null;
 		
@@ -426,7 +430,6 @@ class EthereumTransaction {
 		
 		this.status = null;
 		
-		var global = session.getGlobalObject();
 		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
 		
 		this.ethereumnodeaccessmodule = ethereumnodeaccessmodule;
@@ -579,6 +582,8 @@ class EthereumTransaction {
 	getRawData(callback) {
 		var self = this;
 		var session = this.session;
+		var global = session.getGlobalObject();
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		var web3 = this.web3;
 		var fromaccount = this.sendingaccount;
@@ -597,7 +602,7 @@ class EthereumTransaction {
 		var txjson = this.getTxJson();
 		
 		var ethereumnodeaccessmodule = this.ethereumnodeaccessmodule;
-		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
+		var EthereumNodeAccess = ethnodemodule.getEthereumNodeAccessInstance();
 
 		
 		if (fromaccount.canSignTransactions()) {
@@ -1081,9 +1086,13 @@ class EthereumNodeAccess {
 			var promise = new Promise(function (resolve, reject) {
 				if (self.web3_version == "1.0.x") {
 					// create an account from private key
+					// (used in lock account to remove account from wallet)
 					var web3account = web3.eth.accounts.privateKeyToAccount(privatekey);
 					account.web3account = web3account;
 				}
+
+				if (callback)
+					callback(null, true);
 
 				return resolve(true);
 			});
@@ -1328,10 +1337,14 @@ class EthereumNodeAccess {
 	}
 	
 	web3_getTransactionList(callback) {
-		var self = this
+		var self = this;
 		var session = this.session;
+		var global = session.getGlobalObject();
+		
 		var user = session.getSessionUserObject();
 		var useruuid = (user ? user.getUserUUID() : null);
+
+		var ethnodemodule = global.getModuleObject('ethnode');
 
 		var promise = new Promise(function (resolve, reject) {
 			try {
@@ -1342,7 +1355,7 @@ class EthereumNodeAccess {
 					
 					for (var i = 0; i < txarray.length; i++) {
 						var tx = txarray[i];
-						var transaction = session.getTransactionObject(tx['transactionuuid']);
+						var transaction = ethnodemodule.getTransactionObject(tx['transactionuuid']);
 						
 						transaction.setTransactionHash(tx['transactionHash']);
 						transaction.setFrom(tx['from']);
@@ -1915,9 +1928,11 @@ class EthereumNodeAccess {
 		// create contract object
 		var contractobject = {};
 		
+		contractobject.artifact = {};
+		
 		contractobject.artifact['data'] = abi;
 		contractobject.artifact['artifactpath'] = null;
-		contractobject.artifact['contractName'] = nul;
+		contractobject.artifact['contractName'] = null;
 		contractobject.artifact['abi'] = abi;
 		contractobject.artifact['bytecode'] = null;
 		

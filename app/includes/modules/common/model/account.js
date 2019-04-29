@@ -192,58 +192,6 @@ var Account = class {
 		return this.isPrivateKeyValid();
 	}
 	
-	// operation
-	unlock(password, duration) {
-		if (this.session.needToUnlockAccounts() === false) 
-			return;
-		
-		this.lastunlock = Date.now()/1000; // in seconds
-		this.lastunlockduration = duration;
-		
-		console.log('Account.unlock called for ' + duration + ' seconds ');
-		
-		// call interface to unlock
-		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.web3_unlockAccount(this, password, duration);
-	}
-	
-	lock() {
-		if (this.session.needToUnlockAccounts() === false) 
-			return;
-		
-		// call interface to lock
-		this.lastunlock = null; // unix time
-		this.lastunlockduration = null;
-		
-		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.web3_lockAccount(this);
-	}
-	
-	isLocked() {
-		var session = this.session;
-		
-		if (session.needToUnlockAccounts() === false) 
-			return false;
-		
-		if (this.lastunlock == null)
-			return true;
-		
-		var now = Date.now()/1000; // in seconds
-		
-		if (now - this.lastunlock > this.lastunlockduration - 1) {
-			this.lock();
-			
-			return true;
-		}
-	}
-	
-	getBalance() {
-		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.web3_getBalance(this.address);
-	}
 	
 	// encryption
 	canDoAesEncryption() {
@@ -331,52 +279,15 @@ var Account = class {
 		return this.accountencryption.validateStringSignature(text, signature);
 	}
 	
-	// chain async
-	getChainBalance(callback) {
-		var EthereumNodeAccess = this.session.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.web3_getBalance(this.address, callback);
-	}
-	
-	transferAmount(toaccount, amount, gas, gasPrice, transactionuuid, callback) {
-		console.log('Account.transferAmount called for amount ' + amount + ' to ' + (toaccount ? toaccount.getAddress() : null) + ' with transactionuuid ' + transactionuuid);
-		
-		var session = this.session;
-		var global = session.getGlobalObject();
-		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
-		
-		var ethereumtransaction =  ethereumnodeaccessmodule.getEthereumTransactionObject(session, this);
-		
-		var toaddress = (toaccount ? toaccount.getAddress() : null);
-		
-		ethereumtransaction.setToAddress(toaddress);
-		ethereumtransaction.setValue(amount);
-		ethereumtransaction.setGas(gas);
-		ethereumtransaction.setGasPrice(gasPrice);
-		
-		ethereumtransaction.setTransactionUUID(transactionuuid);
-
-		
-		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
-		
-		
-		return EthereumNodeAccess.web3_sendEthTransaction(ethereumtransaction, callback);
-		
-		/*var txdata = null;
-		var nonce = null;
-		
-		return EthereumNodeAccess.web3_sendTransaction(this, toaccount, amount, gas, gasPrice, txdata, nonce, callback);*/
-	}
-	
 	
 	// static
 	static getAccountObject(session, address) {
 		return session.getAccountObject(address);
 	}
 	
-	static getWalletAccountObject(session) {
+	/*static getWalletAccountObject(session) {
 		return session.getWalletAccountObject();
-	}
+	}*/
 	
 }
 

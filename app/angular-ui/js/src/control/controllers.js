@@ -60,6 +60,11 @@ class Controllers {
 
 		// partials
 		
+		// version info
+		angular_app.controller("VersionInfoViewCtrl",  ['$scope', function ($scope) {
+			controllers.prepareVersionInfoView($scope);
+		}]);
+
 		// node info
 		angular_app.controller("NodeInfoViewCtrl",  ['$scope', function ($scope) {
 			controllers.prepareNodeInfoView($scope);
@@ -113,8 +118,8 @@ class Controllers {
 			controllers.prepareEthAccountModifyForm($scope, $state, $stateParams);
 		}]);
 		
-		angular_app.controller("EtherTransferFormCtrl", ['$scope', function ($scope) {
-			controllers.prepareEtherTransferForm($scope);
+		angular_app.controller("EtherTransferFormCtrl", ['$scope', '$state', '$stateParams', function ($scope, $state, $stateParams) {
+			controllers.prepareEtherTransferForm($scope, $state, $stateParams);
 		}]);
 		
 
@@ -200,46 +205,8 @@ class Controllers {
 				var state = statearray[i];
 				$stateProvider.state(...state);
 			}
-			/*controllers.registerStates($stateProvider);
-			
-			for (var i = 0; i < (dappscontrollers ? dappscontrollers.length : 0); i++) {
-				if (dappscontrollers[i].registerStates)
-					statearray = dappscontrollers[i].registerStates($stateProvider);
-			}*/
 		}]);
 	}
-	
-	/*registerStates($stateProvider) {
-		var global = this.global;
-		var app = this.app;
-		
-		$stateProvider
-	    .state('root', { url: '/', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
-	          ncyBreadcrumb: { label: global.t('Home page') } })
-	    .state('home', { url: '/home', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/home.html'), controller: "PageRequestHandler", } },
-	          ncyBreadcrumb: { label: global.t('Home page') } })
-	    .state('home.about', {url: '/about', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/about.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('About') }})
-	    .state('home.account', {url: '/account', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/account.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Account') }})
-	    .state('home.account.eth-accounts', {url: '/account/eth-accounts', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-accounts.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Ethereum Accounts') }})
-	    .state('home.account.eth-accounts.view', {url: '/account/eth-accounts/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-account.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('View') }})
-	    .state('home.account.cryptokeys', {url: '/account/cryptokeys', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/cryptokeys.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Crypto Keys') }})
-	    .state('home.account.transfer', {url: '/account/transfer', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/ether-transfer.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Transfer') }})
-	    .state('home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-history.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Tx History') }})
-	    .state('home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-view.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Tx') }})
-	    .state('home.login', {url: '/login', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/login.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Login') }})
-	    .state('home.logout', {url: '/logout', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/logout.html'), controller: "PageRequestHandler",}},
-	        ncyBreadcrumb: { label: global.t('Logout') }})
-		
-	}*/
 	
 	getStates() {
 		var statearray = [];
@@ -315,7 +282,10 @@ class Controllers {
 	}
 	
 	refreshPage() {
-		this.getAppObject().refreshDisplay();
+		var app = this.getAppObject();
+		
+		if (app)
+		app.refreshDisplay();
 	}
 	
 	// specific to angular
@@ -461,6 +431,38 @@ class Controllers {
 		$scope.message = message;	
 	}
 	
+	prepareVersionInfoView($scope) {
+		console.log("Controllers.prepareVersionInfoView called");
+		
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		var versioninfos = [];
+		
+		var app = this.getAppObject();
+
+		var versioninfo = {};
+		
+		versioninfo.label = global.t('ethereum dapp');
+		versioninfo.value = app.current_version;
+		
+		versioninfos.push(versioninfo);
+		
+		$scope.versioninfos = versioninfos;
+		
+		var result = [];
+		
+		var params = [];
+		
+		params.push(versioninfos);
+
+		var ret = global.invokeHooks('getVersionInfo_hook', result, params);
+
+		if (ret && result && result.length) {
+			console.log('getVersionInfo_hook overload handled by a module');			
+		}
+	}
+	
 	prepareNodeInfoView($scope) {
 		console.log("Controllers.prepareNodeInfoView called");
 		
@@ -468,7 +470,10 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		
 		var session = commonmodule.getSessionObject();
-		var ethereumnodeaccess = session.getEthereumNodeAccessInstance();
+		
+		var ethnodemodule = global.getModuleObject('ethnode');
+
+		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance();
 		
 		var nodeinfo = [];
 		
@@ -635,6 +640,9 @@ class Controllers {
 
 		var session = commonmodule.getSessionObject();
 		
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		
 		var ethaccounts = [];
 		
@@ -664,12 +672,12 @@ class Controllers {
 						
 						// write ether balance for this account
 						var writebalance = function(ethaccount, account) {
-							account.getChainBalance(function(err, res) {
+							ethnodemodule.getChainAccountBalance(account, function(err, res) {
 								if (err) {
 									ethaccount['balance'] = global.t('error');
 								}
 								else {
-									var etherbalance = commoncontrollers.getEtherStringFromWei(res);
+									var etherbalance = ethnodecontrollers.getEtherStringFromWei(res);
 									ethaccount['balance'] = etherbalance + ' ETH';
 								}
 								
@@ -734,12 +742,13 @@ class Controllers {
 		
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.getSessionObject();
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		var views = global.getModuleObject('mvc').getViewsObject();
 
 		var transactions = [];
 		
-		commonmodule.getTransactionList(function(err, transactionarray) {
+		ethnodemodule.getTransactionList(function(err, transactionarray) {
 			
 			if (transactionarray) {
 				
@@ -749,8 +758,10 @@ class Controllers {
 					
 					transaction.uuid = tx.getTransactionUUID();
 					
-					transaction.unixdate = new Date(tx.getCreationDate()).getTime() / 1000;
-					transaction.date = global.formatDate(new Date(tx.getCreationDate()), 'YYYY-mm-dd HH:MM:SS');
+					var creationdate = tx.getCreationDate();
+					
+					transaction.unixdate = new Date((creationdate ? creationdate : 0)).getTime() / 1000;
+					transaction.date = global.formatDate(new Date(transaction.unixdate*1000), 'YYYY-mm-dd HH:MM:SS');
 					transaction.transactionuuid = tx.getTransactionUUID();
 					transaction.transactionhash = tx.getTransactionHash();
 					transaction.from = tx.getFrom();
@@ -791,6 +802,9 @@ class Controllers {
 		
 		var session = commonmodule.getSessionObject();
 
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		var views = global.getModuleObject('mvc').getViewsObject();
 
 		var transaction = [];
@@ -816,12 +830,14 @@ class Controllers {
 		transaction.chainstatus = global.t('loading...');
 
 		
-		commoncontrollers.getTransactionObjectFromUUID(session, transactionuuid, function (err, tx) {
+		ethnodecontrollers.getTransactionObjectFromUUID(session, transactionuuid, function (err, tx) {
 			if (tx) {
 				transaction.uuid = tx.getTransactionUUID();
 				
-				transaction.unixdate = new Date(tx.getCreationDate()).getTime() / 1000;
-				transaction.date = global.formatDate(new Date(tx.getCreationDate()), 'YYYY-mm-dd HH:MM:SS');
+				var creationdate = tx.getCreationDate();
+				
+				transaction.unixdate = new Date((creationdate ? creationdate : 0)).getTime() / 1000;
+				transaction.date = global.formatDate(new Date(transaction.unixdate*1000), 'YYYY-mm-dd HH:MM:SS');
 				transaction.from = tx.getFrom();
 				transaction.to = tx.getTo();
 				transaction.ethervalue = parseFloat(tx.getValue());
@@ -834,14 +850,14 @@ class Controllers {
 					
 					if (ethtx) {
 						transaction.gaslimit = ethtx.gas;
-						transaction.gasprice = commoncontrollers.getEtherStringFromWei(ethtx.gasPrice, 8) + ' Ether';
+						transaction.gasprice = ethnodecontrollers.getEtherStringFromWei(ethtx.gasPrice, 8) + ' Ether';
 
 						tx.getEthTransactionReceipt(function(err, ethtxreceipt) {
 							
 							if (ethtxreceipt) {
 								transaction.blocknumber = ethtxreceipt.blockNumber;
 								transaction.gasused = ethtxreceipt.gasUsed;
-								transaction.cost = commoncontrollers.getEtherStringFromWei(ethtx.gasPrice * ethtxreceipt.gasUsed, 8) + ' Ether';
+								transaction.cost = ethnodecontrollers.getEtherStringFromWei(ethtx.gasPrice * ethtxreceipt.gasUsed, 8) + ' Ether';
 								transaction.chainstatus = (ethtxreceipt.status ? global.t('success') : global.t('fail'));
 							}
 							else {
@@ -889,7 +905,9 @@ class Controllers {
 				transaction.chainstatus = global.t('not found');
 			}
 			
-			$scope.$apply();
+			// putting $apply in a deferred call to avoid determining if callback is called
+			// from a promise or direct continuation of the code
+			self._apply($scope);
 		});
 		
 		
@@ -1230,6 +1248,9 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		var session = commonmodule.getSessionObject();
 		
 		var fromaccount = commoncontrollers.getSessionAccountObjectFromUUID(session, accountuuid)
@@ -1242,7 +1263,7 @@ class Controllers {
 			// refresh divcue
 			var divcue = document.getElementsByClassName('div-form-cue')[0];
 			
-			var values = commoncontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
+			var values = ethnodecontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
 		}
 	}
 	
@@ -1328,7 +1349,7 @@ class Controllers {
 
 	}
 
-	prepareEtherTransferForm($scope) {
+	prepareEtherTransferForm($scope, $state, $stateParams) {
 		console.log("Controllers.prepareEtherTransferForm called");
 
 		var self = this;
@@ -1341,10 +1362,16 @@ class Controllers {
 
 		var session = commonmodule.getSessionObject();
 		
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		// fill account list
 		this._getAccountArrays($scope, session);
 		
-		// display default transfer values (gaslimit, gasprice, default account,;;°
+		// prepare wallet part
+		this.prepareWalletFormPart(session, $scope, $state, $stateParams);
+
+		// sender
 		var fromaccount;
 		var divcue = document.getElementsByClassName('div-form-cue')[0];
 		
@@ -1353,11 +1380,12 @@ class Controllers {
 			fromaccount = session.getSessionAccountObject($scope.walletused.text);
 		}
 		
+		
 		if (fromaccount) {
-			var values = commoncontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
+			var values = ethnodecontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
 		}
 		else {
-			var values = commoncontrollers.getSessionTransferDefaultValues(session, divcue);
+			var values = ethnodecontrollers.getSessionTransferDefaultValues(session, divcue);
 		}
 		
 		// filling fields
@@ -1434,37 +1462,49 @@ class Controllers {
 			var gasPrice = $scope.gasprice.text;
 			
 			
-			var commonmodule = global.getModuleObject('common');
-			var session = commonmodule.getSessionObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
 			
 			var payingaccount = session.getAccountObject(fromaddress);
 			
 			// unlock account
-			payingaccount.unlock(password, 300); // 300s, but we can relock the account
-			
-			try {
-				var toaccount = session.getAccountObject(toaddress);
-				var transactionuuid = session.guid();
+			// 300s, but we can relock the account
+			ethnodemodule.unlockAccount(payingaccount, password, 300, function(err, res) {
+				
+				if (!err) {
+					try {
+						var toaccount = session.getAccountObject(toaddress);
+						var transactionuuid = session.guid();
 
-				payingaccount.transferAmount(toaccount, amount, gaslimit, gasPrice,  transactionuuid, function (err, res) {
-					
-					if (!err) {
-						console.log('transfer registered at ' + res);
+						ethnodemodule.transferAmount(payingaccount, toaccount, amount, gaslimit, gasPrice,  transactionuuid, function (err, res) {
+							
+							if (!err) {
+								console.log('transfer registered at ' + res);
+								
+								app.setMessage("transfer has been registered at " + res);
+							}
+							else  {
+								console.log('error transfering ethers ' + err);
+							}
+							
+							// relock account
+							ethnodemodule.lockAccount(payingaccount);
+
+							app.refreshDisplay();
+								
+						});
 						
-						app.setMessage("transfer has been registered at " + res);
-					}
-					else  {
-						console.log('error transfering ethers ' + err);
-					}
+						app.setMessage("ether transfercreated a pending transaction");
 						
-				});
-				
-				app.setMessage("ether transfercreated a pending transaction");
-				
-			}
-			catch(e) {
-				app.setMessage("Error: " + e);
-			}		
+					}
+					catch(e) {
+						app.setMessage("Error: " + e);
+					}		
+				}
+				else {
+					app.setMessage("Could not unlock account: " + err);
+				}
+			}); 
+			
 		}
 	}
 
@@ -1521,17 +1561,27 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		var divcue = document.getElementsByClassName('div-form-cue')[0];
 		
-		var values = commoncontrollers.getSessionTransferDefaultValues(session, divcue);
+		var values = ethnodecontrollers.getSessionTransferDefaultValues(session, divcue);
 		
 		if (!session.isAnonymous()) {
 			
 			// we remove the password edit box
-			var passwordspan = document.getElementById('password-span');
+			var passwordspan = document.getElementById('walletpassword-span');
 			
 			if ( passwordspan ) {
-				//passwordspan.parentNode.removeChild(passwordspan);
+				// we hide all children
+				var children = passwordspan.children;
+				var length = (children ? children.length : 0);
+				
+				for (var i = 0; i < length; i++) {
+					var child = children[i];
+					child.style.display = "none";
+				}
 			}
 		}
 

@@ -14,13 +14,6 @@ var Session = class {
 		
 		this.contracts = null;
 
-		// web3
-		this.web3providerurl = null;
-		//this.web3instance = null;
-		
-		// ethereum node access
-		this.ethereum_node_access_instance = null;
-		
 
 		var commonmodule = global.getModuleObject('common');
 
@@ -33,15 +26,9 @@ var Session = class {
 		this.cryptokeymap = new commonmodule.CryptoKeyMap();
 		this.accountmap = new commonmodule.AccountMap();
 		
-		this.transactionmap = Object.create(null); // use a simple object to implement the map
-
 		// impersonation
 		this.user = null;
 		this.identifyingaccountaddress = null; // obsolete
-		
-		// payer
-		this.walletaccountaddress = null;
-		this.needtounlockaccounts = true;
 		
 		// utility
 		this.getClass = function() { return this.constructor.getClass()};
@@ -117,15 +104,6 @@ var Session = class {
 		return array;
 	}
 
-	// web 3
-	getWeb3ProviderUrl() {
-		return this.web3providerurl;
-	}
-	
-	setWeb3ProviderUrl(url) {
-		this.web3providerurl = url;
-	}
-	
 	// instance of objects
 	getGlobalObject() {
 		return this.global;
@@ -133,13 +111,6 @@ var Session = class {
 	
 	
 	// instances of interfaces
-	getEthereumNodeAccessInstance() {
-		var global = this.getGlobalObject();
-		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
-		
-		return ethereumnodeaccessmodule.getEthereumNodeAccessInstance(this);
-	}
-	
 	getCryptoKeyEncryptionInstance(cryptokey) {
 		var global = this.getGlobalObject();
 		var cryptokeytencryptionmodule = global.getModuleObject('cryptokey-encryption');
@@ -406,27 +377,30 @@ var Session = class {
 		return this.accountmap.getAccountArray();
 	}
 	
-	// transactions
-	getTransactionObject(transactionuuid) {
-		var transaction = new Session.Transaction(this, transactionuuid);
-		
-		if (transactionuuid in this.transactionmap)  {
-			transaction.setHash(this.transactionmap[transactionuuid]);
-		}
-		
-		return transaction;
-	}
-	
 
 	// user (impersonation)
 	impersonateUser(user) {
-		if (this.user && user)
+		//if (this.user && user)
 			this.disconnectUser();
 		
 		this.user = user;
 	}
 	
 	disconnectUser() {
+		var global = this.global;
+
+		// invoke hook to let module clean their session objects
+		var result = []; 
+		var inputparams = [];
+		
+		inputparams.push(this);
+		
+		var ret = global.invokeHooks('cleanSessionContext_hook', result, inputparams);
+		
+		if (ret && result && result.length) {
+			console.log('Session.cleanSessionContext_hook handled by a module');			
+		}
+
 		this.user = null;
 		
 		// we clean the cryptokey map
@@ -714,122 +688,6 @@ var Session = class {
 	
 	
 	
-	// Wallet
-	getWalletAccountAddress() {
-		return this.walletaccountaddress;
-	}
-	
-	setWalletAccountAddress(address) {
-		this.walletaccountaddress = address;
-	}
-	
-	needToUnlockAccounts() {
-		return this.needtounlockaccounts;
-	}
-	
-	setNeedToUnlockAccounts(choice) {
-		this.needtounlockaccounts = choice;
-	}
-	
-	getWalletAccountObject() {
-		var address = this.getWalletAccountAddress();
-		
-		if (address)
-			return this.getAccountObject(address);
-	}
-
-	
-	// contracts
-	getContractsObject(bForceRefresh, callback) {
-		if ((this.contracts) && (!bForceRefresh) && (bForceRefresh != true)) {
-			
-			if (callback)
-				callback(null, this.contracts);
-			
-			return this.contracts;
-		}
-		
-		if (this.contracts) {
-			this.contracts.flushContractObjects();
-		}
-		else {
-			var Session = this.getClass();
-			this.contracts = new Session.Contracts(this);
-		}
-		
-		var global = this.getGlobalObject();
-		var self = this;
-		
-		// invoke hook to build processing chain
-		var result = [];
-		
-		var params = [];
-		
-		params.push(this);
-		
-		result.get = function(err, jsonarray) {
-			if (!err) {
-				self.contracts.initContractObjects(jsonarray);
-				
-				if (callback)
-					callback(null, self.contracts);
-			}
-			else {
-				if (callback)
-					callback(err, self.contracts);
-			}
-		};
-
-		var ret = global.invokeHooks('getContractsObject_hook', result, params);
-		
-		if (ret && result && result.length) {
-			global.log('getContractsObject_hook result is ' + JSON.stringify(result));
-		}
-		
-		
-		// process after hooks chained the get functions
-		var jsonarray = [];
-		
-		result.get(null, jsonarray);
-
-		
-		return this.contracts;
-	}
-	
-	saveContractObjects(contracts, callback) {
-		var json = contracts.getContractObjectsJson();
-		console.log("Session.saveContractObjects: contracts json is " + JSON.stringify(json));
-		
-		var global = this.getGlobalObject();
-		var self = this;
-		
-		var keys = ['common','contracts'];
-
-		var localstorageobject = this.getLocalStorageObject();
-		
-		localstorageobject.saveLocalJson(keys, json, function(err, jsonarray) {
-			if (!err) {
-				// re-initialize contract list (that can have been refreshed from previous states)
-				// with the saved version
-				if (self.contracts) {
-					self.contracts.initContractObjects(jsonarray);
-				}
-			}
-			
-			if (callback)
-				callback(null, self.contracts);
-			
-			return self.contracts;
-		});
-	}
-
-	// contract instance
-	getContractInstance(contractaddress, contractartifact) {
-		var Session = this.getClass();
-		var contractinstance = new Session.ContractInstance(this, contractaddress, contractartifact);
-		
-		return contractinstance;
-	}
 	
 	// signatures
 	validateStringSignature(accountaddress, plaintext, signature) {
@@ -844,9 +702,9 @@ var Session = class {
 	
 	
 	guid() {
-		var EthereumNodeAccess = this.getEthereumNodeAccessInstance();
+		var StorageAccess = this.getStorageAccessInstance();
 		
-		return EthereumNodeAccess.guid();
+		return StorageAccess.guid();
 	}
 	
 	getTransactionUUID() {

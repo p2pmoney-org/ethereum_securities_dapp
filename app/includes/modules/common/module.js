@@ -1,7 +1,5 @@
 'use strict';
 
-var ETHER_TO_WEI = 1000000000000000000;
-
 var Module = class {
 	constructor() {
 		this.name = 'common';
@@ -57,11 +55,8 @@ var Module = class {
 
 		modulescriptloader.push_script( moduleroot + '/model/localstorage.js');
 		modulescriptloader.push_script( moduleroot + '/model/restconnection.js');
-		modulescriptloader.push_script( moduleroot + '/model/contracts.js');
-		modulescriptloader.push_script( moduleroot + '/model/contractinstance.js');
 		modulescriptloader.push_script( moduleroot + '/model/cryptokey.js');
 		modulescriptloader.push_script( moduleroot + '/model/account.js');
-		modulescriptloader.push_script( moduleroot + '/model/transaction.js');
 		modulescriptloader.push_script( moduleroot + '/model/user.js');
 		modulescriptloader.push_script( moduleroot + '/model/session.js'); // should be last
 
@@ -84,42 +79,6 @@ var Module = class {
 		
 		var global = this.global;
 		
-		global.registerHook('getContractsObject_hook', 'common', this.getContractsObject_hook);
-	}
-	
-	getContractsObject_hook(result, params) {
-		console.log('getContractsObject_hook called for ' + this.name);
-		
-		var global = this.global;
-		var self = this;
-		
-		var session = params[0];
-		
-		var nextget = result.get;
-		result.get = function(err, jsonarray) {
-			var keys = ['common','contracts'];
-			
-			var localstorageobject = session.getLocalStorageObject();
-			
-			localstorageobject.readLocalJson(keys, true, function(err, myjsonarray) {
-				var newjsonarray = (myjsonarray && (myjsonarray.length > 0) ? jsonarray.concat(myjsonarray) : jsonarray);
-				
-				if (!err) {
-					if (nextget)
-						nextget(null, newjsonarray);
-				}
-				else {
-					if (nextget)
-						nextget(err, null);
-				}
-			});
-			
-			
-		}; // chaining of get function
-
-		result.push({module: 'common', handled: true});
-		
-		return true;
 	}
 	
 	//
@@ -138,41 +97,6 @@ var Module = class {
 	//
 	// model
 	//
-	
-	// web3
-	getWeb3ProviderUrl() {
-		return this.global.globalscope.Config.getWeb3ProviderUrl();
-	}
-	
-	getDefaultGasLimit() {
-		return this.global.globalscope.Config.getDefaultGasLimit();
-	}
-	
-	getDefaultGasPrice() {
-		return this.global.globalscope.Config.getDefaultGasPrice();
-	}
-	
-	// wallet
-	useWalletAccount() {
-		var wallletaccount = this.global.globalscope.Config.getWalletAccountAddress();
-		
-		if (wallletaccount)
-			return true;
-		else
-			return false;
-	}
-	
-	getWalletAccountAddress() {
-		return this.global.globalscope.Config.getWalletAccountAddress();
-	}
-	
-	useWalletAccountChallenge() {
-		return this.global.globalscope.Config.useWalletAccountChallenge();
-	}
-	
-	needToUnlockAccounts() {
-		return this.global.globalscope.Config.needToUnlockAccounts();
-	}
 	
 	// local persistence (as opposed to chain persistence)
 	// from cache
@@ -237,12 +161,12 @@ var Module = class {
 		this.Session.Config = this.global.globalscope.Config;
 		
 		// libs
-		this.Session.EthereumNodeAccess = this.global.globalscope.EthereumNodeAccess;
+		//this.Session.EthereumNodeAccess = this.global.globalscope.EthereumNodeAccess;
 		this.Session.AccountEncryption = this.global.globalscope.AccountEncryption;
 		
 		// model classes
-		this.Session.Contracts = this.Contracts;
-		this.Session.ContractInstance = this.ContractInstance;
+		//this.Session.Contracts = this.Contracts;
+		//this.Session.ContractInstance = this.ContractInstance;
 		
 		this.Session.CryptoKey = this.CryptoKey;
 		this.Session.CryptoKeyMap = this.CryptoKeyMap;
@@ -250,18 +174,10 @@ var Module = class {
 		this.Session.Account = this.Account;
 		this.Session.AccountMap = this.AccountMap;
 		
-		this.Session.Transaction = this.Transaction;
+		//this.Session.Transaction = this.Transaction;
 		
-		var web3providerurl = this.getWeb3ProviderUrl();
-
 		this.session = new this.Session(this.global);
 		
-		// web3
-		this.session.setWeb3ProviderUrl(web3providerurl);
-		
-		// config
-		this.session.setWalletAccountAddress(this.getWalletAccountAddress());
-		this.session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
 		
 		// calling creatingSession_hook
 		var global = this.global;
@@ -296,11 +212,11 @@ var Module = class {
 	}
 	
 	// contracts
-	getContractsObject(bForceRefresh, callback) {
+	/*getContractsObject(bForceRefresh, callback) {
 		var session = this.getSessionObject();
 		
 		return session.getContractsObject(bForceRefresh, callback);
-	}
+	}*/
 	
 	// crypto keys
 	getCryptoKeyObject(address) {
@@ -328,32 +244,6 @@ var Module = class {
 		return session.createBlankAccountObject();
 	}
 	
-	// transactions
-	getTransactionObject(transactionuuid) {
-		var session = this.getSessionObject();
-		
-		return session.getTransactionObject(transactionuuid);
-	}
-	
-	getTransactionList(callback) {
-		var session = this.getSessionObject();
-		var EthereumNodeAccess = session.getEthereumNodeAccessInstance();
-		
-		return EthereumNodeAccess.web3_getTransactionList(callback);
-	}
-	
-	// ether
-	static getWeiFromEther(numofether) {
-		var wei = numofether * ETHER_TO_WEI;
-
-		return wei;
-	}
-	
-	getEtherFromwei(numofwei) {
-		var ether = numofwei / ETHER_TO_WEI;
-
-		return ether;
-	}
 }
 
 GlobalClass.getGlobalObject().registerModuleObject(new Module());

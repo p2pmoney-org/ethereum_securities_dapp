@@ -2154,6 +2154,9 @@ var DAPPControllers = class {
 
 		var session = commonmodule.getSessionObject();
 		
+		var ethnodemodule = global.getModuleObject('ethnode');
+		var ethnodecontrollers = ethnodemodule.getControllersObject();
+
 		if (fromaccount) {
 			$scope.from = { text: fromaccount.getAddress()};
 			
@@ -2176,7 +2179,7 @@ var DAPPControllers = class {
 		// refresh divcue
 		var divcue = document.getElementsByClassName('div-form-cue')[0];
 		
-		var values = commoncontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
+		var values = ethnodecontrollers.getAccountTransferDefaultValues(session, fromaccount, divcue);
 	}
 	
 	handleWalletChange($scope) {
@@ -2374,7 +2377,9 @@ var DAPPControllers = class {
 			
 			
 			var commonmodule = global.getModuleObject('common');
-			var contracts = commonmodule.getContractsObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
+			
+			var contracts = ethnodemodule.getContractsObject();
 			
 			var stockledgermodule = global.getModuleObject('securities');
 			var stockledgercontrollers = stockledgermodule.getControllersObject();
@@ -2398,7 +2403,7 @@ var DAPPControllers = class {
 				}
 				
 				// unlock account
-				payingaccount.unlock(password, 300) // 300s, but we can relock the account
+				ethnodemodule.unlockAccount(payingaccount, password, 300) // 300s, but we can relock the account
 				.then(function(res) {
 					try {
 						contract.deploy(payingaccount, owningaccount, gaslimit, gasPrice, function (err, res) {
@@ -2413,11 +2418,18 @@ var DAPPControllers = class {
 								
 								app.setMessage('error deploying contract ' + err);
 							}
+							
+							// relock account
+							ethnodemodule.lockAccount(payingaccount);
 								
 							// save stockledger
 							stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
 								self.getAngularControllers().gotoStatePage('home.stockledgers');
 							});
+							
+							// relock account
+							ethnodemodule.lockAccount(payingaccount);
+								
 						});
 						
 						app.setMessage("contract deployment created a pending transaction");
@@ -2575,7 +2587,9 @@ var DAPPControllers = class {
 		}
 		else {
 			var commonmodule = global.getModuleObject('common');
-			var contracts = commonmodule.getContractsObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
+			
+			var contracts = ethnodemodule.getContractsObject();
 
 			var stockledgermodule = global.getModuleObject('securities');
 			
@@ -2596,37 +2610,51 @@ var DAPPControllers = class {
 					// payer for registration
 					var payingaccount = session.getAccountObject(wallet);
 					
-					// unlock account
-					payingaccount.unlock(password, 300); // 300s, but we can relock the account
-					
 					var owneraccount = contract.getOwnerAccount();
 					console.log("contract owner is " + owneraccount.getAddress());
 					console.log("session address is " + session.getSessionUserIdentifier());
 					
 					
-					contract.registerAccount(payingaccount, gaslimit, gasPrice, account, function (err, res) {
-						if (!err) {
-							console.log('account deployed at position ' + res);
-							
-							// save stockledger
-							stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
-								var params = {uuid: contractuuid}
-								self.getAngularControllers().gotoStatePage('home.stockledgers.view', params);
+					// unlock account
+					ethnodemodule.unlockAccount(payingaccount, password, 300) // 300s, but we can relock the account
+					.then(function(res) {
+						try {
+							contract.registerAccount(payingaccount, gaslimit, gasPrice, account, function (err, res) {
+								if (!err) {
+									console.log('account deployed at position ' + res);
+									
+									// save stockledger
+									stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
+										var params = {uuid: contractuuid}
+										self.getAngularControllers().gotoStatePage('home.stockledgers.view', params);
+									});
+									
+									app.setMessage("account has been deployed at " + res);
+									
+									app.refreshDisplay();
+								}
+								else  {
+									console.log('error deploying account ' + err);
+								}
+									
+								// relock account
+								ethnodemodule.lockAccount(payingaccount);
+									
+								app.refreshDisplay();
 							});
 							
-							app.setMessage("account has been deployed at " + res);
-							
+							app.setMessage("account deployment created a pending transaction");
+								
 							app.refreshDisplay();
 						}
-						else  {
-							console.log('error deploying account ' + err);
+						catch(e) {
+							app.setMessage("Error: " + e);
 						}
-							
+
+						app.refreshDisplay();
 					});
 					
-					app.setMessage("account deployment created a pending transaction");
-						
-					app.refreshDisplay();
+					
 					
 				}
 				
@@ -2934,7 +2962,9 @@ var DAPPControllers = class {
 			
 			
 			var commonmodule = global.getModuleObject('common');
-			var contracts = commonmodule.getContractsObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
+			
+			var contracts = ethnodemodule.getContractsObject();
 			
 			var stockledgermodule = global.getModuleObject('securities');
 			var stockledgercontrollers = stockledgermodule.getControllersObject();
@@ -2958,7 +2988,7 @@ var DAPPControllers = class {
 				}
 				
 				// unlock account
-				payingaccount.unlock(password, 300) // 300s, but we can relock the account
+				ethnodemodule.unlockAccount(payingaccount, password, 300) // 300s, but we can relock the account
 				.then(function(res) {
 					try {
 						var stakeholder = contract.getStakeHolderFromKey(stakeholderindex);
@@ -3101,6 +3131,9 @@ var DAPPControllers = class {
 										else  {
 											console.log('error deploying shareholder ' + err);
 										}
+											
+										// relock account
+										ethnodemodule.lockAccount(payingaccount);
 											
 									});
 									
@@ -3443,7 +3476,9 @@ var DAPPControllers = class {
 			
 			
 			var commonmodule = global.getModuleObject('common');
-			var contracts = commonmodule.getContractsObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
+			
+			var contracts = ethnodemodule.getContractsObject();
 			
 			var stockledgermodule = global.getModuleObject('securities');
 			var stockledgercontrollers = stockledgermodule.getControllersObject();
@@ -3467,7 +3502,7 @@ var DAPPControllers = class {
 				}
 				
 				// unlock account
-				payingaccount.unlock(password, 300) // 300s, but we can relock the account
+				ethnodemodule.unlockAccount(payingaccount, password, 300) // 300s, but we can relock the account
 				.then(function(res) {
 					try {
 						var issuance = contract.getIssuanceFromKey(issuanceindex);
@@ -3511,11 +3546,14 @@ var DAPPControllers = class {
 									console.log('error deploying issuance ' + err);
 								}
 								
-								app.setMessage("issuance deployment created a pending transaction");
-								
+								// relock account
+								ethnodemodule.lockAccount(payingaccount);
+									
 								return;
 							});
 
+							app.setMessage("issuance deployment created a pending transaction");
+							
 						}
 					}
 					catch(e) {
@@ -4022,7 +4060,9 @@ var DAPPControllers = class {
 			
 			
 			var commonmodule = global.getModuleObject('common');
-			var contracts = commonmodule.getContractsObject();
+			var ethnodemodule = global.getModuleObject('ethnode');
+			
+			var contracts = ethnodemodule.getContractsObject();
 			
 			var stockledgermodule = global.getModuleObject('securities');
 			var stockledgercontrollers = stockledgermodule.getControllersObject();
@@ -4047,7 +4087,7 @@ var DAPPControllers = class {
 					
 				
 				// unlock account
-				payingaccount.unlock(password, 300) // 300s, but we can relock the account
+				ethnodemodule.unlockAccount(payingaccount, password, 300) // 300s, but we can relock the account
 				.then(function(res) {
 					try {
 						var transaction = contract.getTransactionFromKey(transactionindex);
@@ -4092,6 +4132,9 @@ var DAPPControllers = class {
 								else  {
 									console.log('error deploying transaction ' + err);
 								}
+									
+								// relock account
+								ethnodemodule.lockAccount(payingaccount);
 									
 							});
 							

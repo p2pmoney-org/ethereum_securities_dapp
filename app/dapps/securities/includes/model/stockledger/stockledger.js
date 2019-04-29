@@ -62,8 +62,9 @@ class StockLedger {
 		// Contracts class
 		var global = session.getGlobalObject();
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		this.Contracts = commonmodule.Contracts;
+		this.Contracts = ethnodemodule.Contracts;
 		
 		this.savedstatus = this.Contracts.STATUS_LOCAL;
 		
@@ -71,7 +72,8 @@ class StockLedger {
 	}
 	
 	getSecuritiesModuleObject() {
-		var global = GlobalClass.getGlobalObject();
+		var session = this.session;
+		var global = session.getGlobalObject();
 		var securitiesmodule = global.getModuleObject('securities');
 		return securitiesmodule;
 	}
@@ -104,7 +106,7 @@ class StockLedger {
 		var session = this.session;
 		var contractuuid = this.getUUID();
 		
-		var global = GlobalClass.getGlobalObject();
+		var global = session.getGlobalObject();
 		var securitiesmodule = global.getModuleObject('securities');
 		
 		this.contractlocalpersistor = new securitiesmodule.StockLedgerLocalPersistor(session, contractuuid)
@@ -925,8 +927,9 @@ class StockLedger {
 	checkStatus(callback) {
 		var Contracts = this.Contracts;
 		var chaintestfunction = (this.getChainContractVersion).bind(this);
+		var contractinstance = this.getContractInterface().getContractInstance();
 		
-		return Contracts.checkStatus(this, chaintestfunction, callback);
+		return Contracts.checkStatus(this, chaintestfunction, contractinstance, callback);
 	}
 	
 	getContractIndex() {
@@ -1004,7 +1007,7 @@ class StockLedger {
 		var session = this.session;
 		var contractaddress = this.address;
 		
-		var global = GlobalClass.getGlobalObject();
+		var global = session.getGlobalObject();
 		var securitiesmodule = global.getModuleObject('securities');
 		
 		this.contractinterface = new securitiesmodule.StockLedgerContractInterface(session, contractaddress)
@@ -1015,12 +1018,14 @@ class StockLedger {
 	
 	// deployment
 	validateLedgerDeployment(payingaccount, owningaccount, gas, gasPrice, callback) {
+		var session = this.session;
+		var ethnodemodule = this.ethnodemodule;
+
 		// we check the account is unlocked
-		if (payingaccount.isLocked())
+		if (ethnodemodule.isAccountLocked(payingaccount))
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to deploy contract: ' + this.localledgerdescription;
 		
 		// we validate we are signed-in with the correct owning account
-		var session = this.session;
 		
 		if (!session.isSessionAccount(owningaccount))
 			throw 'account ' + owningaccount.getAddress() + ' is not currently signed-in';
@@ -1089,8 +1094,11 @@ class StockLedger {
 	
 	// account
 	validateAccountRegistration(payingaccount, gas, gasPrice, account, callback) {
+		var session = this.session;
+		var ethnodemodule = this.ethnodemodule;
+
 		// we check the account is unlocked
-		if (payingaccount.isLocked())
+		if (ethnodemodule.isAccountLocked(payingaccount))
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to register account: ' + account.getAddress();
 		
 		// we validate we have a bona fide private key
@@ -1178,13 +1186,15 @@ class StockLedger {
 	}
 	
 	validateStakeHolderRegistration(payingaccount, gas, gasPrice, stakeholder, callback) {
+		var session = this.session;
+		var ethnodemodule = this.ethnodemodule;
+
 		// we check the account is unlocked
-		if (payingaccount.isLocked())
+		if (ethnodemodule.isAccountLocked(payingaccount))
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to register shareholder: ' + stakeholder.getLocalIdentifier();
 		
 		// we validate we are signed-in
-		var global = GlobalClass.getGlobalObject();
-		var session = this.session;
+		var global = session.getGlobalObject();
 		
 		if (session.isAnonymous())
 			throw 'session is not currently signed-in';
@@ -1350,12 +1360,14 @@ class StockLedger {
 	
 	// issuance
 	validateIssuanceRegistration(payingaccount, gas, gasPrice, issuance, callback) {
+		var session = this.session;
+		var ethnodemodule = this.ethnodemodule;
+
 		// we check the account is unlocked
-		if (payingaccount.isLocked())
+		if (ethnodemodule.isAccountLocked(payingaccount))
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to register issuance: ' + issuance.getLocalDescription();
 		
 		// we validate we are signed-in with the correct owning account
-		var session = this.session;
 		var owningaccount = this.getSyncChainOwnerAccount();
 		
 		if (!session.isSessionAccount(owningaccount))
@@ -1454,12 +1466,14 @@ class StockLedger {
 	
 	// transaction
 	validateTransaction(payingaccount, gas, gasPrice, stocktransaction, callback) {
+		var session = this.session;
+		var ethnodemodule = this.ethnodemodule;
+
 		// we check the account is unlocked
-		if (payingaccount.isLocked())
+		if (ethnodemodule.isAccountLocked(payingaccount))
 			throw 'account ' + payingaccount.getAddress() + ' is locked, unable to register transaction of ' + stocktransaction.getLocalNumberOfShares() + ' shares';
 		
 		// we validate we are signed-in
-		var session = this.session;
 		
 		if (session.isAnonymous()) {
 			throw 'session is not currently signed-in';

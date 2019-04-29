@@ -83,14 +83,15 @@ var Module = class {
 		var global = this.global;
 
 		var commonmodule = this.global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = commonmodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject();
 		
 		// register StockLedger in the contracts global object
 		contracts.registerContractClass('StockLedger', this.StockLedger);
 		
 		// force refresh of list
-		commonmodule.getContractsObject(true);
+		ethnodemodule.getContractsObject(true);
 		
 
 		result.push({module: 'securities', handled: true});
@@ -180,8 +181,9 @@ var Module = class {
 		var self = this;
 		
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterContracts(contracts);
 				
@@ -199,8 +201,9 @@ var Module = class {
 		var self = this;
 		
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterLocalContracts(contracts);
 				
@@ -216,8 +219,9 @@ var Module = class {
 	getChainStockLedgers(session, bForceRefresh) {
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = commonmodule.getContractsObject(bForceRefresh);
+		var contracts = ethnodemodule.getContractsObject(bForceRefresh);
 		
 		var array = [];
 		
@@ -269,8 +273,9 @@ var Module = class {
 		var self = this;
 		
 		var commonmodule = global.getModuleObject('common');
+		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = commonmodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterContracts(contracts);
 				
@@ -632,4 +637,4 @@ var Module = class {
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
 
 // dependencies
-GlobalClass.getGlobalObject().registerModuleDepency('securities', 'common');
+GlobalClass.getGlobalObject().registerModuleDepency('securities', 'securities-dapp');

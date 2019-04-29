@@ -32,6 +32,8 @@ class Global {
 		this.initialized = false;
 		this.initializationpromises = [];
 		
+		this.allmodulesloadstarted = false;
+		
 		this.initGlobalScope();
 	}
 	
@@ -280,10 +282,15 @@ class Global {
 		// we set global property
 		module.global = this;
 		
+		if ((this.allmodulesloadstarted) && (module.isloading === false)) {
+			console.log('WARNING: module ' + module.name + ' registered too late, will not be loaded by global object!');
+			console.log('WARNING: module ' + module.name + ' may need to implement a postRegisterModule method to do the load');
+		}
 		// global object set in the module
 		// call postRegisterModule if module has the function
 		if (module.postRegisterModule)
 			module.postRegisterModule();
+		
 	}
 	
 	registerModuleDepency(modulename, dependingfrom) {
@@ -428,6 +435,8 @@ class Global {
 				module.loadModule(parentscriptloader);
 			}
 		}
+		
+		this.allmodulesloadstarted = true;
 		
 		parentscriptloader.load_scripts();
 		

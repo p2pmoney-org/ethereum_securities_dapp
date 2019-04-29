@@ -42,8 +42,10 @@ var dappsscriptloader = modulescriptloader.getChildLoader('dappmodulesloader');
 
 // common
 modulescriptloader.push_script('./includes/modules/common/module.js');
-//chain reader
-modulescriptloader.push_script('./includes/modules/chainreader/module.js');
+//ethereum node
+modulescriptloader.push_script('./includes/modules/ethnode/module.js');
+//ethereum chain reader
+modulescriptloader.push_script('./includes/modules/ethchainreader/module.js');
 
 // let /dapps/module push scripts in 'dappmodulesloader' then load them
 modulescriptloader.push_script('./dapps/module.js', function () {

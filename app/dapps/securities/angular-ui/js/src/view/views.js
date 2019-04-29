@@ -31,8 +31,9 @@ var DAPPViews = class {
 		if (!this.Contracts) {
 			// Contracts class
 			var commonmodule = this.global.getModuleObject('common');
+			var ethnodemodule = global.getModuleObject('ethnode');
 			
-			this.Contracts = commonmodule.Contracts;
+			this.Contracts = ethnodemodule.Contracts;
 		}
 		
 		switch(status) {

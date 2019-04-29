@@ -71,7 +71,7 @@ module.exports = function(deployer) {
 	session.impersonateAccount(owningaccount);
 	
 	// creation of contract objects
-	var contracts = global.getContractsObject();
+	var contracts = global.getModuleObject('ethnode').getContractsObject();
 	var promises = [];
 	var promise;
 	var i;

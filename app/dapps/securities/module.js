@@ -123,8 +123,10 @@ var Module = class {
 
 		var moduleroot = './dapps/securities';
 		
-		//securities
+		// securities module
 		dappsmodelsloader.push_script( moduleroot + '/includes/module.js', function() {
+			// load module if initialization has finished
+			if (global.isReady())
 			global.loadModule('securities', dappsmodelsloader);
 		 });
 		
