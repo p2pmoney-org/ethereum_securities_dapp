@@ -2,7 +2,7 @@
 
 var App = class {
 	constructor() {
-		this.current_version = "0.11.0.2019.04.29";
+		this.current_version = "0.11.0.2019.05.08";
 
 		this.angular_app = null;
 		

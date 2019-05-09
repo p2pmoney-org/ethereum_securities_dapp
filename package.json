@@ -1,23 +1,17 @@
 {
-  "name": "ethereum_securities",
-  "version": "0.0.1",
+  "name": "ethereum_securities_dapp",
+  "version": "0.10.1",
   "description": "Open source solidity smart contracts for securities on ethereum",
   "author": "P2PMoney.org",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/github.com/p2pmoney-org/ethereum_securities_dapp.git"
+  },
   "scripts": {
     "dapp": "lite-server"
   },
-  "dependencies": {
-    "@uirouter/angularjs": "^1.0.7",
-    "angular-translate": "^2.18.1",
-    "ethereum.js": "^0.2.4",
-    "ethereumjs-util": "^5.1.3",
-    "ethereumjs-wallet": "^0.6.0",
-    "keythereum": "^1.0.2",
-    "truffle-contract": "^1.1.11",
-    "web3": "^0.20.3"
-  },
   "devDependencies": {
-    "lite-server": "^2.3.0"
+    "lite-server": "^2.4.0"
   }
 }
