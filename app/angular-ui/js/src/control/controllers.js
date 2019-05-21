@@ -440,27 +440,23 @@ class Controllers {
 		var versioninfos = [];
 		
 		var app = this.getAppObject();
+		var mvcmodule = global.getModuleObject('mvc');
 
 		var versioninfo = {};
 		
 		versioninfo.label = global.t('ethereum dapp');
-		versioninfo.value = app.current_version;
+		versioninfo.value = mvcmodule.current_version;
 		
 		versioninfos.push(versioninfo);
 		
 		$scope.versioninfos = versioninfos;
 		
-		var result = [];
+		// get all version infos
+		var allversioninfos = global.getVersionInfo();
 		
-		var params = [];
+		// append the to the current array
+		versioninfos.push(...allversioninfos);
 		
-		params.push(versioninfos);
-
-		var ret = global.invokeHooks('getVersionInfo_hook', result, params);
-
-		if (ret && result && result.length) {
-			console.log('getVersionInfo_hook overload handled by a module');			
-		}
 	}
 	
 	prepareNodeInfoView($scope) {
@@ -1041,6 +1037,8 @@ class Controllers {
 		this._logout();
 		
 		this.gotoHome();
+		
+		location.reload(true);
 	}
 	
 	_logout() {

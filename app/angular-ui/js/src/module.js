@@ -5,6 +5,7 @@ var Module = class {
 	
 	constructor() {
 		this.name = 'mvc';
+		this.current_version = "0.11.1.2019.05.21";
 		
 		this.global = null; // put by global on registration
 		this.app = null;

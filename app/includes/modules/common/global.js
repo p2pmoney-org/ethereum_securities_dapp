@@ -228,6 +228,25 @@ class Global {
 		return this.globalscope.Config.getXtraValue(name);
 	}
 	
+	// version info
+	getVersionInfo() {
+		var versioninfos = [];
+
+		var result = [];
+		
+		var params = [];
+		
+		params.push(versioninfos);
+
+		var ret = this.invokeHooks('getVersionInfo_hook', result, params);
+
+		if (ret && result && result.length) {
+			console.log('getVersionInfo_hook overload handled by a module');			
+		}
+		
+		return versioninfos;
+	}
+	
 	
 	//
 	// variables

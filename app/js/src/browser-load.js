@@ -20,7 +20,18 @@ globalscriptloader.load_scripts();
 var libscriptloader = rootscriptloader.getChildLoader('libloader');
 
 //jquery
-libscriptloader.push_script('./includes/lib/jquery-3.1.0.js');
+libscriptloader.push_script('./includes/lib/jquery-3.1.0.js', function () {
+	// create a div to show the loader gif
+	document.body.innerHTML += '<div class="loader"></div>';
+	
+	rootscriptloader.registerEventListener('on_mvc_module_load_end', function(eventname) {
+	    // fade the loader (we could remove the div)
+		$(".loader").fadeOut("slow");
+	});
+		
+	/*$(window).on('load', function() {
+	});*/
+});
 
 libscriptloader.push_script('./includes/lib/bootstrap.min-3.3.7.js');
 
