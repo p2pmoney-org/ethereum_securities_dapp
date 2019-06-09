@@ -303,6 +303,13 @@ class ScriptLoader {
 	      return outputParts.join('/');
 	}
 	
+	static _getServerName(url) {
+		var parser = document.createElement('a');
+		parser.href = url;
+		var servername = parser.origin;
+		return servername;		
+	}
+	
 	static _getPathName(url) {
 		var parser = document.createElement('a');
 		parser.href = url;
@@ -311,38 +318,48 @@ class ScriptLoader {
 	}
 	
 	static getDappdir() {
-		return this.dapp_dir;
+		return ScriptLoader.dapp_dir;
 	}
 
 	static setDappdir(dapp_dir) {
-		this.dapp_dir = dapp_dir;
+		ScriptLoader.dapp_dir = dapp_dir;
 	}
 
 	static createScriptLoadPromise(file, posttreatment) {
-		var self = this;
+		//var self = ScriptLoader;
 		
 		var promise = new Promise(function(resolve, reject) {
 			console.log('starting load of script ' + file);
 			
-			if (!self.dapp_dir) {
+			if (!ScriptLoader.dapp_dir) {
 				var scripts = document.getElementsByTagName('script');
 				var scripturl = scripts[scripts.length-1].src;
-				var scriptpath = self._getPathName(scripturl);     
+				var scriptserver = ScriptLoader._getServerName(scripturl);
+				var scriptpath = ScriptLoader._getPathName(scripturl);     
 				
 				var htmlpageurl= window.location.href;
-				var htmlpagepath = self._getPathName(htmlpageurl);
+				var htmlserver= ScriptLoader._getServerName(htmlpageurl);;
+				var htmlpagepath = ScriptLoader._getPathName(htmlpageurl);
 				
-				self.dapp_dir = self._relativepath(htmlpagepath, scriptpath);
+				if (scriptserver !=  htmlserver) {
+					// loading scripts from a different server than the page
+					ScriptLoader.dapp_dir = scriptserver + '/';
+				}
+				else {
+					// same server, compute relative path between the page and scripts
+					ScriptLoader.dapp_dir = ScriptLoader._relativepath(htmlpagepath, scriptpath);
+					
+					// add leading ./
+					ScriptLoader.dapp_dir = './' + ScriptLoader.dapp_dir;
+					
+					// remove includes
+					ScriptLoader.dapp_dir = ScriptLoader.dapp_dir.substring( 0, ScriptLoader.dapp_dir.indexOf( "includes" ) );
+				}
 				
-				// add leading ./
-				self.dapp_dir = './' + self.dapp_dir;
-				
-				// remove includes
-				self.dapp_dir = self.dapp_dir.substring( 0, self.dapp_dir.indexOf( "includes" ) );
 			}
 			
 			var script  = document.createElement('script');
-			script.src  = self.dapp_dir + file;
+			script.src  = ScriptLoader.dapp_dir + file;
 			script.type = 'text/javascript';
 			script.defer = true;
 

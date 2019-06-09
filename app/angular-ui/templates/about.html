@@ -13,9 +13,19 @@
 
 <div ng-include='utils.dapp_url("./angular-ui/partials/version-info-view.html")'></div>
 
+<h3>{{'Load info' | transl}}</h3>
+
+<div ng-include='utils.dapp_url("./angular-ui/partials/load-info-view.html")'></div>
+
+
 <h3>{{'Node info' | transl}}</h3>
 
 <div ng-include='utils.dapp_url("./angular-ui/partials/node-info-view.html")'></div>
+
+<h3>{{'Utilities' | transl}}</h3>
+<ul>
+<li><reload-app-link></reload-app-link></li>
+</ul>
 
 
 </div><!-- div-view-container -->

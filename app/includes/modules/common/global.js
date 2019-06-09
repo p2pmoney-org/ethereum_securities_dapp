@@ -496,10 +496,53 @@ class Global {
 			entry['modulename'] = modulename;
 			entry['functionname'] = hookfunctionname;
 			entry['function'] = hookfunction;
+			entry['priority'] = 0; // default
 			
 			console.log('registering hook '+ hookentry + ' for ' + modulename);
 			hookarray.push(entry);
 		}
+	}
+	
+	_findModuleHookEntry(hookentry, modulename) {
+		var hookarray = this.getHookArray(hookentry);
+		
+		if (!hookarray)
+			return;
+		
+		for (var i=0; i < hookarray.length; i++) {
+			var entry = hookarray[i];
+			var __modulename = entry['modulename'];
+			
+			if (__modulename == modulename)
+				return entry;
+		}		
+	}
+	
+	_sortHookEntryArray(hookentry) {
+		var hookarray = this.getHookArray(hookentry);
+		
+		if (!hookarray)
+			return;
+		
+		// sort descending order
+		hookarray.sort(function(entrya,entryb) {return (entryb['priority'] - entrya['priority']);});
+		
+	}
+	
+	modifyHookPriority(hookentry, modulename, priority) {
+		
+		if (!Number.isInteger(priority))
+			return;
+		
+		var entry = this._findModuleHookEntry(hookentry, modulename);
+		
+		if (entry) {
+			entry['priority'] = priority;
+			
+			// sort array
+			this._sortHookEntryArray(hookentry)
+		}
+		
 	}
 	
 	invokeHooks(hookentry, result, inputparams) {

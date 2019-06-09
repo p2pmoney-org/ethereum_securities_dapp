@@ -65,6 +65,11 @@ class Controllers {
 			controllers.prepareVersionInfoView($scope);
 		}]);
 
+		// load info
+		angular_app.controller("LoadInfoViewCtrl",  ['$scope', function ($scope) {
+			controllers.prepareLoadInfoView($scope);
+		}]);
+
 		// node info
 		angular_app.controller("NodeInfoViewCtrl",  ['$scope', function ($scope) {
 			controllers.prepareNodeInfoView($scope);
@@ -139,6 +144,10 @@ class Controllers {
 		
 		angular_app.directive('loginLink', function () {
 			return controllers.getLoginLink();
+		});
+		
+		angular_app.directive('reloadAppLink', function () {
+			return controllers.getReloadAppLink();
 		});
 		
 		angular_app.directive('datetime', function () {
@@ -288,6 +297,17 @@ class Controllers {
 		app.refreshDisplay();
 	}
 	
+	_forceAppReload() {
+		// use setTimeout to let page jump complete
+		setTimeout(function() {
+			location.reload(true);
+		  }, 100);
+	}
+	
+	reloadApp() {
+		this._forceAppReload();
+	}
+	
 	// specific to angular
 	gotoStatePage(pagestate, params) {
 		console.log("Controllers.gotoStatePage called for: " + pagestate);
@@ -322,7 +342,7 @@ class Controllers {
 		console.log("Controllers.handlePageRequest called with location: " + JSON.stringify($location));
 		  
 		$scope.message = "your location is " + $location.hash();
-		  
+		
 		var global = this.global;
 		var session = global.getModuleObject('common').getSessionObject();
 		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
@@ -456,6 +476,48 @@ class Controllers {
 		
 		// append the to the current array
 		versioninfos.push(...allversioninfos);
+		
+	}
+	
+	prepareLoadInfoView($scope) {
+		console.log("Controllers.prepareLoadInfoView called");
+		
+		var global = this.global;
+		var Constants = window.Constants;
+		
+		var loadinfos = [];
+		
+		var lifecyclearray = Constants.get('lifecycle');
+		
+		var eventarray = [];
+		
+		if (Array.isArray(lifecyclearray) === false) {
+			if (lifecyclearray) {
+				eventarray.push(lifecyclearray);
+			}
+		}
+		else {
+			eventarray.push(...lifecyclearray);
+		}
+		
+		
+		// push now event
+		eventarray.push({eventname: 'now', time: Date.now()})
+		
+		// sort descending order
+		eventarray.sort(function(a,b) {return (b.time - a.time);});
+
+		for (var i = 0; i < eventarray.length; i++) {
+			var event = eventarray[i];
+			var loadinfo = {};
+			
+			loadinfo.label = global.t(event.eventname);
+			loadinfo.value = global.formatDate(new Date(event.time), 'YYYY-mm-dd HH:MM:SS');;
+			
+			loadinfos.push(loadinfo);
+		}
+		
+		$scope.loadinfos = loadinfos;
 		
 	}
 	
@@ -1038,7 +1100,7 @@ class Controllers {
 		
 		this.gotoHome();
 		
-		location.reload(true);
+		this.reloadApp();
 	}
 	
 	_logout() {
@@ -1701,6 +1763,21 @@ class Controllers {
 		return {
 	        restrict: 'E',
 	        template: loginwidget
+	    }	
+	}
+	
+	getReloadAppLink(){  
+		console.log("Controllers.getReloadAppLink called");
+		
+		var global = this.global;
+		var views = global.getModuleObject('mvc').getViewsObject();
+		
+
+		var reloadwidget = views.getReloadAppWidget();
+		
+		return {
+	        restrict: 'E',
+	        template: reloadwidget
 	    }	
 	}
 	

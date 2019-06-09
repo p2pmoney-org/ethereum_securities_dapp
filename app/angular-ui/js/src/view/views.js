@@ -34,6 +34,27 @@ class Views {
 		return content;
 	}
 	
+	getReloadAppWidget() {
+		console.log('Views.getReloadAppWidget called');
+		
+		var global = this.global;
+		var session = global.getModuleObject('common').getSessionObject();
+
+		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
+		
+		var reloadtext = global.t("Reload app");
+		
+		var reloadlink;
+
+		reloadlink = "<a href='javascript:GlobalClass.getGlobalObject().getModuleObject(\"mvc\").getControllersObject().reloadApp()' >"
+			+ reloadtext 
+			+ "</a>";
+
+		var content = reloadlink;
+		
+		return content;
+	}
+	
 	getTransactionStatusString(transaction) {
 		if (!transaction)
 			return;
