@@ -115,6 +115,11 @@ class Controllers {
 		}]);
 		
 		
+		// multi session
+		angular_app.controller("SessionsFormCtrl",  ['$scope', function ($scope) {
+			controllers.prepareSessionsForm($scope);
+		}]);
+
 		angular_app.controller("ethAccountFormCtrl", ['$scope', function ($scope) {
 			controllers.prepareEthAccountForm($scope);
 		}]);
@@ -259,6 +264,9 @@ class Controllers {
 	  	statearray
 	    .push(['home.logout', {url: '/logout', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/logout.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Logout') }}]);
+	  	statearray
+	    .push(['home.sessions', {url: '/sessions', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/sessions.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Sessions') }}]);
 
 	     return  statearray; 
 	}
@@ -607,6 +615,7 @@ class Controllers {
 		
 	}
 	
+	
 	prepareAccountView($scope) {
 		console.log("Controllers.prepareAccountView called");
 		
@@ -639,7 +648,8 @@ class Controllers {
 		
 		var cryptokeys = [];
 		
-		var cryptokeyarray = session.getSessionCryptoKeyObjects(true, function(err, keyarray) {
+		//var cryptokeyarray = 
+		session.getSessionCryptoKeyObjects(true, function(err, keyarray) {
 			if (keyarray) {
 				// empty array
 				while(cryptokeys.length > 0) { cryptokeys.pop();}
@@ -666,7 +676,7 @@ class Controllers {
 			self._apply($scope);
 		});
 		
-		if (cryptokeyarray) {
+		/*if (cryptokeyarray) {
 			for (var i = 0; i < cryptokeyarray.length; i++) {
 				var cryptokeyobj = cryptokeyarray[i];
 				
@@ -682,7 +692,7 @@ class Controllers {
 					cryptokeys.push(cryptokey);
 				}
 			}
-		}
+		}*/
 		
 		$scope.cryptokeys = cryptokeys;
 	}
@@ -740,7 +750,11 @@ class Controllers {
 								}
 								
 								// tell scope a value has changed
-								$scope.$apply();
+								//$scope.$apply();
+								
+								// putting $apply in a deferred call to avoid determining if callback is called
+								// from a promise or direct continuation of the code
+								self._apply($scope);
 							});
 						};
 						
@@ -1079,6 +1093,7 @@ class Controllers {
 		$scope.handleSubmit = function(){
 			self.handleLogoutSubmit($scope);
 		}
+		
 	}
 	
 	handleLogoutSubmit($scope) {
@@ -1092,7 +1107,7 @@ class Controllers {
 		var params = [];
 		
 		params.push($scope);
-
+		
 		var ret = global.invokeHooks('handleLogoutSubmit_hook', result, params);
 		
 		// but log out anyway
@@ -1113,6 +1128,92 @@ class Controllers {
 		app.refreshDisplay();
 		
 	}
+	
+	_getSessionArray($scope) {
+		var self = this;
+		
+		var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		var currentsession = commonmodule.getSessionObject();
+		var currentsessionuuid = currentsession.getSessionUUID();
+		
+		// all sessions
+		var sessionarray = commonmodule.getSessionObjects();
+		
+		var sessions = [];
+		
+		for (var i = 0; i < (sessionarray ? sessionarray.length : 0); i++) {
+			var sess = sessionarray[i];
+			
+			var session = [];
+			
+			var sessionuuid = sess.getSessionUUID();
+			var shortuuid = sessionuuid.substring(0,4) + '...' + sessionuuid.substring(sessionuuid.length - 4,sessionuuid.length);
+
+			
+			session['uuid'] = sessionuuid;
+			session['description'] = (sess.isAnonymous() ? sessionuuid : sess.getSessionUserIdentifier() + ' -' + shortuuid);
+			
+			sessions.push(session);
+		}
+		
+		$scope.selectedsessionuuid = currentsessionuuid;
+			
+			
+		// change function
+		$scope.handleToChange = function(){
+			self.handleSessionSelectChange($scope);
+		}
+
+		$scope.sessions = sessions;
+		
+
+	}
+
+	handleSessionSelectChange($scope) {
+		var sessionuuid = $scope.selectedsessionuuid;
+		
+		var global = this.global;
+		var app = this.getAppObject();
+		
+		var commonmodule = global.getModuleObject('common');
+		var session = commonmodule.findSessionObjectFromUUID(sessionuuid);
+		
+		if (session)
+			commonmodule.setCurrentSessionObject(session);
+
+		app.refreshDisplay();
+	}
+	
+	handleSpawnNewSessionSubmit($scope) {
+		console.log("Controllers.handleSpawnNewSessionSubmit called");
+		
+		var global = this.global;
+		var app = this.getAppObject();
+		
+		var commonmodule = global.getModuleObject('common')
+		var newsession = commonmodule.createBlankSessionObject();
+		
+		commonmodule.setCurrentSessionObject(newsession);
+
+		app.refreshDisplay();
+	}
+		
+	prepareSessionsForm($scope) {
+		console.log("Controllers.prepareSessionsForm called");
+		
+		var global = this.global;
+		var self = this;
+		
+		// fill session list
+		this._getSessionArray($scope);
+
+		// select
+		$scope.handleNewSessionSubmit = function(){
+			self.handleSpawnNewSessionSubmit($scope);
+		}
+	}	
 
 	//
 	// ethereum accounts

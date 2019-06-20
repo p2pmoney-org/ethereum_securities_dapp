@@ -57,8 +57,8 @@ var Module = class {
 	
 	// objects
 	getStorageAccessInstance(session) {
-		if (this.storage_access_instance)
-			return this.storage_access_instance;
+		if (session.storage_access_instance)
+			return session.storage_access_instance;
 		
 		console.log('instantiating StorageAccess');
 		
@@ -67,19 +67,23 @@ var Module = class {
 		var result = []; 
 		var inputparams = [];
 		
+		inputparams.push(this);
 		inputparams.push(session);
 		
+		result[0] = new StorageAccess(session);
+		
+		// call hook to let modify or replace instance
 		var ret = global.invokeHooks('getStorageAccessInstance_hook', result, inputparams);
 		
 		if (ret && result[0]) {
-			this.storage_access_instance = result[0];
+			session.storage_access_instance = result[0];
 		}
 		else {
-			this.storage_access_instance = new StorageAccess(session);
+			session.storage_access_instance = new StorageAccess(session);
 		}
 
 		
-		return this.storage_access_instance;
+		return session.storage_access_instance;
 	}
 	
 	// utilitites
@@ -191,7 +195,7 @@ class StorageAccess {
 
 		var promise = new Promise(function (resolve, reject) {
 			try {
-				var keys = ['accounts'];
+				var keys = ['common', 'accounts'];
 				
 				self.readUserJson(keys, function(err, res) {
 					
@@ -267,8 +271,12 @@ class StorageAccess {
 				commonmodule.insertLocalJsonLeaf(session, keys, null, null, json);
 			}
 			
-			if (callback)
-				callback(null, json);
+			/*if (callback)
+				callback(null, json);*/
+			
+			// save
+			var useraccountjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+			commonmodule.saveLocalJson(session, keys, useraccountjson, callback);
 			
 			return resolve(json);
 		});
@@ -321,8 +329,12 @@ class StorageAccess {
 				throw 'could not find account with uuid ' + uuid;
 			}
 			
-			if (callback)
-				callback(null, jsonleaf);
+			/*if (callback)
+				callback(null, jsonleaf);*/
+			
+			// save
+			var useraccountjson = commonmodule.readLocalJson(session, keys); // from cache, since no refresh
+			commonmodule.saveLocalJson(session, keys, useraccountjson, callback);
 			
 			return resolve(jsonleaf);
 		});

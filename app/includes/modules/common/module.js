@@ -12,7 +12,9 @@ var Module = class {
 		this.controllers = null;
 		
 		// model
-		this.session = null;
+		this.session = null; // current session
+		
+		this.session_array = [];
 	}
 	
 	init() {
@@ -152,6 +154,10 @@ var Module = class {
 	
 	
 	// session
+	createBlankSessionObject() {
+		return new this.Session(this.global);
+	}
+	
 	getSessionObject() {
 		if (this.session)
 			return this.session;
@@ -192,6 +198,9 @@ var Module = class {
 		if (ret && result && result.length) {
 			console.log('session creation hook handled by a module');			
 		}
+		
+		// put session in multi-session array
+		this.session_array.push(this.session);
 
 		return this.session;
 	}
@@ -201,6 +210,33 @@ var Module = class {
 			// re-read config
 			this.session.setWalletAccountAddress(this.getWalletAccountAddress());
 			this.session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
+		}
+	}
+	
+	// multi session management
+	setCurrentSessionObject(session) {
+		var newsessionuuid = session.getSessionUUID();
+		
+		var newsession = this.findSessionObjectFromUUID(newsessionuuid);
+		
+		if (!newsession) {
+			// not in our array yet, push it
+			this.session_array.push(session);
+		}
+		
+		this.session = session;
+	}
+	
+	getSessionObjects() {
+		return this.session_array;
+	}
+	
+	findSessionObjectFromUUID(sessionuuid) {
+		for (var i = 0; i < this.session_array.length;i ++) {
+			var session = this.session_array[i];
+			
+			if (session && (session.getSessionUUID() == sessionuuid))
+				return session;
 		}
 	}
 	

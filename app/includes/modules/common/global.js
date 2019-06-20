@@ -492,14 +492,27 @@ class Global {
 		if (typeof hookfunction === "function") {
 			var hookfunctionname = hookfunction.toString();
 			var entry = [];
+			var bAddEntry = true;
+			
+			if (typeof this._findModuleHookEntry(hookentry, modulename)  !== 'undefined') {
+				// overload existing entry
+				console.log('overloading hook '+ hookentry + ' for ' + modulename);
+
+				entry = this._findModuleHookEntry(hookentry, modulename);
+				bAddEntry = false;
+			}
 			
 			entry['modulename'] = modulename;
 			entry['functionname'] = hookfunctionname;
 			entry['function'] = hookfunction;
 			entry['priority'] = 0; // default
 			
-			console.log('registering hook '+ hookentry + ' for ' + modulename);
-			hookarray.push(entry);
+			if (bAddEntry) {
+				console.log('registering hook '+ hookentry + ' for ' + modulename);
+				
+				hookarray.push(entry);
+			}
+			
 		}
 	}
 	
@@ -551,8 +564,12 @@ class Global {
 		if ((!this.isReady()) 
 				&& (hookentry != 'preFinalizeGlobalScopeInit_hook'))
 			throw 'Global object is not ready. No invoke of hooks can be done at this time: ' + hookentry;
+		
+		if ((!result) || (Array.isArray(result) === false))
+			throw 'invokeHooks did not receive an array as result parameter for hookentry: ' + hookentry;
 
 		var hookarray = this.getHookArray(hookentry);
+		var ret_array = {};
 
 		for (var i=0; i < hookarray.length; i++) {
 			var entry = hookarray[i];
@@ -563,8 +580,10 @@ class Global {
 			if (module) {
 				var ret = func.call(module, result, inputparams);
 				
-				if ((ret) && (ret === false))
-					return ret
+				ret_array[modulename] = ret;
+				
+				if (result[result.length-1] && (result[result.length-1].module == modulename) && (result[result.length-1].stop === true))
+					break;
 			}
 			
 		}

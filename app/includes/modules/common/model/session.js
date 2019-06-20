@@ -220,12 +220,14 @@ var Session = class {
 		result.get = function(err, keyarray) {
 
 			if (!err) {
-				self.cryptokeymap.empty();
-				
-				for (var i = 0; i < keyarray.length; i++) {
-					var key = keyarray[i];
+				if (keyarray && keyarray.length) {
+					self.cryptokeymap.empty();
 					
-					self.cryptokeymap.pushCryptoKey(key);
+					for (var i = 0; i < keyarray.length; i++) {
+						var key = keyarray[i];
+						
+						self.cryptokeymap.pushCryptoKey(key);
+					}
 				}
 				
 				if (callback)

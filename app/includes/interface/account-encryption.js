@@ -74,9 +74,13 @@ var Module = class {
 		var result = [];
 		var inputparams = [];
 		
+		inputparams.push(this);
 		inputparams.push(session);
 		inputparams.push(account);
 		
+		result[0] = new AccountEncryption(session, account);
+		
+		// call hook to let modify or replace instance
 		var ret = global.invokeHooks('getAccountEncryptionInstance_hook', result, inputparams);
 		
 		if (ret && result[0]) {
