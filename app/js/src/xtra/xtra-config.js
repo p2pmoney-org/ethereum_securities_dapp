@@ -24,14 +24,14 @@ class XtraConfigModule {
 		var modulescriptloader = ScriptLoader.findScriptLoader('moduleloader')
 		var xtramodulescriptloader = modulescriptloader.getChildLoader('xtramoduleloader')
 		
-		// get list of additional modules from Constants
-		if (Constants && Constants.get) {
+		// get list of additional modules from Config
+		if (Config && Config.get) {
 			var moduleroot = './js/src/xtra/modules/';
 			
 			// get list of xtra modules
 			var modulearray = [];
 			
-			var xtramodulearray = Constants.get('xtramoduleload');
+			var xtramodulearray = Config.get('xtramoduleload');
 			
 			if (Array.isArray(xtramodulearray) === false) {
 				if (xtramodulearray) {

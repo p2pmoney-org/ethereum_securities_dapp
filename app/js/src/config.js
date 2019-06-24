@@ -1,64 +1,105 @@
-class Config {
+/********************************/
+/*   Ethereum dapp functions    */
+/********************************/ 
+
+Config.getWeb3ProviderUrl = function() {
+	if (Config.config_overload_read == false)
+		Config.readConfigOverload();
 	
-	static getWeb3ProviderUrl() {
-		if (Config.config_overload_read == false)
-			Config.readConfigOverload();
-		
-		return Config.web3provider_protocol + Config.web3provider_host + (Config.web3provider_port && Config.web3provider_port.toString().length ? ':' + Config.web3provider_port.toString() : '');
+	var web3providerurl = Config.web3provider_protocol + Config.web3provider_host + (Config.web3provider_port && Config.web3provider_port.toString().length ? ':' + Config.web3provider_port.toString() : '');
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var web3_provider_full_url = (Config && (Config.get)  && (Config.get('web3_provider_full_url')) ? Config.get('web3_provider_full_url') : null);
+	
+	if (web3_provider_full_url) {
+		web3providerurl = web3_provider_full_url
+	}
+
+	return web3providerurl;
+};
+
+Config.getWeb3ProviderProtocol = function() {
+	return Config.web3provider_protocol;
+};
+
+Config.getWeb3ProviderHost = function() {
+	return Config.web3provider_host;
+};
+
+Config.getWeb3ProviderPort = function() {
+	return Config.web3provider_port;
+};
+
+Config.getWeb3ProviderNetworkId = function() {
+	return Config.web3provider_network_id;
+};
+
+Config.getDefaultGasLimit = function() {
+	var defaultlimit = Config.defaultGasLimit;
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var defaultgaslimit = (Config && (Config.get)  && (Config.get('defaultgaslimit')) ? Config.get('defaultgaslimit') : null);
+	
+	if (defaultgaslimit) {
+		defaultlimit = defaultgaslimit
 	}
 	
-	static getWeb3ProviderProtocol() {
-		return Config.web3provider_protocol;
+	return defaultlimit;
+};
+
+Config.getDefaultGasPrice = function() {
+	var defaultprice = Config.defaultGasPrice;
+	
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var defaultgasprice = (Config && (Config.get)  && (Config.get('defaultgasprice')) ? Config.get('defaultgasprice') : null);
+	
+	if (defaultgasprice) {
+		defaultprice = defaultgasprice
+	}
+
+	return defaultprice;
+};
+
+Config.getWalletAccountAddress = function() {
+	var walletaccountaddress = Config.wallet_account;
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var wallet_account = (Config && (Config.get)  && (Config.get('wallet_account')) ? Config.get('wallet_account') : null);
+	
+	if (wallet_account) {
+		walletaccountaddress = wallet_account
 	}
 	
-	static getWeb3ProviderHost() {
-		return Config.web3provider_host;
+	return walletaccountaddress;
+};
+
+Config.useWalletAccountChallenge = function() {
+	var walletaccountchallenge = Config.wallet_account_challenge;
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var wallet_account_challenge = (Config && (Config.get)  && (Config.get('wallet_account_challenge')) ? Config.get('wallet_account_challenge') : null);
+	
+	if (wallet_account_challenge) {
+		walletaccountchallenge = wallet_account_challenge
+	}
+
+	return walletaccountchallenge;
+};
+
+Config.needToUnlockAccounts = function() {
+	var needtounlockaccounts = Config.need_to_unlock_accounts;
+	
+	// we look in Config.valuemap to see if value is overloaded
+	var need_to_unlock_accounts = (Config && (Config.get)  && (Config.get('need_to_unlock_accounts')) ? Config.get('need_to_unlock_accounts') : null);
+	
+	if (need_to_unlock_accounts) {
+		needtounlockaccounts = need_to_unlock_accounts
 	}
 	
-	static getWeb3ProviderPort() {
-		return Config.web3provider_port;
-	}
+	return needtounlockaccounts;
+};
 	
-	static getWeb3ProviderNetworkId() {
-		return Config.web3provider_network_id;
-	}
-	
-	static getDefaultGasLimit() {
-		return Config.defaultGasLimit;
-	}
-	
-	static getDefaultGasPrice() {
-		return Config.defaultGasPrice;
-	}
-	
-	static getWalletAccountAddress() {
-		return Config.wallet_account;
-	}
-	
-	static useWalletAccountChallenge() {
-		return Config.wallet_account_challenge;
-	}
-	
-	static needToUnlockAccounts() {
-		return Config.need_to_unlock_accounts;
-	}
-	
-	static getXtraValue(key) {
-		if (!key)
-			return;
-		
-		if ( typeof Config.XtraConfig !== 'undefined' && Config.XtraConfig) {
-			if (!Config.XtraConfig.instance)
-				Config.XtraConfig.instance = new Config.XtraConfig();
-			
-			if (Config.XtraConfig.instance[key])
-			return Config.XtraConfig.instance[key];
-		}
-		else {
-			console.log('Config.XtraConfig not defined')
-		}
-	}
-}
 
 /*********************/
 /*      Web3         */
@@ -114,15 +155,3 @@ Config.wallet_account_challenge = true;
 Config.wallet_account = 'your_test_account';*/
 
 
-
-/********************/
-/*   Export         */
-/********************/ 
-	
-	
-// export
-
-if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.Config = Config;
-else
-module.exports = Config; // we are in node js

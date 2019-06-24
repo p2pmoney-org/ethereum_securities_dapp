@@ -35,7 +35,7 @@ var Module = class {
 		// ethchainreader
 		var modulescriptloader = global.getScriptLoader('ethchainreaderloader', parentscriptloader);
 		
-		var moduleroot = './includes/modules/ethchainreader';
+		var moduleroot = './js/src/xtra/modules/ethchainreader';
 
 		modulescriptloader.push_script( moduleroot + '/chainreader-interface.js');
 

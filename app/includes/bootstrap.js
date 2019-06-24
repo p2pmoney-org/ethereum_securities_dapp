@@ -310,6 +310,14 @@ class ScriptLoader {
 		return servername;		
 	}
 	
+	static _getDirName(url) {
+		var parser = document.createElement('a');
+		parser.href = url;
+		var pathname = parser.pathname;
+		var dirname = pathname.substr(0, pathname.lastIndexOf( '/' )+1 );;
+		return dirname;		
+	}
+	
 	static _getPathName(url) {
 		var parser = document.createElement('a');
 		parser.href = url;
@@ -323,6 +331,19 @@ class ScriptLoader {
 
 	static setDappdir(dapp_dir) {
 		ScriptLoader.dapp_dir = dapp_dir;
+	}
+	
+	static __dirname() {
+		var scripts = document.getElementsByTagName('script');
+		var scripturl = scripts[scripts.length-1].src;
+		var scriptserver = ScriptLoader._getServerName(scripturl);
+		var scriptpath = ScriptLoader._getPathName(scripturl);     
+		
+		var htmlpageurl= window.location.href;
+		var htmlserver= ScriptLoader._getServerName(htmlpageurl);;
+		var htmlpagepath = ScriptLoader._getPathName(htmlpageurl);
+		
+		return ScriptLoader._relativepath(htmlpagepath, scriptpath);
 	}
 
 	static createScriptLoadPromise(file, posttreatment) {
@@ -430,14 +451,34 @@ window.ScriptLoader = ScriptLoader;
 else
 module.exports = ScriptLoader; // we are in node js
 
-if (window.dapp_browser_no_load === undefined) {
-	// load browser-load.js
-	var browserload = ScriptLoader.getScriptLoader('bootstrap');
+var rootscriptloader = ScriptLoader.getRootScriptLoader();
+var bootstraploader = rootscriptloader.getChildLoader('bootstrap');
+var browserload;
 
-	browserload.push_script('./js/src/browser-load.js');
+bootstraploader.push_script(ScriptLoader.__dirname() + '/constants.js');
+bootstraploader.push_script(ScriptLoader.__dirname() + '/config.js');
+
+bootstraploader.push_script(ScriptLoader.__dirname() + '/modules/common/global.js');
 
 
-	//perform load
-	browserload.load_scripts();
-}
+bootstraploader.load_scripts(function() {
+	if ((window.dapp_browser_no_load === undefined) 
+			|| (window.dapp_browser_no_load === false)){
+		
+		rootscriptloader.signalEvent('on_bootstrap_load_end');
+		
+		// load browser-load.js
+		//var browserload = ScriptLoader.getScriptLoader('bootstrap');
+		browserload = bootstraploader.getChildLoader('browserload');
+
+		browserload.push_script('./js/src/browser-load.js');
+
+
+		//perform load
+		browserload.load_scripts();
+	}
+	
+});
+
+
 

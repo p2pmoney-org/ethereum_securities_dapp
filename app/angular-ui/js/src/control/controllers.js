@@ -709,7 +709,7 @@ class Controllers {
 		var session = commonmodule.getSessionObject();
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
-		var ethnodecontrollers = ethnodemodule.getControllersObject();
+		var ethnodecontrollers = (ethnodemodule ? ethnodemodule.getControllersObject() : null);
 
 		
 		var ethaccounts = [];
@@ -740,12 +740,14 @@ class Controllers {
 						
 						// write ether balance for this account
 						var writebalance = function(ethaccount, account) {
+							
+							if (ethnodemodule)
 							ethnodemodule.getChainAccountBalance(account, function(err, res) {
 								if (err) {
 									ethaccount['balance'] = global.t('error');
 								}
 								else {
-									var etherbalance = ethnodecontrollers.getEtherStringFromWei(res);
+									var etherbalance = (ethnodecontrollers ? ethnodecontrollers.getEtherStringFromWei(res) : null);
 									ethaccount['balance'] = etherbalance + ' ETH';
 								}
 								

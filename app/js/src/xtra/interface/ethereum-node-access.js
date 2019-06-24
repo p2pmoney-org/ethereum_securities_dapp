@@ -37,7 +37,7 @@ var Module = class {
 		
 		var modulescriptloader = global.getScriptLoader('ethereumnodeaccessmoduleloader', parentscriptloader);
 
-		var moduleroot = './includes/lib';
+		var moduleroot = ScriptLoader.getDappdir() + './js/src/xtra/lib';
 
 		if (global.isInBrowser()) {
 			if (this.web3_version  == "1.0.x") {

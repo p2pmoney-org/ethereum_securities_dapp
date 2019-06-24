@@ -9,9 +9,10 @@ globalscriptloader.push_script('./js/src/constants.js', function() {
 	Constants.push('lifecycle', {eventname: 'app start', time: Date.now()});
 });
 
-globalscriptloader.push_script('./includes/modules/common/global.js');
 
 globalscriptloader.push_script('./js/src/xtra/xtra-config.js');
+
+globalscriptloader.push_script('./includes/load.js');
 
 
 // perform load
@@ -19,7 +20,7 @@ globalscriptloader.load_scripts();
 
 
 //libs
-var libscriptloader = rootscriptloader.getChildLoader('libloader');
+var libscriptloader = globalscriptloader.getChildLoader('libloader');
 
 //jquery
 libscriptloader.push_script('./includes/lib/jquery-3.1.0.js', function () {
@@ -38,10 +39,7 @@ libscriptloader.push_script('./includes/lib/jquery-3.1.0.js', function () {
 libscriptloader.push_script('./includes/lib/bootstrap.min-3.3.7.js');
 
 // interfaces to abstract access to standard libs
-libscriptloader.push_script('./includes/interface/ethereum-node-access.js');
-libscriptloader.push_script('./includes/interface/cryptokey-encryption.js');
-libscriptloader.push_script('./includes/interface/account-encryption.js');
-libscriptloader.push_script('./includes/interface/storage-access.js');
+libscriptloader.push_script('./js/src/xtra/interface/ethereum-node-access.js');
 
 
 //perform load
@@ -53,12 +51,10 @@ libscriptloader.load_scripts();
 var modulescriptloader = libscriptloader.getChildLoader('moduleloader');
 var dappsscriptloader = modulescriptloader.getChildLoader('dappmodulesloader');
 
-// common
-modulescriptloader.push_script('./includes/modules/common/module.js');
 //ethereum node
-modulescriptloader.push_script('./includes/modules/ethnode/module.js');
+modulescriptloader.push_script('./js/src/xtra/modules/ethnode/module.js');
 //ethereum chain reader
-modulescriptloader.push_script('./includes/modules/ethchainreader/module.js');
+modulescriptloader.push_script('./js/src/xtra/modules/ethchainreader/module.js');
 
 // let /dapps/module push scripts in 'dappmodulesloader' then load them
 modulescriptloader.push_script('./dapps/module.js', function () {

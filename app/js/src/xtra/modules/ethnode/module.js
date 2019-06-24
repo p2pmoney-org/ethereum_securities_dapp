@@ -40,7 +40,7 @@ var Module = class {
 		
 		// web3
 		var web3providerurl = this.global.globalscope.Config.getWeb3ProviderUrl();
-
+		
 		this.setWeb3ProviderUrl(web3providerurl);
 		
 		// config
@@ -62,7 +62,7 @@ var Module = class {
 		// ethnode
 		var modulescriptloader = global.getScriptLoader('ethnodeloader', parentscriptloader);
 		
-		var moduleroot = './includes/modules/ethnode';
+		var moduleroot = './js/src/xtra/modules/ethnode';
 
 		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
 
@@ -182,11 +182,15 @@ var Module = class {
 	}*/
 	
 	getDefaultGasLimit() {
-		return this.global.globalscope.Config.getDefaultGasLimit();
+		var defaultlimit = this.global.globalscope.Config.getDefaultGasLimit();
+		
+		return defaultlimit;
 	}
 	
 	getDefaultGasPrice() {
-		return this.global.globalscope.Config.getDefaultGasPrice();
+		var defaultprice = this.global.globalscope.Config.getDefaultGasPrice();
+		
+		return defaultprice;
 	}
 	
 	// instances of interfaces
@@ -204,7 +208,9 @@ var Module = class {
 		if ((typeof this.needtounlockaccounts !== 'undefined') && (this.needtounlockaccounts != null))
 			return this.needtounlockaccounts;
 		
-		this.needtounlockaccounts = this.global.globalscope.Config.needToUnlockAccounts();
+		var needtounlockaccounts = this.global.globalscope.Config.needToUnlockAccounts();
+		
+		this.needtounlockaccounts = needtounlockaccounts;
 		
 		return this.needtounlockaccounts;
 	}
@@ -350,7 +356,10 @@ var Module = class {
 		if ((typeof this.walletaccountaddress !== 'undefined') && (this.walletaccountaddress != null))
 			return this.walletaccountaddress;
 		
-		this.walletaccountaddress = this.global.globalscope.Config.getWalletAccountAddress();
+		var walletaccountaddress = this.global.globalscope.Config.getWalletAccountAddress();
+		
+		this.walletaccountaddress = walletaccountaddress;
+
 		
 		return this.walletaccountaddress;
 	}
@@ -360,7 +369,9 @@ var Module = class {
 	}
 	
 	useWalletAccountChallenge() {
-		return this.global.globalscope.Config.useWalletAccountChallenge();
+		var walletaccountchallenge = this.global.globalscope.Config.useWalletAccountChallenge();
+		
+		return walletaccountchallenge;
 	}
 	
 	getWalletAccountObject() {
