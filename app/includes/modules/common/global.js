@@ -61,11 +61,12 @@ class Global {
 	}
 	
 	getBootstrapObject() {
+		var Bootstrap = window.simplestore.Bootstrap;
 		return Bootstrap.getBootstrapObject();
 	}
 	
 	getRootScriptLoader() {
-		return ScriptLoader.getRootScriptLoader();
+		return this.globalscope.simplestore.ScriptLoader.getRootScriptLoader();
 	}
 	
 	isInNodejs() {
@@ -154,7 +155,8 @@ class Global {
 	
 	finalizeGlobalScopeInit(callback) {
 		var xtra_execution_env = this.getXtraConfigValue('client_env');
-		var rootscriptloader = ScriptLoader.getRootScriptLoader();
+		
+		var rootscriptloader = this.getRootScriptLoader();
 		
 		console.log('xtra_execution_env is ' + xtra_execution_env);
 		
@@ -221,11 +223,11 @@ class Global {
 	// config setting
 	//
 	getConfigValue(name) {
-		return this.globalscope.Config[name];
+		return this.globalscope.simplestore.Config[name];
 	}
 	
 	getXtraConfigValue(name) {
-		return this.globalscope.Config.getXtraValue(name);
+		return this.globalscope.simplestore.Config.getXtraValue(name);
 	}
 	
 	// version info
@@ -263,11 +265,11 @@ class Global {
 	// scripts
 	//
 	getScriptLoader(loadername, parentscriptloader) {
-		return this.globalscope.ScriptLoader.getScriptLoader(loadername, parentscriptloader);
+		return this.globalscope.simplestore.ScriptLoader.getScriptLoader(loadername, parentscriptloader);
 	}
 	
 	findScriptLoader(loadername) {
-		return this.globalscope.ScriptLoader.findScriptLoader(loadername);
+		return this.globalscope.simplestore.ScriptLoader.findScriptLoader(loadername);
 	}
 	
 	//
@@ -682,7 +684,9 @@ class Global {
 	}
 	
 
-	
+	getGlobalClass() {
+		return Global;
+	}
 
 	
 	// static functions
@@ -717,6 +721,6 @@ class Global {
 var GlobalClass = Global;
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.Global = Global;
+window.simplestore.Global = Global;
 else
 module.exports = Global; // we are in node js

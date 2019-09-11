@@ -164,11 +164,10 @@ var Module = class {
 		
 		console.log('Creating Session Object')
 		
-		this.Session.Config = this.global.globalscope.Config;
+		this.Session.Config = this.global.globalscope.simplestore.Config;
 		
 		// libs
-		//this.Session.EthereumNodeAccess = this.global.globalscope.EthereumNodeAccess;
-		this.Session.AccountEncryption = this.global.globalscope.AccountEncryption;
+		this.Session.AccountEncryption = this.global.globalscope.simplestore.AccountEncryption;
 		
 		// model classes
 		//this.Session.Contracts = this.Contracts;
@@ -282,4 +281,10 @@ var Module = class {
 	
 }
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}

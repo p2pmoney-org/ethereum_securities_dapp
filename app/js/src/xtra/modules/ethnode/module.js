@@ -27,6 +27,9 @@ var Module = class {
 		this.transactionmap = Object.create(null); // use a simple object to implement the map
 
 		// payer
+		this.defaultgaslimit = null;
+		this.defaultgasprice = null;
+		
 		this.walletaccountaddress = null;
 		this.needtounlockaccounts = null;
 		
@@ -39,7 +42,7 @@ var Module = class {
 		
 		
 		// web3
-		var web3providerurl = this.global.globalscope.Config.getWeb3ProviderUrl();
+		var web3providerurl = this.global.globalscope.simplestore.Config.getWeb3ProviderUrl();
 		
 		this.setWeb3ProviderUrl(web3providerurl);
 		
@@ -170,36 +173,80 @@ var Module = class {
 	//
 	
 	// web 3
-	getWeb3ProviderUrl() {
-		return this.web3providerurl;
-	}
-	
-	setWeb3ProviderUrl(url) {
-		this.web3providerurl = url;
-	}
-	/*getWeb3ProviderUrl() {
-	return this.global.globalscope.Config.getWeb3ProviderUrl();
-	}*/
-	
-	getDefaultGasLimit() {
-		var defaultlimit = this.global.globalscope.Config.getDefaultGasLimit();
+	getWeb3ProviderUrl(session) {
+		if ((session) && (session.web3providerurl))
+			return session.web3providerurl; // return session's value
 		
-		return defaultlimit;
+		var web3providerurl = this.web3providerurl; // return Config value as default
+		
+		return web3providerurl;
 	}
 	
-	getDefaultGasPrice() {
-		var defaultprice = this.global.globalscope.Config.getDefaultGasPrice();
+	setWeb3ProviderUrl(url, session) {
+		var global = this.global;
+
+		if (session) {
+			// set for this session only
+			session.web3providerurl = url;
+			var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
+			
+			ethereumnodeaccessmodule.clearEthereumNodeAccessInstance(session);
+		}
+		else {
+			this.web3providerurl = url;
+		}
+	}
+	
+	getDefaultGasLimit(session) {
+		if (session && session.defaultgaslimit)
+			return session.defaultgaslimit;
 		
-		return defaultprice;
+		if (this.defaultgaslimit)
+			return this.defaultgaslimit;
+		
+		this.defaultgaslimit = this.global.globalscope.simplestore.Config.getDefaultGasLimit();
+		
+		return this.defaultgaslimit;
+	}
+	
+	setDefaultGasLimit(gaslimit, session) {
+		if (session) {
+			session.defaultgaslimit = gaslimit;
+		}
+		else {
+			this.defaultgaslimit = gaslimit;
+		}
+	}
+
+	
+	getDefaultGasPrice(session) {
+		if (session && session.defaultgasprice)
+			return session.defaultgasprice;
+			
+		if (this.defaultgasprice)
+			return this.defaultgasprice;
+		
+		this.defaultgasprice = this.global.globalscope.simplestore.Config.getDefaultGasPrice();
+		
+		return this.defaultgasprice;
+	}
+	
+	setDefaultGasPrice(gasprice, session) {
+		if (session) {
+			session.defaultgasprice = gasprice;
+		}
+		else {
+			this.defaultgasprice = gasprice;
+		}
 	}
 	
 	// instances of interfaces
-	getEthereumNodeAccessInstance() {
+	getEthereumNodeAccessInstance(session) {
 		var global = this.global;
-		var session = this.getSessionObject();
+		var sess = (session ? session : this.getSessionObject());
 		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
 		
-		return ethereumnodeaccessmodule.getEthereumNodeAccessInstance(session);
+		return ethereumnodeaccessmodule.getEthereumNodeAccessInstance(sess);
 	}
 	
 	
@@ -208,7 +255,7 @@ var Module = class {
 		if ((typeof this.needtounlockaccounts !== 'undefined') && (this.needtounlockaccounts != null))
 			return this.needtounlockaccounts;
 		
-		var needtounlockaccounts = this.global.globalscope.Config.needToUnlockAccounts();
+		var needtounlockaccounts = this.global.globalscope.simplestore.Config.needToUnlockAccounts();
 		
 		this.needtounlockaccounts = needtounlockaccounts;
 		
@@ -344,7 +391,7 @@ var Module = class {
 	
 	// wallet
 	useWalletAccount() {
-		var wallletaccount = this.global.globalscope.Config.getWalletAccountAddress();
+		var wallletaccount = this.global.globalscope.simplestore.Config.getWalletAccountAddress();
 		
 		if (wallletaccount)
 			return true;
@@ -352,11 +399,14 @@ var Module = class {
 			return false;
 	}
 	
-	getWalletAccountAddress() {
+	getWalletAccountAddress(session) {
+		if (session && session.walletaccountaddress)
+			return session.walletaccountaddress;
+		
 		if ((typeof this.walletaccountaddress !== 'undefined') && (this.walletaccountaddress != null))
 			return this.walletaccountaddress;
 		
-		var walletaccountaddress = this.global.globalscope.Config.getWalletAccountAddress();
+		var walletaccountaddress = this.global.globalscope.simplestore.Config.getWalletAccountAddress();
 		
 		this.walletaccountaddress = walletaccountaddress;
 
@@ -364,12 +414,17 @@ var Module = class {
 		return this.walletaccountaddress;
 	}
 	
-	setWalletAccountAddress(address) {
-		this.walletaccountaddress = address;
+	setWalletAccountAddress(address, session) {
+		if (session) {
+			session.walletaccountaddress = address;
+		}
+		else {
+			this.walletaccountaddress = address;
+		}
 	}
 	
 	useWalletAccountChallenge() {
-		var walletaccountchallenge = this.global.globalscope.Config.useWalletAccountChallenge();
+		var walletaccountchallenge = this.global.globalscope.simplestore.Config.useWalletAccountChallenge();
 		
 		return walletaccountchallenge;
 	}
@@ -514,7 +569,20 @@ var Module = class {
 	}
 }
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+
 
 // dependencies
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleDepency('ethnode', 'common');
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleDepency('ethnode', 'common');
+}

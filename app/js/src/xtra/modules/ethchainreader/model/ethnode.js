@@ -135,5 +135,10 @@ var EthereumNode = class {
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethchainreader', 'EthereumNode', EthereumNode);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'EthereumNode', EthereumNode);
+}
 else
 module.exports = EthereumNode; // we are in node js

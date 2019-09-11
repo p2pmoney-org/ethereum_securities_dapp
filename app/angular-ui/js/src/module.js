@@ -5,7 +5,7 @@ var Module = class {
 	
 	constructor() {
 		this.name = 'mvc';
-		this.current_version = "0.11.3.2019.06.27";
+		this.current_version = "0.11.3.2019.09.03";
 		
 		this.global = null; // put by global on registration
 		this.app = null;
@@ -106,6 +106,7 @@ var Module = class {
 		var global = this.global;
 		
 		// angular libs
+		var ScriptLoader = window.simplestore.ScriptLoader;
 		var rootscriptloader = ScriptLoader.getRootScriptLoader();
 		var modulescriptloader = ScriptLoader.findScriptLoader('mvcmoduleloader');
 		var angularscriptloader = modulescriptloader.getChildLoader('angularloader');

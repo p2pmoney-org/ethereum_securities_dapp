@@ -35,4 +35,7 @@ var ModuleControllers = class {
 
 }
 
+if ( (typeof GlobalClass === 'undefined') || (!GlobalClass)) {var GlobalClass = ((typeof window !== 'undefined') && window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);}
+
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('common', 'Controllers', ModuleControllers);

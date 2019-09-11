@@ -10,7 +10,7 @@ var Module = class {
 		this.isloading = false;
 		
 		// operating
-		this.web3instance = null;
+		//this.web3instance = null;
 		
 		this.controllers = null;
 	}
@@ -78,14 +78,14 @@ var Module = class {
 	//
 	
 	// classes
-	getWeb3Class() {
+	/*getWeb3Class() {
 		if ( typeof window !== 'undefined' && window ) {
 			return Web3;
 		}
 		else {
 			return require('web3');
 		}
-	}
+	}*/
 	
 	getAccountClass() {
 		return this.Account;
@@ -196,7 +196,20 @@ var Module = class {
 	
 }
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+
 
 // dependencies
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
+}

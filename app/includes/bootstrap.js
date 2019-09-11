@@ -3,6 +3,19 @@
 class Bootstrap {
 	constructor() {
 		this.execution_env = 'prod';
+		this.javascript_env = 'browser';
+		
+		if (typeof window !== 'undefined' && window ) {
+			if (typeof document !== 'undefined' && document ) {
+				this.javascript_env = 'browser';
+			}
+			else {
+				this.javascript_env = 'react-native';
+			}
+		}
+		else {
+			this.javascript_env = 'nodejs';
+		}
 		
 		// capture console.log
 		this.overrideConsoleLog();
@@ -68,6 +81,32 @@ class Bootstrap {
 		};
 	}
 	
+	getJavascriptEnvironment() {
+		switch(this.javascript_env) {
+			case 'browser':
+				return 'browser';
+			case 'react-native':
+				return 'react-native';
+			case 'nodejs':
+				return 'nodejs';
+			default:
+				return 'browser';
+		}
+	}
+	
+	setJavascriptEnvironment(val) {
+		switch(val) {
+			case 'browser':
+				this.javascript_env = 'browser';
+			case 'react-native':
+				this.javascript_env = 'react-native';
+			case 'nodejs':
+				this.javascript_env = 'nodejs';
+			default:
+				break;
+		}
+	}
+	
 	releaseConsoleLog() {
 		this.overrideconsolelog = false;
 		
@@ -95,6 +134,9 @@ class Bootstrap {
 var BootstrapObject = new Bootstrap();
 
 var scriptloadermap = Object.create(null);
+
+var browserload;
+
 
 class ScriptLoader {
 	
@@ -226,6 +268,21 @@ class ScriptLoader {
 		return ScriptLoader.getScriptLoader(loadername, this);
 	}
 	
+	getChildrenLoaders() {
+		var children = [];
+		
+		for (var name in scriptloadermap) {
+		    if (!scriptloadermap[name]) continue;
+		    
+		    var loader = scriptloadermap[name];
+		    
+		    if (loader.parentloader && (loader.parentloader.loadername == this.loadername))
+		    	children.push(loader);
+		}	
+		
+		return children;
+	}
+	
 	getParentLoader() {
 		if (this.parentloader)
 			return this.parentloader;
@@ -304,25 +361,61 @@ class ScriptLoader {
 	}
 	
 	static _getServerName(url) {
-		var parser = document.createElement('a');
-		parser.href = url;
-		var servername = parser.origin;
-		return servername;		
+		var javascriptenv = BootstrapObject.getJavascriptEnvironment();
+		
+		switch(javascriptenv) {
+			case 'browser':
+				var parser = document.createElement('a');
+				parser.href = url;
+				var servername = parser.origin;
+				return servername;		
+
+			case 'react-native':
+				break;
+				
+			default:
+				break;
+		}
+		
 	}
 	
 	static _getDirName(url) {
-		var parser = document.createElement('a');
-		parser.href = url;
-		var pathname = parser.pathname;
-		var dirname = pathname.substr(0, pathname.lastIndexOf( '/' )+1 );;
-		return dirname;		
+		var javascriptenv = BootstrapObject.getJavascriptEnvironment();
+		
+		switch(javascriptenv) {
+			case 'browser':
+				var parser = document.createElement('a');
+				parser.href = url;
+				var pathname = parser.pathname;
+				var dirname = pathname.substr(0, pathname.lastIndexOf( '/' )+1 );;
+				return dirname;		
+
+			case 'react-native':
+				break;
+				
+			default:
+				break;
+		}
+
 	}
 	
 	static _getPathName(url) {
-		var parser = document.createElement('a');
-		parser.href = url;
-		var pathname = parser.pathname;
-		return pathname;		
+		var javascriptenv = BootstrapObject.getJavascriptEnvironment();
+		
+		switch(javascriptenv) {
+			case 'browser':
+				var parser = document.createElement('a');
+				parser.href = url;
+				var pathname = parser.pathname;
+				return pathname;		
+
+			case 'react-native':
+				break;
+				
+			default:
+				break;
+		}
+
 	}
 	
 	static getDappdir() {
@@ -334,25 +427,10 @@ class ScriptLoader {
 	}
 	
 	static __dirname() {
-		var scripts = document.getElementsByTagName('script');
-		var scripturl = scripts[scripts.length-1].src;
-		var scriptserver = ScriptLoader._getServerName(scripturl);
-		var scriptpath = ScriptLoader._getPathName(scripturl);     
+		var javascriptenv = BootstrapObject.getJavascriptEnvironment();
 		
-		var htmlpageurl= window.location.href;
-		var htmlserver= ScriptLoader._getServerName(htmlpageurl);;
-		var htmlpagepath = ScriptLoader._getPathName(htmlpageurl);
-		
-		return ScriptLoader._relativepath(htmlpagepath, scriptpath);
-	}
-
-	static createScriptLoadPromise(file, posttreatment) {
-		//var self = ScriptLoader;
-		
-		var promise = new Promise(function(resolve, reject) {
-			console.log('starting load of script ' + file);
-			
-			if (!ScriptLoader.dapp_dir) {
+		switch(javascriptenv) {
+			case 'browser':
 				var scripts = document.getElementsByTagName('script');
 				var scripturl = scripts[scripts.length-1].src;
 				var scriptserver = ScriptLoader._getServerName(scripturl);
@@ -362,41 +440,97 @@ class ScriptLoader {
 				var htmlserver= ScriptLoader._getServerName(htmlpageurl);;
 				var htmlpagepath = ScriptLoader._getPathName(htmlpageurl);
 				
-				if (scriptserver !=  htmlserver) {
-					// loading scripts from a different server than the page
-					ScriptLoader.dapp_dir = scriptserver + '/';
-				}
-				else {
-					// same server, compute relative path between the page and scripts
-					ScriptLoader.dapp_dir = ScriptLoader._relativepath(htmlpagepath, scriptpath);
+				return ScriptLoader._relativepath(htmlpagepath, scriptpath);
+
+			case 'react-native':
+				return '';
+				
+			default:
+				break;
+		}
+	}
+
+	static createScriptLoadPromise(file, posttreatment) {
+		//var self = ScriptLoader;
+		var javascriptenv = BootstrapObject.getJavascriptEnvironment();
+		
+		switch(javascriptenv) {
+			case 'browser':
+				var promise = new Promise(function(resolve, reject) {
+					console.log('starting load of script ' + file);
 					
-					// add leading ./
-					ScriptLoader.dapp_dir = './' + ScriptLoader.dapp_dir;
+					if (!ScriptLoader.dapp_dir) {
+						var scripts = document.getElementsByTagName('script');
+						var scripturl = scripts[scripts.length-1].src;
+						var scriptserver = ScriptLoader._getServerName(scripturl);
+						var scriptpath = ScriptLoader._getPathName(scripturl);     
+						
+						var htmlpageurl= window.location.href;
+						var htmlserver= ScriptLoader._getServerName(htmlpageurl);;
+						var htmlpagepath = ScriptLoader._getPathName(htmlpageurl);
+						
+						if (scriptserver !=  htmlserver) {
+							// loading scripts from a different server than the page
+							ScriptLoader.dapp_dir = scriptserver + '/';
+						}
+						else {
+							// same server, compute relative path between the page and scripts
+							ScriptLoader.dapp_dir = ScriptLoader._relativepath(htmlpagepath, scriptpath);
+							
+							// add leading ./
+							ScriptLoader.dapp_dir = './' + ScriptLoader.dapp_dir;
+							
+							// remove includes
+							ScriptLoader.dapp_dir = ScriptLoader.dapp_dir.substring( 0, ScriptLoader.dapp_dir.indexOf( "includes" ) );
+						}
+						
+					}
 					
-					// remove includes
-					ScriptLoader.dapp_dir = ScriptLoader.dapp_dir.substring( 0, ScriptLoader.dapp_dir.indexOf( "includes" ) );
+					var source;
+					
+					if (file.startsWith('/')) {
+						source = ScriptLoader.dapp_dir + '.' + file;
+					}
+					else if (file.startsWith('./')) {
+						// './' means relative to dapp dir (not html page)
+						source = ScriptLoader.dapp_dir + file;
+					}
+					else {
+						source = file;
+					}
+					
+					var script  = document.createElement('script');
+					script.src  = source;
+					script.type = 'text/javascript';
+					script.defer = true;
+
+					script.onload = function(){
+						console.log('script ' + file + ' is now loaded');
+						
+						if (posttreatment)
+							posttreatment();
+						
+						return resolve(true);
+					};
+
+					document.getElementsByTagName('head').item(0).appendChild(script);
+				});
+
+				return promise;
+
+			case 'react-native':
+				console.log('asking to load script: ' + file);
+				
+				if (!ScriptLoader.dapp_dir) {
+					ScriptLoader.dapp_dir = "";
 				}
 				
-			}
-			
-			var script  = document.createElement('script');
-			script.src  = ScriptLoader.dapp_dir + file;
-			script.type = 'text/javascript';
-			script.defer = true;
-
-			script.onload = function(){
-				console.log('script ' + file + ' is now loaded');
+				return Promise.resolve(true);
 				
-				if (posttreatment)
-					posttreatment();
-				
-				return resolve(true);
-			};
-
-			document.getElementsByTagName('head').item(0).appendChild(script);
-		});
-
-		return promise;
+			default:
+				return Promise.resolve(false);
+		}
+		
 		
 	}
 	
@@ -444,41 +578,68 @@ class ScriptLoader {
 			return scriptloadermap[loadername];
 	}
 	
+	static getScriptLoaders() {
+		var loaders = [];
+		
+		for (var name in scriptloadermap) {
+		    if (!scriptloadermap[name]) continue;
+		    
+		    var loader = scriptloadermap[name];
+		    
+		    loaders.push(loader);
+		}	
+		
+		return loaders;
+	}
+	
 }
 
-if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.ScriptLoader = ScriptLoader;
+if ( typeof window !== 'undefined' && window ) { // if we are in browser and not node js (e.g. truffle)
+	if (typeof window.simplestore !== 'undefined')
+		throw 'Hard conflict on use of window.simplestore!!!'
+	
+	window.simplestore = {}; // files should store their classes in window.simplestore for environments like react native
+
+	window.simplestore.Bootstrap = Bootstrap;
+	window.simplestore.ScriptLoader = ScriptLoader;
+	
+	var rootscriptloader = ScriptLoader.getRootScriptLoader();
+	
+	if ( (window.global_scope_no_load === undefined) || (window.global_scope_no_load === false)) {
+		var bootstraploader = rootscriptloader.getChildLoader('bootstrap');
+	
+		bootstraploader.push_script(ScriptLoader.__dirname() + '/constants.js');
+		bootstraploader.push_script(ScriptLoader.__dirname() + '/config.js');
+	
+		bootstraploader.push_script(ScriptLoader.__dirname() + '/modules/common/global.js');
+	
+	
+		bootstraploader.load_scripts(function() {
+			// signal end of bootstrap
+			rootscriptloader.signalEvent('on_bootstrap_load_end');
+						
+			if ((window.dapp_browser_no_load === undefined) 
+					|| (window.dapp_browser_no_load === false)){
+				
+				// load browser-load.js
+				//var browserload = ScriptLoader.getScriptLoader('bootstrap');
+				browserload = bootstraploader.getChildLoader('browserload');
+	
+				browserload.push_script('./js/src/browser-load.js');
+	
+	
+				//perform load
+				browserload.load_scripts();
+			}
+			
+		});
+	}
+	
+}
 else
 module.exports = ScriptLoader; // we are in node js
 
-var rootscriptloader = ScriptLoader.getRootScriptLoader();
-var bootstraploader = rootscriptloader.getChildLoader('bootstrap');
-var browserload;
 
-bootstraploader.push_script(ScriptLoader.__dirname() + '/constants.js');
-bootstraploader.push_script(ScriptLoader.__dirname() + '/config.js');
-
-bootstraploader.push_script(ScriptLoader.__dirname() + '/modules/common/global.js');
-
-
-bootstraploader.load_scripts(function() {
-	if ((window.dapp_browser_no_load === undefined) 
-			|| (window.dapp_browser_no_load === false)){
-		
-		rootscriptloader.signalEvent('on_bootstrap_load_end');
-		
-		// load browser-load.js
-		//var browserload = ScriptLoader.getScriptLoader('bootstrap');
-		browserload = bootstraploader.getChildLoader('browserload');
-
-		browserload.push_script('./js/src/browser-load.js');
-
-
-		//perform load
-		browserload.load_scripts();
-	}
-	
-});
 
 
 

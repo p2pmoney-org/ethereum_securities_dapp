@@ -5,17 +5,13 @@
 
 <div class="div-form-container" >
 
+<h3>{{'Sessions' | transl}}</h3>
 
+<div ng-include='utils.dapp_url("./angular-ui/partials/session-switch.html")'></div>
 
-<form name="sessionsForm" id="sessionsForm" ng-controller="SessionsFormCtrl" ng-submit="handleSubmit()">
- 
-    <div>
-            <button ng-click="handleNewSessionSubmit()" >{{'Spawn' || transl}}</button>
-            <select class="form-from-select" ng-model="selectedsessionuuid" ng-change="handleToChange()"><option ng-repeat="session in sessions" ng-value="session.uuid">{{session.description}}</option></select>
-    </div>
-     
- </form>
+<h3>{{'Current Session' | transl}}</h3>
 
+<div ng-include='utils.dapp_url("./angular-ui/partials/session-config.html")'></div>
 
 </div><!-- div-form -->
 

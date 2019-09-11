@@ -732,5 +732,10 @@ var Session = class {
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('common', 'Session', Session);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'Session', Session);
+}
 else
 module.exports = Session; // we are in node js

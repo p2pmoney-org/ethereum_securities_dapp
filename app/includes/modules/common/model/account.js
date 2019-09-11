@@ -291,12 +291,17 @@ var Account = class {
 	
 }
 
-if ( typeof window !== 'undefined' && window )
-GlobalClass.registerModuleClass('common', 'Account', Account);
-else
-module.exports = Account; // we are in node js
-
-if ( typeof window !== 'undefined' && window )
-GlobalClass.registerModuleClass('common', 'AccountMap', AccountMap);
-else
-Account.AccountMap = AccountMap; // we are in node js
+if ( typeof GlobalClass !== 'undefined' && GlobalClass ) {
+	GlobalClass.registerModuleClass('common', 'Account', Account);
+	GlobalClass.registerModuleClass('common', 'AccountMap', AccountMap);
+}
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'Account', Account);
+	_GlobalClass.registerModuleClass('common', 'AccountMap', AccountMap);
+}
+else {
+	module.exports = Account; // we are in node js
+	Account.AccountMap = AccountMap; 
+}

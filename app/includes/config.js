@@ -111,6 +111,6 @@ class Config {
 // export
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.Config = Config;
+window.simplestore.Config = Config;
 else
 module.exports = Config; // we are in node js

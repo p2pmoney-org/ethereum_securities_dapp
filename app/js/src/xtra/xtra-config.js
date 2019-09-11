@@ -21,6 +21,9 @@ class XtraConfigModule {
 		var self = this;
 		
 		// load and register additional modules
+		var ScriptLoader = window.simplestore.ScriptLoader;
+		var Config = window.simplestore.Config;
+		
 		var modulescriptloader = ScriptLoader.findScriptLoader('moduleloader')
 		var xtramodulescriptloader = modulescriptloader.getChildLoader('xtramoduleloader')
 		
@@ -114,6 +117,13 @@ class XtraConfig {
 //export
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.Config.XtraConfig = XtraConfig;
+window.simplestore.Config.XtraConfig = XtraConfig;
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new XtraConfigModule());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new XtraConfigModule());
+}
+

@@ -34,10 +34,12 @@ var Module = class {
 
 		var self = this;
 		var global = this.global;
+		var ScriptLoader = window.simplestore.ScriptLoader;
 		
 		var modulescriptloader = global.getScriptLoader('ethereumnodeaccessmoduleloader', parentscriptloader);
 
-		var moduleroot = ScriptLoader.getDappdir() + './js/src/xtra/lib';
+		//var moduleroot = ScriptLoader.getDappdir() + './js/src/xtra/lib';
+		var moduleroot = './js/src/xtra/lib';
 
 		if (global.isInBrowser()) {
 			if (this.web3_version  == "1.0.x") {
@@ -97,6 +99,11 @@ var Module = class {
 		return session.ethereum_node_access_instance;
 	}
 	
+	clearEthereumNodeAccessInstance(session) {
+		session.ethereum_node_access_instance = null;
+	}
+
+	
 	getArtifactProxyObject(artifactuuid, contractname, artifactpath, abi, bytecode) {
 		return new ArtifactProxy(artifactuuid, contractname, artifactpath, abi, bytecode);
 	}
@@ -114,10 +121,18 @@ var Module = class {
 	//
 	getWeb3Class(session) {
 		if ( typeof window !== 'undefined' && window ) {
-			return Web3;
+			if ( typeof window.Web3 !== 'undefined' && window.Web3 ) 
+			return window.Web3;
+			else {
+				if (window.simplestore.Web3)
+				return window.simplestore.Web3;
+				else
+				throw 'Web3 should be available in window.simplestore.Web3';
+			}
 		}
 		else {
-			return require('web3');
+			throw 'nodejs not implemented';
+			//return require('web3');
 		}
 	}
 	
@@ -127,24 +142,27 @@ var Module = class {
 		var global = this.global;
 		var ethnodemodule = global.getModuleObject('ethnode');
 
-		var web3providerurl = ethnodemodule.getWeb3ProviderUrl();
+		var web3providerurl = ethnodemodule.getWeb3ProviderUrl(session);
 		var web3Provider = new Web3.providers.HttpProvider(web3providerurl);
 
 		return web3Provider;
 	}
 	
 	getWeb3Instance(session) {
-		if (this.web3instance)
-			return this.web3instance;
+		if (session && session.ethereum_node_access_instance && session.ethereum_node_access_instance.web3instance)
+			return session.ethereum_node_access_instance.web3instance;
 		
 		var Web3 = this.getWeb3Class();
 		var web3Provider = this.getWeb3Provider(session);
 		  
-		this.web3instance = new Web3(web3Provider);		
+		var web3instance = new Web3(web3Provider);		
 		
 		console.log("web3 instance created");
 		
-		return this.web3instance;
+		if (session && session.ethereum_node_access_instance)
+			session.ethereum_node_access_instance.web3instance = web3instance;
+		
+		return web3instance;
 	}
 	
 	getEthereumJsClass(session) {
@@ -152,14 +170,15 @@ var Module = class {
 			return window.ethereumjs;
 		}
 		else {
-			var ethereumjs;
+			throw 'nodejs not implemented';
+			/*var ethereumjs;
 			
 			ethereumjs = require('ethereum.js');
 			ethereumjs.Util = require('ethereumjs-util');
 			ethereumjs.Wallet = require('ethereumjs-wallet');
 			ethereumjs.tx = require('ethereumjs-tx');
 
-			return ethereumjs;
+			return ethereumjs;*/
 		}
 	}
 
@@ -694,6 +713,18 @@ class EthereumNodeAccess {
 		this.web3_version = ethereumnodeaccessmodule.web3_version;
 	}
 	
+	isReady(callback) {
+		var promise = new Promise(function (resolve, reject) {
+			
+			if (callback)
+				callback(null, true);
+			
+			resolve(true);
+		});
+		
+		return promise
+	}
+	
 	//
 	// Web3
 	//
@@ -716,26 +747,21 @@ class EthereumNodeAccess {
 		return this.web3instance;
 	}
 	
-	/*_getEthereumJsClass() {
-		if ( typeof window !== 'undefined' && window ) {
-			return window.ethereumjs;
-		}
-		else {
-			var ethereumjs;
-			
-			ethereumjs = require('ethereum.js');
-			ethereumjs.Util = require('ethereumjs-util');
-			ethereumjs.Wallet = require('ethereumjs-wallet');
-			ethereumjs.tx = require('ethereumjs-tx');
-
-			return ethereumjs;
-		}
-	}*/
-	
-
 	
 	
 	// node
+	web3_setProviderUrl(url, callback) {
+		this.web3instance = null;
+		
+		var Web3 = this.ethereumnodeaccessmodule.getWeb3Class();
+		var web3Provider = new Web3.providers.HttpProvider(url);
+		
+		this.web3instance = new Web3(web3Provider);
+		
+		if (callback)
+			callback(null, this.web3instance);
+	}
+	
 	web3_isSyncing(callback) {
 		var self = this
 		var session = this.session;
@@ -2149,7 +2175,8 @@ class EthereumNodeAccess {
 			return TruffleContract;
 		}
 		else {
-			return require('truffle-contract');
+			throw 'nodejs not implemented';
+			//return require('truffle-contract');
 		}
 	}
 	
@@ -2245,10 +2272,17 @@ class EthereumNodeAccess {
 }
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.EthereumNodeAccess = EthereumNodeAccess;
+window.simplestore.EthereumNodeAccess = EthereumNodeAccess;
 else
 module.exports = EthereumNodeAccess; // we are in node js
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+
 
 

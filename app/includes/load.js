@@ -1,3 +1,5 @@
+'use strict';
+
 var rootscriptloader = ScriptLoader.getRootScriptLoader();
 var corescriptloader = rootscriptloader.getChildLoader('coreloader');
 

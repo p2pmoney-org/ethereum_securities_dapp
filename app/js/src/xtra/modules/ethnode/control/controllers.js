@@ -15,8 +15,8 @@ var ModuleControllers = class {
 		var global = ethnodemodule.global;
 		var commonmodule = global.getModuleObject('common');
 
-		var gaslimit = ethnodemodule.getDefaultGasLimit();
-		var gasPrice = ethnodemodule.getDefaultGasPrice();
+		var gaslimit = ethnodemodule.getDefaultGasLimit(session);
+		var gasPrice = ethnodemodule.getDefaultGasPrice(session);
 		
 		values['gaslimit'] = gaslimit;
 		values['gasprice'] = gasPrice;
@@ -32,11 +32,11 @@ var ModuleControllers = class {
 			else {
 				if (ethnodemodule.useWalletAccount()) {
 					// do we pay everything from a single wallet
-					walletaddress = ethnodemodule.getWalletAccountAddress();
+					walletaddress = ethnodemodule.getWalletAccountAddress(session);
 				}
 				else {
 					console.log('not using wallet account');
-					console.log('wallet address is ' + ethnodemodule.getWalletAccountAddress());
+					console.log('wallet address is ' + ethnodemodule.getWalletAccountAddress(session));
 				}
 			}
 			
@@ -65,8 +65,8 @@ var ModuleControllers = class {
 		var global = ethnodemodule.global;
 		var commonmodule = global.getModuleObject('common');
 
-		var gaslimit = ethnodemodule.getDefaultGasLimit();
-		var gasPrice = ethnodemodule.getDefaultGasPrice();
+		var gaslimit = ethnodemodule.getDefaultGasLimit(session);
+		var gasPrice = ethnodemodule.getDefaultGasPrice(session);
 		
 		values['gaslimit'] = gaslimit;
 		values['gasprice'] = gasPrice;
@@ -74,21 +74,6 @@ var ModuleControllers = class {
 		var walletaddress = null;
 		
 		if (session) {
-			/*var sessionaccount = session.getMainSessionAccountObject();
-			
-			if (sessionaccount) {
-				walletaddress = sessionaccount.getAddress();
-			}
-			else {
-				if (ethnodemodule.useWalletAccount()) {
-					// do we pay everything from a single wallet
-					walletaddress = ethnodemodule.getWalletAccountAddress();
-				}
-				else {
-					console.log('not using wallet account');
-					console.log('wallet address is ' + ethnodemodule.getWalletAccountAddress());
-				}
-			}*/
 			
 			// ether transfers does not support "in name of" transactions
 			// we necessarily use fromaccount as wallet
@@ -145,7 +130,7 @@ var ModuleControllers = class {
 	// contracts
 	
 	// deployment
-	getContractDeploymentDefaultValues(contract, divcue) {
+	getContractDeploymentDefaultValues(session, contract, divcue) {
 		var values = [];
 		
 		if (contract) {
@@ -158,8 +143,8 @@ var ModuleControllers = class {
 			var global = ethnodemodule.global;
 			var commonmodule = global.getModuleObject('common');
 
-			var gaslimit = ethnodemodule.getDefaultGasLimit();
-			var gasPrice = ethnodemodule.getDefaultGasPrice();
+			var gaslimit = ethnodemodule.getDefaultGasLimit(session);
+			var gasPrice = ethnodemodule.getDefaultGasPrice(session);
 			
 			values['gaslimit'] = gaslimit;
 			values['gasprice'] = gasPrice;
@@ -170,7 +155,7 @@ var ModuleControllers = class {
 			
 			if (ethnodemodule.useWalletAccount()) {
 				// do we pay everything from a single wallet
-				walletaddress = ethnodemodule.getWalletAccountAddress();
+				walletaddress = ethnodemodule.getWalletAccountAddress(session);
 			}
 			else {
 				// or from the wallet of the owner of the contract
@@ -224,4 +209,10 @@ var ModuleControllers = class {
 	}
 }
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethnode', 'Controllers', ModuleControllers);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethnode', 'Controllers', ModuleControllers);
+}

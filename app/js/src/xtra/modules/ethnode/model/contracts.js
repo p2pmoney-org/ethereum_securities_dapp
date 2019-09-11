@@ -3,8 +3,6 @@
  */
 'use strict';
 
-var GlobalClass;
-
 var Contracts = class {
 	
 	// "constants"
@@ -482,6 +480,11 @@ var Contracts = class {
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethnode', 'Contracts', Contracts);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethnode', 'Contracts', Contracts);
+}
 else
 module.exports = Contracts; // we are in node js
 

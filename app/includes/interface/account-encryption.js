@@ -10,6 +10,7 @@ var Module = class {
 		this.isloading = false;
 		
 		this.ethereum_node_access_instance = null;
+		
 	}
 	
 	init() {
@@ -101,28 +102,48 @@ class AccountEncryption {
 		this.account = account;
 	}
 	
+	isReady(callback) {
+		var promise = new Promise(function (resolve, reject) {
+			
+			if (callback)
+				callback(null, true);
+			
+			resolve(true);
+		});
+		
+		return promise
+	}
+	
 	// encryption
 	getKeythereumClass() {
 		if ( typeof window !== 'undefined' && window ) {
-			return keythereum;
+			if (window.keythereum !== 'undefined')
+			return window.keythereum;
+			else if (window.simplestore.keythereum !== 'undefined')
+					return window.simplestore.keythereum;
 		}
 		else {
-			return require('keythereum');
+			throw 'nodejs not implemented';
+			//return require('keythereum');
 		}
 	}
 	
 	getEthereumJsClass() {
 		if ( typeof window !== 'undefined' && window ) {
+			if (window.ethereumjs !== 'undefined')
 			return window.ethereumjs;
+			else if (window.simplestore.ethereumjs !== 'undefined')
+				return window.simplestore.ethereumjs;
 		}
 		else {
-			var ethereumjs;
+			throw 'nodejs not implemented';
+			/*var ethereumjs;
 			
 			ethereumjs = require('ethereum.js');
 			ethereumjs.Util = require('ethereumjs-util');
 			ethereumjs.Wallet = require('ethereumjs-wallet');
 
-			return ethereumjs;
+			return ethereumjs;*/
 		}
 	}
 	
@@ -306,12 +327,46 @@ class AccountEncryption {
 	
 	// asymmetric encryption with the private/public key pair
 	getBitcoreClass() {
-		return require('bitcore');
+		if ( typeof window !== 'undefined' && window ) {
+			var bitcore = window.bitcore;
+			
+			if (bitcore)
+			return bitcore;
+			else {
+				//throw 'window.bitcore not initialized';
+				
+				if (typeof window.simplestore.bitcore === 'undefined')
+				window.simplestore.bitcore = bit_require('bitcore');
+				
+				return window.simplestore.bitcore;
+			}
+		}
+		else {
+			throw 'nodejs not implemented';
+			//return require('bitcore');
+		}
 	}
 	
 	
 	getBitcoreEcies() {
-		return require('bitcore-ecies');
+		if ( typeof window !== 'undefined' && window ) {
+			var bitcore_ecies = window.bitcore_ecies;
+			
+			if (bitcore_ecies)
+			return bitcore_ecies;
+			else {
+				//throw 'window.bitcore_ecies not initialized';
+
+				if (typeof window.simplestore.bitcore_ecies === 'undefined')
+				window.simplestore.bitcore_ecies = bit_require('bitcore_ecies');
+
+				return window.simplestore.bitcore_ecies;
+			}
+		}
+		else {
+			throw 'nodejs not implemented';
+			//return require('bitcore-ecies');
+		}
 	}
 	
 	
@@ -560,8 +615,14 @@ class AccountEncryption {
 }
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.AccountEncryption = AccountEncryption;
+window.simplestore.AccountEncryption = AccountEncryption;
 else
 module.exports = AccountEncryption; // we are in node js
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}

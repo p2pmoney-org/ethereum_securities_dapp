@@ -1,0 +1,10 @@
+<div id="sessionsSwitch" >
+<form name="sessionsForm" id="sessionsForm" ng-controller="SessionsFormCtrl" ng-submit="handleSubmit()">
+ 
+    <div>
+            <button ng-click="handleNewSessionSubmit()" >{{'Spawn' || transl}}</button>
+            <select class="form-from-select" ng-model="selectedsessionuuid" ng-change="handleToChange()"><option ng-repeat="session in sessions" ng-value="session.uuid">{{session.description}}</option></select>
+    </div>
+     
+ </form>
+</div>

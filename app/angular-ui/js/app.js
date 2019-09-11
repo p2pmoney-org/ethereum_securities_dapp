@@ -60,6 +60,7 @@ var App = class {
 			return this.app;
 		}
 		
+		var ScriptLoader = window.simplestore.ScriptLoader;
 		var rootscriptloader = ScriptLoader.getRootScriptLoader();
 		
 		rootscriptloader.registerEventListener('on_angular_ui_load_end', function(eventname) {
@@ -121,7 +122,7 @@ var App = class {
 			console.log('bootstrapping manually angular app');
 			angular.bootstrap(document, ['angular_app']);
 			
-			var rootscriptloader = window.ScriptLoader.getRootScriptLoader();
+			var rootscriptloader = window.simplestore.ScriptLoader.getRootScriptLoader();
 			
 			rootscriptloader.signalEvent('on_angular_ui_bootstrapped');
 			
@@ -141,6 +142,7 @@ var App = class {
 	}
 	
 	getDappDir() {
+		var ScriptLoader = window.simplestore.ScriptLoader;
 		return (ScriptLoader.dapp_dir ? ScriptLoader.dapp_dir : '');
 	}
 	

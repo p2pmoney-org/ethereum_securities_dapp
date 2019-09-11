@@ -1,3 +1,5 @@
+'use strict';
+
 var bootstrapobject = Bootstrap.getBootstrapObject();
 var rootscriptloader = ScriptLoader.getRootScriptLoader();
 
@@ -48,8 +50,8 @@ libscriptloader.load_scripts();
 
 
 // includes modules
-var modulescriptloader = libscriptloader.getChildLoader('moduleloader');
-var dappsscriptloader = modulescriptloader.getChildLoader('dappmodulesloader');
+let modulescriptloader = libscriptloader.getChildLoader('moduleloader');
+let dappsscriptloader = modulescriptloader.getChildLoader('dappmodulesloader');
 
 //ethereum node
 modulescriptloader.push_script('./js/src/xtra/modules/ethnode/module.js');
@@ -84,7 +86,6 @@ modulescriptloader.load_scripts(function () {
 	
 	
 });
-
 
 //mvc
 rootscriptloader.registerEventListener('on_dapps_module_load_end', function(eventname) {
@@ -129,5 +130,15 @@ rootscriptloader.registerEventListener('on_dapps_module_load_end', function(even
 // signal end of browser load
 rootscriptloader.signalEvent('on_browser_load_end');
 
+
+//must be here because of problems in react native
+var bit_require = function(libname) {
+	switch(libname) {
+		case 'bitcore':
+			return require('bitcore');
+		case 'bitcore_ecies':
+			return require('bitcore-ecies');
+	}
+}
 
 

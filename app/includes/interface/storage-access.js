@@ -9,6 +9,8 @@ var Module = class {
 		this.isready = false;
 		this.isloading = false;
 		
+		this.localStorage = null;
+		
 		this.storage_access_instance = null;
 	}
 	
@@ -97,9 +99,27 @@ var Module = class {
 		return key;
 	}
 	
+	_getLocalStorage() {
+		if (this.localStorage)
+			return this.localStorage;
+		
+		if (typeof localStorage !== 'undefined') {
+			// we are in the browser
+			this.localStorage = localStorage;
+		}
+		else {
+			if (window.simplestore.localStorage !== 'undefined') {
+				this.localStorage = window.simplestore.localStorage;
+			}
+		}
+		
+		return this.localStorage;
+	}
+	
 	readClientSideJson(session, keys) {
 		var key = this.keystostring(keys);
-		var jsonstring = localStorage.getItem(key.toString());
+		var localStorage = this._getLocalStorage();
+		var jsonstring = (localStorage ? localStorage.getItem(key.toString()) : '{}');
 		
 		//console.log("client side local storage json for key " + key.toString() + " is " + jsonstring);
 		
@@ -114,6 +134,9 @@ var Module = class {
 
 		//console.log("saving in client side local storage json " + jsonstring + " for key " + key.toString());
 		
+		var localStorage = this._getLocalStorage();
+		
+		if (localStorage)
 		localStorage.setItem(key, jsonstring);
 	}
 	
@@ -124,6 +147,18 @@ var Module = class {
 class StorageAccess {
 	constructor(session) {
 		this.session = session;
+	}
+	
+	isReady(callback) {
+		var promise = new Promise(function (resolve, reject) {
+			
+			if (callback)
+				callback(null, true);
+			
+			resolve(true);
+		});
+		
+		return promise
 	}
 	
 	//
@@ -357,8 +392,15 @@ class StorageAccess {
 
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
-window.StorageAccess = StorageAccess;
+window.simplestore.StorageAccess = StorageAccess;
 else
 module.exports = StorageAccess; // we are in node js
 
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+	

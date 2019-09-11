@@ -168,12 +168,17 @@ var CryptoKey = class {
 }
 
 
-if ( typeof window !== 'undefined' && window )
-GlobalClass.registerModuleClass('common', 'CryptoKey', CryptoKey);
-else
-module.exports = CryptoKey; // we are in node js
-
-if ( typeof window !== 'undefined' && window )
-GlobalClass.registerModuleClass('common', 'CryptoKeyMap', CryptoKeyMap);
-else
-CryptoKey.CryptoKeyMap = CryptoKeyMap; // we are in node js
+if ( typeof GlobalClass !== 'undefined' && GlobalClass ) {
+	GlobalClass.registerModuleClass('common', 'CryptoKey', CryptoKey);
+	GlobalClass.registerModuleClass('common', 'CryptoKeyMap', CryptoKeyMap);
+}
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'CryptoKey', CryptoKey);
+	_GlobalClass.registerModuleClass('common', 'CryptoKeyMap', CryptoKeyMap);
+}
+else {
+	module.exports = CryptoKey; // we are in node js
+	CryptoKey.CryptoKeyMap = CryptoKeyMap; 
+}

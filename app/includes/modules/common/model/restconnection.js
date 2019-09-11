@@ -212,5 +212,10 @@ var RestConnection = class {
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 	GlobalClass.registerModuleClass('common', 'RestConnection', RestConnection);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'RestConnection', RestConnection);
+}
 else
 	module.exports = RestConnection; // we are in node js

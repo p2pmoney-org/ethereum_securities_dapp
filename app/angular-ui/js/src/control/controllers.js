@@ -120,6 +120,13 @@ class Controllers {
 			controllers.prepareSessionsForm($scope);
 		}]);
 
+		// session config
+		angular_app.controller("SessionConfigFormCtrl",  ['$scope', function ($scope) {
+			controllers.prepareSessionConfigForm($scope);
+		}]);
+
+
+		// account and ether transfer
 		angular_app.controller("ethAccountFormCtrl", ['$scope', function ($scope) {
 			controllers.prepareEthAccountForm($scope);
 		}]);
@@ -491,7 +498,7 @@ class Controllers {
 		console.log("Controllers.prepareLoadInfoView called");
 		
 		var global = this.global;
-		var Constants = window.Constants;
+		var Constants = window.simplestore.Constants;
 		
 		var loadinfos = [];
 		
@@ -1216,6 +1223,97 @@ class Controllers {
 			self.handleSpawnNewSessionSubmit($scope);
 		}
 	}	
+	
+	
+	prepareSessionConfigForm($scope) {
+		console.log("Controllers.prepareSessionConfigForm called");
+		
+		var global = this.global;
+		var self = this;
+
+		var app = this.getAppObject();
+		
+		var commonmodule = global.getModuleObject('common');
+		var session = commonmodule.getSessionObject();
+		
+		var ethnodemodule = global.getModuleObject('ethnode');
+		
+		var web3url = ethnodemodule.getWeb3ProviderUrl(session);
+		
+		var accountaddress = ethnodemodule.getWalletAccountAddress(session);
+
+		var gaslimit = ethnodemodule.getDefaultGasLimit(session);
+		var gasprice = ethnodemodule.getDefaultGasPrice(session);
+
+		// filling fields
+		$scope.sessionuuid = session.getSessionUUID();
+
+		$scope.web3url = {
+				text: web3url
+		};
+		
+		$scope.walletused = {
+				text: accountaddress
+		};
+		
+		$scope.gaslimit = {
+				text: gaslimit
+		};
+		
+		$scope.gasprice = {
+				text: gasprice
+		};
+		
+		
+		// submit function
+		$scope.handleSubmit = function(){
+			self.handleSessionConfigSubmit($scope);
+		}
+		
+	}
+	
+	handleSessionConfigSubmit($scope) {
+		console.log("Controllers.handleSessionConfigSubmit called");
+		
+		var global = this.global;
+		var app = this.getAppObject();
+		
+		var commonmodule = global.getModuleObject('common');
+		var session = commonmodule.getSessionObject();
+		
+		var ethnodemodule = global.getModuleObject('ethnode');
+
+		var web3url = $scope.web3url.text;
+		
+		var accountaddress = $scope.walletused.text;
+		
+		var gaslimit = $scope.gaslimit.text;
+		var gasprice = $scope.gasprice.text;
+		
+		ethnodemodule.setWeb3ProviderUrl(web3url, session);
+
+		ethnodemodule.setWalletAccountAddress(accountaddress, session);
+		
+		ethnodemodule.setDefaultGasLimit(gaslimit, session);
+		ethnodemodule.setDefaultGasPrice(gasprice, session)
+		
+		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance();
+		
+		ethereumnodeaccess.isReady(function(err, res) {
+			if (res === true) {
+				console.log('new configuration has been applied');
+				
+				app.setMessage('new configuration for session is now operational!');				
+			}
+			else {
+				console.log('error during application of config: ' + err);
+				
+				app.setMessage('error during application of config: ' + err);				
+			}
+		});
+	}
+
+
 
 	//
 	// ethereum accounts

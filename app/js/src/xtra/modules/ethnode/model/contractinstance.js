@@ -900,5 +900,10 @@ var ContractInstance = class {
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 	GlobalClass.registerModuleClass('ethnode', 'ContractInstance', ContractInstance);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethnode', 'ContractInstance', ContractInstance);
+}
 else
 	module.exports = ContractIntance; // we are in node js

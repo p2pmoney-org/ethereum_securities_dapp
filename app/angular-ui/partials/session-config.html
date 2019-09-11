@@ -1,0 +1,40 @@
+<div id="sessionConfigh" >
+<form name="sessionConfigForm" id="sessionConfigForm" ng-controller="SessionConfigFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<input type="hidden" name="sessionuuid" ng-model="sessionuuid" required>
+ 
+ 	<div>
+  	<span id="web3url-span" class="form-web3url-span">
+		<label for="description">{{'Please enter the url to access web3 provider:' | transl}}</label>
+		<input type="text" class="form-web3url-input" name="web3url" ng-model="web3url.text" required>
+ 	</span>
+ 	</div>
+ 	
+ 	<div>
+	<span id="walletused-span" class="form-walletused-span">
+		<label for="walletused">{{'Default account:' | transl}}</label>
+		<input type="text" class="form-walletused-input"  name="walletused" ng-model="walletused.text" required><br>
+ 	</span>
+	
+	<span id="gaslimit-span" class="form-gaslimit-span">
+		<label for="gaslimit">{{'Gas limit:' | transl}}</label>
+		<input type="text" class="form-gaslimit-input" name="gaslimit" ng-model="gaslimit.text" required>
+	</span>
+	
+	<span id="gasprice-span" class="form-gasprice-span">
+		<label for="gasprice">{{'Gas price:' | transl}}</label>
+		<input type="text" class="form-gasprice-input" name="gasprice" ng-model="gasprice.text" required>
+	</span>
+ 	</div>
+	
+
+  	<div>
+	
+  	<span class="form-actions">
+            <button type="submit" >{{'Save' || transl}}</button>
+ 	</span>
+
+    </div>
+     
+ </form>
+</div>

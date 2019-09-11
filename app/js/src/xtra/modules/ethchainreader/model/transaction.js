@@ -394,8 +394,12 @@ var Transaction = class {
 	
 }
 
-
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethchainreader', 'Transaction', Transaction);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Transaction', Transaction);
+}
 else
 module.exports = Contract; // we are in node js

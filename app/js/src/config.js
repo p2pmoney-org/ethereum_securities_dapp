@@ -1,8 +1,11 @@
 /********************************/
 /*   Ethereum dapp functions    */
-/********************************/ 
+/********************************/
 
-Config.getWeb3ProviderUrl = function() {
+
+window.simplestore.Config.getWeb3ProviderUrl = function() {
+	var Config = window.simplestore.Config;
+	
 	if (Config.config_overload_read == false)
 		Config.readConfigOverload();
 	
@@ -18,23 +21,31 @@ Config.getWeb3ProviderUrl = function() {
 	return web3providerurl;
 };
 
-Config.getWeb3ProviderProtocol = function() {
+window.simplestore.Config.getWeb3ProviderProtocol = function() {
+	var Config = window.simplestore.Config;
+	
 	return Config.web3provider_protocol;
 };
 
-Config.getWeb3ProviderHost = function() {
+window.simplestore.Config.getWeb3ProviderHost = function() {
+	var Config = window.simplestore.Config;
+	
 	return Config.web3provider_host;
 };
 
-Config.getWeb3ProviderPort = function() {
+window.simplestore.Config.getWeb3ProviderPort = function() {
 	return Config.web3provider_port;
 };
 
-Config.getWeb3ProviderNetworkId = function() {
+window.simplestore.Config.getWeb3ProviderNetworkId = function() {
+	var Config = window.simplestore.Config;
+	
 	return Config.web3provider_network_id;
 };
 
-Config.getDefaultGasLimit = function() {
+window.simplestore.Config.getDefaultGasLimit = function() {
+	var Config = window.simplestore.Config;
+	
 	var defaultlimit = Config.defaultGasLimit;
 	
 	// we look in Config.valuemap to see if value is overloaded
@@ -47,7 +58,9 @@ Config.getDefaultGasLimit = function() {
 	return defaultlimit;
 };
 
-Config.getDefaultGasPrice = function() {
+window.simplestore.Config.getDefaultGasPrice = function() {
+	var Config = window.simplestore.Config;
+	
 	var defaultprice = Config.defaultGasPrice;
 	
 	
@@ -61,7 +74,9 @@ Config.getDefaultGasPrice = function() {
 	return defaultprice;
 };
 
-Config.getWalletAccountAddress = function() {
+window.simplestore.Config.getWalletAccountAddress = function() {
+	var Config = window.simplestore.Config;
+	
 	var walletaccountaddress = Config.wallet_account;
 	
 	// we look in Config.valuemap to see if value is overloaded
@@ -74,7 +89,9 @@ Config.getWalletAccountAddress = function() {
 	return walletaccountaddress;
 };
 
-Config.useWalletAccountChallenge = function() {
+window.simplestore.Config.useWalletAccountChallenge = function() {
+	var Config = window.simplestore.Config;
+	
 	var walletaccountchallenge = Config.wallet_account_challenge;
 	
 	// we look in Config.valuemap to see if value is overloaded
@@ -87,7 +104,9 @@ Config.useWalletAccountChallenge = function() {
 	return walletaccountchallenge;
 };
 
-Config.needToUnlockAccounts = function() {
+window.simplestore.Config.needToUnlockAccounts = function() {
+	var Config = window.simplestore.Config;
+	
 	var needtounlockaccounts = Config.need_to_unlock_accounts;
 	
 	// we look in Config.valuemap to see if value is overloaded
@@ -106,52 +125,52 @@ Config.needToUnlockAccounts = function() {
 /********************/ 
 
 
-Config.defaultGasLimit = 4712388;
-Config.defaultGasPrice = 100000000000;
+window.simplestore.Config.defaultGasLimit = 4712388;
+window.simplestore.Config.defaultGasPrice = 100000000000;
 
 // default
 /*
  * 
- * Config.web3provider_protocol = 'http://';
- * Config.web3provider_host = 'localhost';
- * Config.web3provider_port = 8545;
- * Config.web3provider_network_id = '*' // Match any network id
- * Config.need_to_unlock_accounts = true; // do we need to unlock (e.g. on geth) or pass-through development client (e.g. Ganache)
- * Config.wallet_account_challenge = true; 
- * Config.wallet_account = '0x0000000000000000000000000000000000000001'; // your test account
+ * window.simplestore.Config.web3provider_protocol = 'http://';
+ * window.simplestore.Config.web3provider_host = 'localhost';
+ * window.simplestore.Config.web3provider_port = 8545;
+ * window.simplestore.Config.web3provider_network_id = '*' // Match any network id
+ * window.simplestore.Config.need_to_unlock_accounts = true; // do we need to unlock (e.g. on geth) or pass-through development client (e.g. Ganache)
+ * window.simplestore.Config.wallet_account_challenge = true; 
+ * window.simplestore.Config.wallet_account = '0x0000000000000000000000000000000000000001'; // your test account
  * */
 
 
 // Ganache
-Config.web3provider_protocol = 'http://';
-Config.web3provider_host = 'localhost';
-Config.web3provider_port = 9547;
-Config.web3provider_network_id = '*' // Match any network id
-Config.need_to_unlock_accounts = false;
-Config.wallet_account_challenge = true;
+window.simplestore.Config.web3provider_protocol = 'http://';
+window.simplestore.Config.web3provider_host = 'localhost';
+window.simplestore.Config.web3provider_port = 9547;
+window.simplestore.Config.web3provider_network_id = '*' // Match any network id
+window.simplestore.Config.need_to_unlock_accounts = false;
+window.simplestore.Config.wallet_account_challenge = true;
 //Ganache 1.0.1
-//Config.wallet_account = '0x6330A553Fc93768F612722BB8c2eC78aC90B3bbc';
+//window.simplestore.Config.wallet_account = '0x6330A553Fc93768F612722BB8c2eC78aC90B3bbc';
 //Ganache 1.1.0
-Config.wallet_account = '0xfFA2808E37954fF5042a98103068b42f22f0f733';
+window.simplestore.Config.wallet_account = '0xfFA2808E37954fF5042a98103068b42f22f0f733';
 
 
 
 // local Geth
-/*Config.web3provider_protocol = 'http://';
-Config.web3provider_host = 'localhost';
-Config.web3provider_port = 8545;
-Config.web3provider_network_id = '*' // Match any network id
-Config.need_to_unlock_accounts = true; 
-Config.wallet_account_challenge = true; 
-Config.wallet_account = 'your_test_account';*/
+/*window.simplestore.Config.web3provider_protocol = 'http://';
+window.simplestore.Config.web3provider_host = 'localhost';
+window.simplestore.Config.web3provider_port = 8545;
+window.simplestore.Config.web3provider_network_id = '*' // Match any network id
+window.simplestore.Config.need_to_unlock_accounts = true; 
+window.simplestore.Config.wallet_account_challenge = true; 
+window.simplestore.Config.wallet_account = 'your_test_account';*/
 
 // INFURA
-/*Config.web3provider_protocol = 'https://';
-Config.web3provider_host = 'rinkeby.infura.io/v3/your_infura_key'
-Config.web3provider_port = '';
-Config.web3provider_network_id = '*' // Match any network id
-Config.need_to_unlock_accounts = true; 
-Config.wallet_account_challenge = true; 
-Config.wallet_account = 'your_test_account';*/
+/*window.simplestore.Config.web3provider_protocol = 'https://';
+window.simplestore.Config.web3provider_host = 'rinkeby.infura.io/v3/your_infura_key'
+window.simplestore.Config.web3provider_port = '';
+window.simplestore.Config.web3provider_network_id = '*' // Match any network id
+window.simplestore.Config.need_to_unlock_accounts = true; 
+window.simplestore.Config.wallet_account_challenge = true; 
+window.simplestore.Config.wallet_account = 'your_test_account';*/
 
 
