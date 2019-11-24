@@ -14,6 +14,7 @@ var User = class {
 		var commonmodule = global.getModuleObject('common');
 
 		this.accountmap = new commonmodule.AccountMap();
+		this.cryptokeymap = new commonmodule.CryptoKeyMap();
 
 		this.getClass = function() { return this.constructor.getClass()};
 	}
@@ -42,7 +43,27 @@ var User = class {
 		this.useremail = useremail;
 	}
 	
-	// user's private keys
+	// user's crypto keys
+	getCryptoKeyObjects() {
+		return this.cryptokeymap.getCryptoKeyArray();
+	}
+	
+	addCryptoKeyObject(cryptokey) {
+		cryptokey.setOwner(this);
+
+		this.cryptokeymap.pushCryptoKey(cryptokey);
+	}
+	
+	removeCryptoKeyObject(cryptokey) {
+		this.cryptokeymap.removeCryptoKey(cryptokey);
+		
+		cryptokey.setOwner(null);
+	}
+	
+
+	
+	
+	// user's accounts
 	getAccountObjects() {
 		return this.accountmap.getAccountArray();
 	}
@@ -93,6 +114,7 @@ var User = class {
 	}
 	
 
+	// utils
 	isEqual(user) {
 		var useruuid1 = this.useruuid;
 		var useruuid2 = (user ? user.useruuid : null);
@@ -111,5 +133,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('common', 'User', User);
 }
-else
-module.exports = User; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'User', User);
+}

@@ -16,6 +16,10 @@ class StockHolder extends StakeHolder {
 		this.stockledger = orgObj.stockledger;
 	}
 	
+	getSessionObject() {
+		return this.session;
+	}
+	
 	getStockLedgerObject() {
 		return this.stockledger;
 	}

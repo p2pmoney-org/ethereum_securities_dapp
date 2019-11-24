@@ -1,0 +1,28 @@
+ <form name="openVaultForm" id="openVaultForm" ng-controller="OpenVaultFormCtrl" ng-submit="handleSubmit()">
+ 
+  	<div>
+	
+  	<span id="vaultname-span" class="vaultname-span">
+		<label for="vaultname">{{'Please enter the name of the vault:' | transl}}</label>
+		<input type="text" class="form-vaultname-input" name="vaultname" ng-model="vaultname.text" required>
+		
+ 	</span>
+ 	
+ 	</div>
+ 	<div>
+	<span id="password-span" class="prassword-span">
+		<label for="privatekey">{{'Please enter vault\'s password:' | transl}}</label>
+		<input type="password"  class="form-password-input" name="password" ng-model="password.text" required>
+		
+ 	</span>
+ 	
+    </div>
+   	<div>
+   	
+  	<span id="button-span" class="form-actions">
+            <button type="submit" >{{'Open' || transl}}</button>
+	</span>
+
+    </div>
+     
+ </form>

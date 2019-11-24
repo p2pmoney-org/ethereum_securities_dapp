@@ -2,7 +2,8 @@
 
 
 var EthereumNode = class {
-	constructor(module) {
+	constructor(session, module) {
+		this.session = session;
 		this.module = module;
 	}
 	
@@ -10,7 +11,7 @@ var EthereumNode = class {
 	    console.log("EthereumNode.getHighestBlockNumber called");
 		var blocknumber;
 		
-	    var EthereumNodeAccess = this.module.getEthereumNodeAccess();
+	    var EthereumNodeAccess = this.module.getEthereumNodeAccess(this.session);
 	    
 	    return EthereumNodeAccess.web3_getBlockNumber(function(error, result) {
 			
@@ -57,7 +58,7 @@ var EthereumNode = class {
 	
 	getSyncingArray(callback) {
 	    var syncing = null;
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
 	    return EthereumNodeAccess.web3_isSyncing(function(error, result) {
 			
@@ -140,5 +141,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'EthereumNode', EthereumNode);
 }
-else
-module.exports = EthereumNode; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'EthereumNode', EthereumNode);
+}

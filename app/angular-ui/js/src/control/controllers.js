@@ -10,12 +10,81 @@ class Controllers {
 		
 		var dappsmodule = global.getModuleObject('dapps');
 		this.dappscontrollers = (dappsmodule ? dappsmodule.getAngularControllers() : null);
+		
+		this.session = null;
 	}
 	
 	getAppObject() {
 		return this.app;
 	}
 	
+	// default session (app level)
+	getCurrentSessionObject() {
+		if (this.session)
+		return this.session;
+		else {
+			var global = this.global;
+			var commonmodule = global.getModuleObject('common');
+			var session = null;
+			
+			// legacy (should be removed when
+			// commonmodule.getSessionObject is discarded)
+			//session = commonmodule.getSessionObject();
+
+			if (!session) {
+				// first time, create a blank session
+				session = commonmodule.createBlankSessionObject();
+			}
+			
+			this.session = session;
+			
+			return this.session;
+		}
+	}
+	
+	setCurrentSessionObject(newsession) {
+		this.session = newsession;
+		
+		// legacy
+		/*var global = this.global;
+		var commonmodule = global.getModuleObject('common');
+		
+		commonmodule.setCurrentSessionObject(newsession);*/
+	}
+	
+
+	// scope level
+	getSessionObject($scope) {
+		if ($scope.sessionobject)
+			return $scope.sessionobject;
+		else
+			return this.getCurrentSessionObject();
+	}
+	
+	setSessionObject($scope, session) {
+		var global = this.global;
+		
+		$scope.session = {};
+		
+		if (session) {
+			$scope.session.isanonymous = session.isAnonymous();
+			$scope.session.sessionuuid = session.getSessionUUID();
+			
+			$scope.sessionobject = session;
+			
+			$scope.useridentifier = (session.isAnonymous() ? global.t('Anonymous' ): session.getSessionUserIdentifier());
+		}
+		else {
+			$scope.session.isanonymous = true;
+			$scope.session.sessionuuid = null;
+			
+			$scope.sessionobject = null;
+
+			$scope.useridentifier = global.t('Anonymous' );
+		}
+	}
+	
+	// setup of controllers
 	registerControllers(app) {
 		this.app = app;
 		
@@ -55,7 +124,7 @@ class Controllers {
 		
 		// menu bar
 		angular_app.controller("MenuBarCtrl",  ['$scope', function ($scope) {
-			controllers.preparMenuBarView($scope);
+			controllers.prepareMenuBarView($scope);
 		}]);
 
 		// partials
@@ -114,10 +183,18 @@ class Controllers {
 			controllers.prepareLogoutForm($scope);
 		}]);
 		
+		angular_app.controller("OpenVaultFormCtrl", ['$scope', function ($scope) {
+			controllers.prepareOpenVaultForm($scope);
+		}]);
+		
+		angular_app.controller("CreateVaultFormCtrl", ['$scope', function ($scope) {
+			controllers.prepareCreateVaultForm($scope);
+		}]);
+		
 		
 		// multi session
-		angular_app.controller("SessionsFormCtrl",  ['$scope', function ($scope) {
-			controllers.prepareSessionsForm($scope);
+		angular_app.controller("SessionsFormCtrl",  ['$rootScope', '$scope', function ($rootScope, $scope) {
+			controllers.prepareSessionsForm($rootScope, $scope);
 		}]);
 
 		// session config
@@ -248,19 +325,19 @@ class Controllers {
 	    .push(['home.account', {url: '/account', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/account.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Account') }}]);
 	  	statearray
-	    .push(['home.account.eth-accounts', {url: '/account/eth-accounts', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-accounts.html'), controller: "PageRequestHandler",}},
+	    .push(['home.account.eth-accounts', {url: '/eth-accounts', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-accounts.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Ethereum Accounts') }}]);
 	  	statearray
-	    .push(['home.account.eth-accounts.view', {url: '/account/eth-accounts/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-account.html'), controller: "PageRequestHandler",}},
+	    .push(['home.account.eth-accounts.view', {url: '/eth-accounts/view/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/eth-account.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('View') }}]);
 	  	statearray
-	    .push(['home.account.cryptokeys', {url: '/account/cryptokeys', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/cryptokeys.html'), controller: "PageRequestHandler",}},
+	    .push(['home.account.cryptokeys', {url: '/cryptokeys', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/cryptokeys.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Crypto Keys') }}]);
 	  	statearray
-	    .push(['home.account.transfer', {url: '/account/transfer', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/ether-transfer.html'), controller: "PageRequestHandler",}},
+	    .push(['home.account.transfer', {url: '/transfer', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/ether-transfer.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Transfer') }}]);
 	  	statearray
-	    .push(['home.account.transaction-history', {url: '/account/txhistory', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-history.html'), controller: "PageRequestHandler",}},
+	    .push(['home.account.transaction-history', {url: '/txhistory', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-history.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Tx History') }}]);
 	  	statearray
 	    .push(['home.account.transaction-history.tx', {url: '/tx/:uuid', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/transaction-view.html'), controller: "PageRequestHandler",}},
@@ -271,6 +348,15 @@ class Controllers {
 	  	statearray
 	    .push(['home.logout', {url: '/logout', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/logout.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Logout') }}]);
+	  	statearray
+	    .push(['home.vaults', {url: '/vaults', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/vaults.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Vaults') }}]);
+	  	statearray
+	    .push(['home.vaults.open', {url: '/open', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/vault-open.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Open') }}]);
+	  	statearray
+	    .push(['home.vaults.create', {url: '/create', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/vault-create.html'), controller: "PageRequestHandler",}},
+	        ncyBreadcrumb: { label: global.t('Create') }}]);
 	  	statearray
 	    .push(['home.sessions', {url: '/sessions', views: {'main@': {templateUrl: app.getHtmlUrl('./angular-ui/templates/sessions.html'), controller: "PageRequestHandler",}},
 	        ncyBreadcrumb: { label: global.t('Sessions') }}]);
@@ -359,20 +445,35 @@ class Controllers {
 		$scope.message = "your location is " + $location.hash();
 		
 		var global = this.global;
-		var session = global.getModuleObject('common').getSessionObject();
-		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
-		
 		$rootScope.global = global; // to give access to global object from anywhere in the view
+		
+		// session
+		var commonmodule = global.getModuleObject('common');
+		var session = null;
+		
+		if ($rootScope.session && $rootScope.session.sessionuuid) {
+			session = commonmodule.findSessionObjectFromUUID($rootScope.session.sessionuuid);
+		}
+		else {
+			// first time, get default session (created if needed)
+			session = this.getCurrentSessionObject();
+		}
+		
+		// set session in root and current scope to retrieve it in controller function
+		this.setSessionObject($rootScope, session);
+		this.setSessionObject($scope, session);
+		
+		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
 		
 		var controllers = this;
 		$rootScope.utils = {};
 		$rootScope.utils.dapp_url = function(path) {return controllers.dapp_url(path);};
 		
-		$rootScope.session = {};
+		/*$rootScope.session = {};
 		$rootScope.session.isanonymous = session.isAnonymous();
 		$rootScope.session.sessionuuid = session.getSessionUUID();
 		
-		$rootScope.useridentifier = (session.isAnonymous() ? global.t('Anonymous' ): session.getSessionUserIdentifier());
+		$rootScope.useridentifier = (session.isAnonymous() ? global.t('Anonymous' ): session.getSessionUserIdentifier());*/
 		
 		var now = new Date(); // get the current time
         $rootScope.globaldate = now.toISOString();
@@ -412,10 +513,12 @@ class Controllers {
 		console.log("Controllers.prepareloginView called with $sce: " + JSON.stringify($sce));
 		
 		var global = this.global;
+		var session = this.getSessionObject($rootScope);
+		
 		var views = global.getModuleObject('mvc').getViewsObject();
 		
 		// test login link content
-		var content = views.getLoginWidget();
+		var content = views.getLoginWidget(session);
 
 		$scope.content = $sce.trustAsHtml(content);	
 		
@@ -432,8 +535,8 @@ class Controllers {
         // end test
 	}
 	
-	preparMenuBarView($scope) {
-		console.log("Controllers.preparMenuBarView called");
+	prepareMenuBarView($scope) {
+		console.log("Controllers.prepareMenuBarView called");
 		
 		var global = this.global;
 		
@@ -477,12 +580,19 @@ class Controllers {
 		var app = this.getAppObject();
 		var mvcmodule = global.getModuleObject('mvc');
 
-		var versioninfo = {};
+		var coreversioninfo = {};
 		
-		versioninfo.label = global.t('ethereum dapp');
-		versioninfo.value = mvcmodule.current_version;
+		coreversioninfo.label = global.t('ethereum core');
+		coreversioninfo.value = commonmodule.current_version;
 		
-		versioninfos.push(versioninfo);
+		versioninfos.push(coreversioninfo);
+		
+		var dappversioninfo = {};
+		
+		dappversioninfo.label = global.t('ethereum dapp');
+		dappversioninfo.value = mvcmodule.current_version;
+		
+		versioninfos.push(dappversioninfo);
 		
 		$scope.versioninfos = versioninfos;
 		
@@ -542,14 +652,16 @@ class Controllers {
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
 		
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 
-		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance();
+		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance(session);
 		
 		var nodeinfo = [];
 		
+		nodeinfo.web3providerUrl = ethereumnodeaccess.web3_getProviderUrl();
+
 		nodeinfo.islistening = global.t('loading');
 		nodeinfo.networkid = global.t('loading');
 		nodeinfo.peercount = global.t('loading');
@@ -629,7 +741,7 @@ class Controllers {
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
 		
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		if (!session.isAnonymous()) {
 			var user = session.getSessionUserObject();
@@ -650,7 +762,7 @@ class Controllers {
 		var self = this;
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		
 		var cryptokeys = [];
@@ -670,6 +782,10 @@ class Controllers {
 						cryptokey['uuid'] = cryptokeyobj.getKeyUUID();
 
 						cryptokey['description'] = cryptokeyobj.getDescription();
+
+						var origin = cryptokeyobj.getOrigin();
+						cryptokey['origin'] = (origin && origin.storage ?  global.t(origin.storage) : global.t('unknown'));
+						
 						cryptokey['address'] = cryptokeyobj.getAddress();
 						cryptokey['public_key'] = cryptokeyobj.getPublicKey();
 						
@@ -683,24 +799,6 @@ class Controllers {
 			self._apply($scope);
 		});
 		
-		/*if (cryptokeyarray) {
-			for (var i = 0; i < cryptokeyarray.length; i++) {
-				var cryptokeyobj = cryptokeyarray[i];
-				
-				if (cryptokeyobj) {
-					var cryptokey = [];
-					
-					cryptokey['uuid'] = cryptokeyobj.getKeyUUID();
-
-					cryptokey['description'] = cryptokeyobj.getDescription();
-					cryptokey['address'] = cryptokeyobj.getAddress();
-					cryptokey['public_key'] = cryptokeyobj.getPublicKey();
-					
-					cryptokeys.push(cryptokey);
-				}
-			}
-		}*/
-		
 		$scope.cryptokeys = cryptokeys;
 	}
 	
@@ -713,7 +811,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 		var ethnodecontrollers = (ethnodemodule ? ethnodemodule.getControllersObject() : null);
@@ -739,6 +837,10 @@ class Controllers {
 
 						ethaccount['description'] = (account.getDescription() !== null ? account.getDescription() : account.getAddress());
 						ethaccount['type'] = (account.getPrivateKey() !== null ? global.t('personal') : global.t('3rd party'));
+						
+						var origin = account.getOrigin();
+						ethaccount['origin'] = (origin && origin.storage ?  global.t(origin.storage) : global.t('unknown'));
+						
 						ethaccount['address'] = account.getAddress();
 						ethaccount['public_key'] = account.getPublicKey();
 						ethaccount['rsa_public_key'] = account.getRsaPublicKey();
@@ -749,7 +851,7 @@ class Controllers {
 						var writebalance = function(ethaccount, account) {
 							
 							if (ethnodemodule)
-							ethnodemodule.getChainAccountBalance(account, function(err, res) {
+							ethnodemodule.getChainAccountBalance(session, account, function(err, res) {
 								if (err) {
 									ethaccount['balance'] = global.t('error');
 								}
@@ -794,7 +896,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 		
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		var account = commoncontrollers.getAccountObjectFromUUID(session, accountuuid);
 
@@ -822,14 +924,14 @@ class Controllers {
 		var self = this;
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		var views = global.getModuleObject('mvc').getViewsObject();
 
 		var transactions = [];
 		
-		ethnodemodule.getTransactionList(function(err, transactionarray) {
+		ethnodemodule.getTransactionList(session, function(err, transactionarray) {
 			
 			if (transactionarray) {
 				
@@ -881,7 +983,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 		
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		var ethnodemodule = global.getModuleObject('ethnode');
 		var ethnodecontrollers = ethnodemodule.getControllersObject();
@@ -899,6 +1001,7 @@ class Controllers {
 		transaction.to = global.t('loading...');
 		transaction.value = global.t('loading...');
 		transaction.status = global.t('loading...');
+		transaction.web3providerurl = global.t('loading...');
 
 		transaction.transactionhash = global.t('loading...');
 		
@@ -924,6 +1027,7 @@ class Controllers {
 				transaction.ethervalue = parseFloat(tx.getValue());
 				transaction.value = ( transaction.ethervalue ? transaction.ethervalue.toFixed(2) + ' Ether' : '');
 				transaction.status = views.getTransactionStatusString(tx);
+				transaction.web3providerurl = tx.getWeb3ProviderUrl();
 				
 				transaction.transactionhash = tx.getTransactionHash();
 				
@@ -976,6 +1080,7 @@ class Controllers {
 				transaction.to = global.t('not found');
 				transaction.value = global.t('not found');
 				transaction.status = global.t('not found');
+				transaction.web3providerurl = global.t('not found');
 				
 				transaction.gaslimit = global.t('not found');
 				transaction.gasprice = global.t('not found');
@@ -1005,6 +1110,7 @@ class Controllers {
 
 		var global = this.global;
 		var self = this;
+		var session = this.getSessionObject($scope);
 		
 		var loginform = document.getElementById("loginForm");
 		
@@ -1015,6 +1121,7 @@ class Controllers {
 			
 			params.push($scope);
 			params.push(loginform);
+			params.push(session);
 
 			var ret = global.invokeHooks('alterLoginForm_hook', result, params);
 			
@@ -1035,14 +1142,14 @@ class Controllers {
 		
 		var global = this.global;
 		var app = this.getAppObject();
-		var session = global.getModuleObject('common').getSessionObject();
+		var session = this.getSessionObject($scope);
 		
-
 		var result = [];
 		
 		var params = [];
 		
 		params.push($scope);
+		params.push(session);
 
 		var ret = global.invokeHooks('handleLoginSubmit_hook', result, params);
 		
@@ -1067,7 +1174,7 @@ class Controllers {
 		
 				app.refreshDisplay();
 			});
-			}
+		}
 
 		this.gotoHome();
 
@@ -1079,6 +1186,7 @@ class Controllers {
 
 		var global = this.global;
 		var self = this;
+		var session = this.getSessionObject($scope);
 		
 		var logoutform = document.getElementById("logoutForm");
 		
@@ -1089,6 +1197,7 @@ class Controllers {
 			
 			params.push($scope);
 			params.push(logoutform);
+			params.push(session);
 
 			var ret = global.invokeHooks('alterLogoutForm_hook', result, params);
 			
@@ -1109,6 +1218,7 @@ class Controllers {
 		console.log("Controllers.handleLogoutSubmit called");
 		
 		var global = this.global;
+		var session = this.getSessionObject($scope);
 		
 		// warn of logout
 		var result = [];
@@ -1116,21 +1226,21 @@ class Controllers {
 		var params = [];
 		
 		params.push($scope);
+		params.push(session);
 		
 		var ret = global.invokeHooks('handleLogoutSubmit_hook', result, params);
 		
 		// but log out anyway
-		this._logout();
+		this._logout(session);
 		
 		this.gotoHome();
 		
 		this.reloadApp();
 	}
 	
-	_logout() {
+	_logout(session) {
 		var global = this.global;
 		var app = this.getAppObject();
-		var session = global.getModuleObject('common').getSessionObject();
 		
 		session.disconnectUser();
 		
@@ -1138,13 +1248,223 @@ class Controllers {
 		
 	}
 	
-	_getSessionArray($scope) {
+	// open vault
+	prepareOpenVaultForm($scope) {
+		console.log("Controllers.prepareOpenVaultForm called");
+
+		var global = this.global;
+		var self = this;
+		var session = this.getSessionObject($scope);
+		
+		var openvaultform = document.getElementById("openVaultForm");
+		
+		angular.element(document).ready(function () {
+			var result = [];
+			
+			var params = [];
+			
+			params.push($scope);
+			params.push(openvaultform);
+			params.push(session);
+
+			var ret = global.invokeHooks('alterOpenVaultForm_hook', result, params);
+			
+			if (ret && result && result.length) {
+				console.log('openvaultform overload handled by a module');			
+			}
+	    });
+		
+		
+		// submit function
+		$scope.handleSubmit = function(){
+			self.handleOpenVaultSubmit($scope);
+		}
+	}
+	
+	_openVault(session, vaultname, passphrase, type, callback) {
+		var global = this.global;
+		var app = this.getAppObject();
+		var commonmodule = global.getModuleObject('common');
+		
+		commonmodule.openVault(session, vaultname, passphrase, type, (err, res) => {
+			var vault = res;
+			
+			if (vault) {
+				var cryptokey = vault.getCryptoKeyObject();
+				
+				// impersonate with vault's name and crypto key uuid
+				var user = commonmodule.createBlankUserObject(session);
+
+				user.setUserName(vaultname);
+				user.setUserUUID(cryptokey.getKeyUUID());
+				
+				session.impersonateUser(user);
+				
+				// add crypto key to session and user
+				user.addCryptoKeyObject(cryptokey);
+				session.addCryptoKeyObject(cryptokey);
+
+				// read accounts
+				var storagemodule = global.getModuleObject('storage-access');
+				var storageaccess = storagemodule.getStorageAccessInstance(session);
+				
+				storageaccess.account_session_keys( (err, res) => {
+					
+					if (res && res['keys']) {
+						var keys = res['keys'];
+						
+						session.readSessionAccountFromKeys(keys);
+					}
+			
+					app.refreshDisplay();
+					
+					if (callback)
+						callback(null, vault);
+				});
+				
+			}
+			else {
+				var error = global.t('Could not open vault') + ' ' + vaultname;
+				alert(global.t(error));
+				
+				if (callback)
+					callback(error, null);
+			}
+			
+		});
+		
+	}
+	
+	handleOpenVaultSubmit($scope) {
+		console.log("Controllers.handleOpenVaultSubmit called");
+		
+		var global = this.global;
+		var app = this.getAppObject();
+		var session = this.getSessionObject($scope);
+		
+		var result = [];
+		
+		var params = [];
+		
+		params.push($scope);
+		params.push(session);
+
+		var ret = global.invokeHooks('handleOpenVaultSubmit_hook', result, params);
+		
+		if (ret && result && result.length) {
+			console.log('handleOpenVaultSubmit overloaded by a module');			
+		}
+		else {
+			var vaultname = $scope.vaultname.text;
+			var password = $scope.password.text;
+			
+			// open vault (0 for vault specifically on the client)
+			var vaulttype = 0;
+			
+			this._openVault(session, vaultname, password, vaulttype, (err, res) => {
+				app.refreshDisplay();
+				
+				this.gotoHome();
+			});
+		}
+
+
+	}
+	
+
+	// create vault
+	prepareCreateVaultForm($scope) {
+		console.log("Controllers.prepareCreateVaultForm called");
+
+		var global = this.global;
+		var self = this;
+		var session = this.getSessionObject($scope);
+		
+		var createvaultform = document.getElementById("createVaultForm");
+		
+		angular.element(document).ready(function () {
+			var result = [];
+			
+			var params = [];
+			
+			params.push($scope);
+			params.push(createvaultform);
+			params.push(session);
+
+			var ret = global.invokeHooks('alterCreateVaultForm_hook', result, params);
+			
+			if (ret && result && result.length) {
+				console.log('createvaultform overload handled by a module');			
+			}
+	    });
+		
+		
+		// submit function
+		$scope.handleSubmit = function(){
+			self.handleCreateVaultSubmit($scope);
+		}
+	}
+	
+	handleCreateVaultSubmit($scope) {
+		console.log("Controllers.handleCreateVaultSubmit called");
+		
+		var global = this.global;
+		var app = this.getAppObject();
+		var session = this.getSessionObject($scope);
+		
+		var result = [];
+		
+		var params = [];
+		
+		params.push($scope);
+		params.push(session);
+
+		var ret = global.invokeHooks('handleCreateVaultSubmit_hook', result, params);
+		
+		if (ret && result && result.length) {
+			console.log('handleCreateVaultSubmit_hook overloaded by a module');			
+		}
+		else {
+			var vaultname = $scope.vaultname.text;
+			
+			var password = $scope.password.text;
+			var passwordconfirm = $scope.passwordconfirm.text;
+			
+			// (0 for vault specifically on the client)
+			var vaulttype = 0;
+			
+			if (password == passwordconfirm) {
+				var commonmodule = global.getModuleObject('common');
+				
+				commonmodule.createVault(session, vaultname, password, vaulttype, (err, res) => {
+					if (!err) {
+						// open vault 
+						this._openVault(session, vaultname, password, vaulttype, (err, res) => {
+							app.refreshDisplay();
+							
+							this.gotoHome();
+						});
+					}
+					else {
+						alert(global.t(err));
+					}
+				});
+			}
+				
+		}
+
+	}
+	
+	
+	
+	// sessions
+	_getSessionArray($rootScope, $scope) {
 		var self = this;
 		
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
 		
-		var currentsession = commonmodule.getSessionObject();
+		var currentsession = this.getSessionObject($scope);
 		var currentsessionuuid = currentsession.getSessionUUID();
 		
 		// all sessions
@@ -1172,7 +1492,7 @@ class Controllers {
 			
 		// change function
 		$scope.handleToChange = function(){
-			self.handleSessionSelectChange($scope);
+			self.handleSessionSelectChange($rootScope, $scope);
 		}
 
 		$scope.sessions = sessions;
@@ -1180,7 +1500,7 @@ class Controllers {
 
 	}
 
-	handleSessionSelectChange($scope) {
+	handleSessionSelectChange($rootScope, $scope) {
 		var sessionuuid = $scope.selectedsessionuuid;
 		
 		var global = this.global;
@@ -1189,13 +1509,16 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var session = commonmodule.findSessionObjectFromUUID(sessionuuid);
 		
-		if (session)
-			commonmodule.setCurrentSessionObject(session);
+		if (session) {
+			this.setCurrentSessionObject(session);
+			this.setSessionObject($rootScope, session);
+			this.setSessionObject($scope, session);
+		}
 
 		app.refreshDisplay();
 	}
 	
-	handleSpawnNewSessionSubmit($scope) {
+	handleSpawnNewSessionSubmit($rootScope, $scope) {
 		console.log("Controllers.handleSpawnNewSessionSubmit called");
 		
 		var global = this.global;
@@ -1204,23 +1527,25 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common')
 		var newsession = commonmodule.createBlankSessionObject();
 		
-		commonmodule.setCurrentSessionObject(newsession);
+		this.setCurrentSessionObject(newsession);
+		this.setSessionObject($rootScope, newsession);
+		this.setSessionObject($scope, newsession);
 
 		app.refreshDisplay();
 	}
 		
-	prepareSessionsForm($scope) {
+	prepareSessionsForm($rootScope, $scope) {
 		console.log("Controllers.prepareSessionsForm called");
 		
 		var global = this.global;
 		var self = this;
 		
 		// fill session list
-		this._getSessionArray($scope);
+		this._getSessionArray($rootScope, $scope);
 
 		// select
 		$scope.handleNewSessionSubmit = function(){
-			self.handleSpawnNewSessionSubmit($scope);
+			self.handleSpawnNewSessionSubmit($rootScope, $scope);
 		}
 	}	
 	
@@ -1234,7 +1559,7 @@ class Controllers {
 		var app = this.getAppObject();
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
@@ -1279,7 +1604,7 @@ class Controllers {
 		var app = this.getAppObject();
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 
@@ -1297,7 +1622,7 @@ class Controllers {
 		ethnodemodule.setDefaultGasLimit(gaslimit, session);
 		ethnodemodule.setDefaultGasPrice(gasprice, session)
 		
-		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance();
+		var ethereumnodeaccess = ethnodemodule.getEthereumNodeAccessInstance(session);
 		
 		ethereumnodeaccess.isReady(function(err, res) {
 			if (res === true) {
@@ -1342,7 +1667,7 @@ class Controllers {
 		
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var privkey = session.generatePrivateKey();		
 		
@@ -1356,11 +1681,11 @@ class Controllers {
 		var app = this.getAppObject();
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		var sessionuser = session.getSessionUserObject();
 		
 		
-		var sessionaccount = global.getModuleObject('common').createBlankAccountObject();
+		var sessionaccount = global.getModuleObject('common').createBlankAccountObject(session);
 		
 		
 		var description = $scope.description.text;
@@ -1411,7 +1736,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 		
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		var accountobject = commoncontrollers.getAccountObjectFromUUID(session, accountuuid);
 
@@ -1462,7 +1787,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		var sessionuser = session.getSessionUserObject();
 		
 		// call hooks
@@ -1512,7 +1837,7 @@ class Controllers {
 		var ethnodemodule = global.getModuleObject('ethnode');
 		var ethnodecontrollers = ethnodemodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var fromaccount = commoncontrollers.getSessionAccountObjectFromUUID(session, accountuuid)
 
@@ -1536,7 +1861,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var account = commoncontrollers.getAccountObjectFromUUID(session, accountuuid)
 
@@ -1621,7 +1946,7 @@ class Controllers {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 		var ethnodecontrollers = ethnodemodule.getControllersObject();
@@ -1697,7 +2022,7 @@ class Controllers {
 		var global = this.global;
 		var app = this.getAppObject();
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		// call hooks
 		var result = [];
@@ -1705,6 +2030,7 @@ class Controllers {
 		var params = [];
 		
 		params.push($scope);
+		params.push(session);
 
 		var ret = global.invokeHooks('handleEtherTransferSubmit_hook', result, params);
 		
@@ -1729,14 +2055,14 @@ class Controllers {
 			
 			// unlock account
 			// 300s, but we can relock the account
-			ethnodemodule.unlockAccount(payingaccount, password, 300, function(err, res) {
+			ethnodemodule.unlockAccount(session, payingaccount, password, 300, function(err, res) {
 				
 				if (!err) {
 					try {
 						var toaccount = session.getAccountObject(toaddress);
 						var transactionuuid = session.guid();
 
-						ethnodemodule.transferAmount(payingaccount, toaccount, amount, gaslimit, gasPrice,  transactionuuid, function (err, res) {
+						ethnodemodule.transferAmount(session, payingaccount, toaccount, amount, gaslimit, gasPrice,  transactionuuid, function (err, res) {
 							
 							if (!err) {
 								console.log('transfer registered at ' + res);
@@ -1748,7 +2074,7 @@ class Controllers {
 							}
 							
 							// relock account
-							ethnodemodule.lockAccount(payingaccount);
+							ethnodemodule.lockAccount(session, payingaccount);
 
 							app.refreshDisplay();
 								
@@ -1779,35 +2105,46 @@ class Controllers {
 		var global = this.global;
 		var app = this.getAppObject();
 		
-		var session = global.getModuleObject('common').getSessionObject();
+		var session = this.getCurrentSessionObject();
 
 		if (privatekey != null) {
+			var userorigin = {storage: 'user'};
 			
 			// we add this private key as one of the session's account to perform transactions
-			var sessionaccount = global.getModuleObject('common').createBlankAccountObject();
+			var sessionaccount = global.getModuleObject('common').createBlankAccountObject(session);
 			
 			sessionaccount.setPrivateKey(privatekey);
 			
 			var address = sessionaccount.getAddress();
 			sessionaccount.setAccountUUID(address);
 			
+			// set account origin
+			sessionaccount.setOrigin(userorigin);
+			
+			// impersonate session with this account
 			session.impersonateAccount(sessionaccount);
 			
 			console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
 			
 			// we add this privatekey as one of the crypto key to save data
-			var sessioncryptokey = global.getModuleObject('common').createBlankCryptoKeyObject();
+			var sessioncryptokey = global.getModuleObject('common').createBlankCryptoKeyObject(session);
+			
+			// set crypto key origin
+			sessioncryptokey.setOrigin(userorigin);
 			
 			sessioncryptokey.setPrivateKey(privatekey);
 			
 			var address = sessioncryptokey.getAddress();
 			sessioncryptokey.setKeyUUID(address);
 			
+			// add crypto key to session and user
+			var sessionuser = session.getSessionUserObject();
 			
+			sessionuser.addCryptoKeyObject(sessioncryptokey);
 			session.addCryptoKeyObject(sessioncryptokey);
 
 			
-
+			// refresh
 	        app.refreshDisplay();
 		}	
 		
@@ -1871,7 +2208,7 @@ class Controllers {
 		var global = this.global;
 		//var app = this.getAppObject();
 		
-		//var session = global.getModuleObject('common').getSessionObject();
+		//var session = this.getSessionObject($scope);
 		
 		var result = []; // description of the form entries
 		
@@ -1884,7 +2221,7 @@ class Controllers {
 			for (var i=0; i < result.length; i++) {
 				var field = result[i];
 				
-				message += ' field '+ i + ' has name ' + field['name'] + ' of type ' + field['name'];
+				message += global.t('field ') + i + ' ' + global.t('has name') + ' ' + field['name'] +  ' ' + global.t('of type') + ' ' + field['name'];
 				
 			}
 			
@@ -1899,6 +2236,7 @@ class Controllers {
 
 	}
 	
+	//handleShowLoginBox(sessionuuid, message) {
 	handleShowLoginBox(message) {
 		console.log("Controllers.handleShowLoginBox called with message: " + JSON.stringify(message));
 		
@@ -1907,9 +2245,10 @@ class Controllers {
 		var global = this.global;
 		var app = this.getAppObject();
 		
-		var session = global.getModuleObject('common').getSessionObject();
+		var commonmodule = global.getModuleObject('common');
+		var session = this.getCurrentSessionObject();
 
-		var sessionuser = session.getSessionUserObject();
+		var sessionuser = (session ? session.getSessionUserObject() : null);
 		
 		if (sessionuser != null) {
 			if (promptbox) {
@@ -1956,10 +2295,12 @@ class Controllers {
 		console.log("Controllers.getLoginLink called");
 		
 		var global = this.global;
+		var session = this.getCurrentSessionObject();
+
 		var views = global.getModuleObject('mvc').getViewsObject();
 		
 
-		var loginwidget = views.getLoginWidget();
+		var loginwidget = views.getLoginWidget(session);
 		
 		return {
 	        restrict: 'E',
@@ -1971,10 +2312,12 @@ class Controllers {
 		console.log("Controllers.getReloadAppLink called");
 		
 		var global = this.global;
+		var session = this.getCurrentSessionObject();
+		
 		var views = global.getModuleObject('mvc').getViewsObject();
 		
 
-		var reloadwidget = views.getReloadAppWidget();
+		var reloadwidget = views.getReloadAppWidget(session);
 		
 		return {
 	        restrict: 'E',

@@ -107,4 +107,17 @@ var ModuleControllers = class {
 	}
 }
 
+
+if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethchainreader', 'Controllers', ModuleControllers);
+else if (typeof window !== 'undefined') {
+	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Controllers', ModuleControllers);
+}
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Controllers', ModuleControllers);
+}

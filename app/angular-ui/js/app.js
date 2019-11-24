@@ -73,7 +73,6 @@ var App = class {
 		console.log("Initializing angular app for dapp_app");
 		
 		var global = GlobalClass.getGlobalObject(); 
-		//var session = global.getModuleObject('common').getSessionObject();
 		
 		
 		// add modules dependencies

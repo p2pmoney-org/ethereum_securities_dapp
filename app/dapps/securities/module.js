@@ -69,7 +69,7 @@ var Module = class {
 		
 		var global = this.global;
 		
-		global.registerHook('postFinalizeGlobalScopeInit_hook', 'securities-dapp', this.postFinalizeGlobalScopeInit_hook);
+		global.registerHook('postFinalizeGlobalScopeInit_hook', this.name, this.postFinalizeGlobalScopeInit_hook);
 	}
 	
 	//
@@ -100,9 +100,9 @@ var Module = class {
 				//perform load
 				appscriptloader.load_scripts();
 			});
-		});
-
-		result.push({module: 'securities-dapp', handled: true});*/
+		});*/
+		
+		result.push({module: this.name, handled: true});
 		
 		return true;
 	}

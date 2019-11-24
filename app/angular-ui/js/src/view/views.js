@@ -8,11 +8,14 @@ class Views {
 		
 	}
 	
-	getLoginWidget() {
+	getLoginWidget(session) {
 		console.log('Views.getLoginWidget called');
 		
+		if (session instanceof Session !== true)
+			throw 'must pass a session object as first parameter!';
+		
 		var global = this.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		var sessionuuid = session.getSessionUUID();
 
 		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
 		
@@ -23,6 +26,7 @@ class Views {
 		var loginlink;
 
 		loginlink = "<a href='javascript:GlobalClass.getGlobalObject().getModuleObject(\"mvc\").getControllersObject().handleShowLoginBox(\"" 
+//			+ sessionuuid + "\",\""
 			+ message 
 			+ "\")' >"
 			+ '{{useridentifier}}' 
@@ -38,9 +42,6 @@ class Views {
 		console.log('Views.getReloadAppWidget called');
 		
 		var global = this.global;
-		var session = global.getModuleObject('common').getSessionObject();
-
-		console.log('is anonymous: ' + (session.isAnonymous() ? 'true' : 'false'));
 		
 		var reloadtext = global.t("Reload app");
 		

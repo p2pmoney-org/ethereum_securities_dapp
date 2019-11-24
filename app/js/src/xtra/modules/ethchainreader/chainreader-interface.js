@@ -4,9 +4,11 @@
 'use strict';
 
 var ChainReaderInterface = class {
-	constructor(module) {
+	constructor(session, module) {
 		this.module = module
 		this.global = module.global;
+		
+		this.session = session;
 	}
 	
 	// api
@@ -16,12 +18,42 @@ var ChainReaderInterface = class {
 	getContract(address) {
 		var Contract = this.module.getContractClass();
 		
-		return Contract.getContract(address);
+		return Contract.getContract(this.session, address);
 	}
 	
 	// async
+	getAccount(address, callback) {
+		var Account = this.module.getAccountClass();
+		
+		Account.getAccount(this.session, address, callback);
+	}
+	
+	getContract(address, callback) {
+		var Contract = this.module.getContractClass();
+		
+		Contract.getContract(this.session, address, callback);
+	}
+	
+	getContractName(address, callback) {
+		var Contract = this.module.getContractClass();
+		
+		return Contract.getContractName(this.session, address, callback);
+	}
+	
+	getContractVersion(address, callback) {
+		var Contract = this.module.getContractClass();
+		
+		return Contract.getContractVersion(this.session, address, callback);
+	}
+	
+	getBlock(blocknumber, callback) {
+		var Block = this.module.getBlockClass();
+		
+		Block.getBlock(this.session, blocknumber, callback);
+	}
+	
 	getCurrentBlockNumber(callback) {
-		var ethnode = this.module.getEthereumNodeObject();
+		var ethnode = this.module.getEthereumNodeObject(this.session);
 		
 		return ethnode.getHighestBlockNumber(callback);
 	}
@@ -29,13 +61,19 @@ var ChainReaderInterface = class {
 	getLatestBlock(callback) {
 		var Block = this.module.getBlockClass();
 		
-		return Block.getLatestBlock(callback);
+		return Block.getLatestBlock(this.session, callback);
+	}
+	
+	getTransaction(txhash, callback) {
+		var Transaction = this.module.getTransactionClass();
+		
+		Transaction.getTransaction(this.session, txhash, callback);
 	}
 	
 	getLatestTransactions(callback) {
 		var Block = this.module.getBlockClass();
 		
-		var promise = Block.getLatestBlock()
+		var promise = Block.getLatestBlock(this.session)
 		.then(function(res) {
 			var block = res;
 			
@@ -43,18 +81,6 @@ var ChainReaderInterface = class {
 		});
 		
 		return promise;
-	}
-	
-	getContractName(address, callback) {
-		var Contract = this.module.getContractClass();
-		
-		return Contract.getContractName(address, callback);
-	}
-	
-	getContractVersion(address, callback) {
-		var Contract = this.module.getContractClass();
-		
-		return Contract.getContractVersion(address, callback);
 	}
 	
 }
@@ -66,6 +92,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'ChainReaderInterface', ChainReaderInterface);
 }
-
-else
-module.exports = Session; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'ChainReaderInterface', ChainReaderInterface);
+}

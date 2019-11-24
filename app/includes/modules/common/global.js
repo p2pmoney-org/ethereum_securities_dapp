@@ -12,7 +12,9 @@ class Global {
 		
 		// execution context
 		this.execution_env = 'prod';
+		
 		this.innodejs = false;
+		this.inreactnative= false;
 		this.inbrowser = true;
 		
 		// global variables
@@ -60,8 +62,12 @@ class Global {
 		};
 	}
 	
+	getJavascriptEnvironment() {
+		return this.getBootstrapObject().getJavascriptEnvironment();
+	}
+	
 	getBootstrapObject() {
-		var Bootstrap = window.simplestore.Bootstrap;
+		var Bootstrap = this.globalscope.simplestore.Bootstrap;
 		return Bootstrap.getBootstrapObject();
 	}
 	
@@ -77,12 +83,24 @@ class Global {
 		this.innodejs = choice;
 	}
 	
+	isInReactNative() {
+		return this.inreactnative;
+	}
+	
+	setInReactNative(choice) {
+		this.inreactnative = choice;
+	}
+	
 	isInBrowser() {
 		return this.inbrowser;
 	}
 	
 	setIsInBrowser(choice) {
 		this.inbrowser = choice;
+	}
+	
+	getExecutionGlobalScope() {
+		return this.globalscope;
 	}
 	
 	// initialization sequence
@@ -92,13 +110,13 @@ class Global {
 	
 	initGlobalScope() {
 		if ( typeof window !== 'undefined' && window ) {
-			// if we are in browser and not node js
+			// if we are in browser (or react-native) and not node js
 			this.globalscope = window;
 			
 		}
-		else {
+		else if (typeof global !== 'undefined') {
 			// node js (e.g. truffle migrate)
-			this.globalscope = this;
+			this.globalscope = global;
 			
 		}
 	}
@@ -154,6 +172,21 @@ class Global {
 
 	
 	finalizeGlobalScopeInit(callback) {
+		// set internal javascript env flags
+		var javascriptenv = this.getJavascriptEnvironment();
+		
+		if (javascriptenv == 'react-native') {
+			this.innodejs = false;
+			this.inreactnative= true;
+			this.inbrowser = false;
+		}
+		else if (javascriptenv == 'nodejs') {
+			this.innodejs = true;
+			this.inreactnative= false;
+			this.inbrowser = false;
+		}
+		
+		// xtra_execution_env
 		var xtra_execution_env = this.getXtraConfigValue('client_env');
 		
 		var rootscriptloader = this.getRootScriptLoader();
@@ -296,6 +329,21 @@ class Global {
 
 		if (!module.isReady)
 			throw 'module ' + module.name + ' needs to have a isReady function';
+		
+		if (this.modules[module.name]) {
+			console.log('WARNING: collision on module name ' + module.name + ', older module will no longer be accessible by its name!');
+			
+			// park previous module with trailing digit
+			var n = 1;
+			var newname = module.name + '-' + n;
+			
+			while (this.modules[newname]) {
+				n++;
+				newname = loadername + '-' + n;
+			}
+			
+			this.modules[newname] = this.modules[module.name];
+		}
 
 		this.modules[module.name] = module; // for direct access by name in getModuleObject
 		this.modules.push(module); //for iteration on the array
@@ -305,12 +353,16 @@ class Global {
 		
 		if ((this.allmodulesloadstarted) && (module.isloading === false)) {
 			console.log('WARNING: module ' + module.name + ' registered too late, will not be loaded by global object!');
-			console.log('WARNING: module ' + module.name + ' may need to implement a postRegisterModule method to do the load');
 		}
 		// global object set in the module
 		// call postRegisterModule if module has the function
-		if (module.postRegisterModule)
+		if (module.postRegisterModule) {
+			console.log('WARNING: module ' + module.name + ' has a postRegisterModule method, gives it opportunity to do the load if needed');
 			module.postRegisterModule();
+		}
+		else {
+			console.log('WARNING: module ' + module.name + ' may need to implement a postRegisterModule method to do the load');
+		}
 		
 	}
 	
@@ -513,6 +565,9 @@ class Global {
 				console.log('registering hook '+ hookentry + ' for ' + modulename);
 				
 				hookarray.push(entry);
+				
+				// sort array
+				this._sortHookEntryArray(hookentry)
 			}
 			
 		}
@@ -687,6 +742,10 @@ class Global {
 	getGlobalClass() {
 		return Global;
 	}
+	
+	getModuleClass(modulename, classname) {
+		return this.getModuleObject(modulename)[classname]
+	}
 
 	
 	// static functions
@@ -718,9 +777,10 @@ class Global {
 	
 }
 
-var GlobalClass = Global;
+var GlobalClass = Global; // for the browser env only
 
-if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
+if ( typeof window !== 'undefined' && window ) // if we are in browser (or react-native) and not node js (e.g. from truffle)
 window.simplestore.Global = Global;
-else
-module.exports = Global; // we are in node js
+else if (typeof global !== 'undefined')
+global.simplestore.Global = Global; // we are in node js
+

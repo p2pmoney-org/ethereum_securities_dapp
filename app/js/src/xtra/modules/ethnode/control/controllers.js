@@ -21,18 +21,18 @@ var ModuleControllers = class {
 		values['gaslimit'] = gaslimit;
 		values['gasprice'] = gasPrice;
 		
-		var walletaddress = null;
+		var walletaccount = null;
 		
 		if (session) {
 			var sessionaccount = session.getMainSessionAccountObject();
 			
 			if (sessionaccount) {
-				walletaddress = sessionaccount.getAddress();
+				walletaccount = sessionaccount;
 			}
 			else {
 				if (ethnodemodule.useWalletAccount()) {
 					// do we pay everything from a single wallet
-					walletaddress = ethnodemodule.getWalletAccountAddress(session);
+					walletaccount = ethnodemodule.getWalletAccountObject(session);
 				}
 				else {
 					console.log('not using wallet account');
@@ -40,15 +40,12 @@ var ModuleControllers = class {
 				}
 			}
 			
-			if (walletaddress) {
-				
-				values['walletused'] = walletaddress;
+			if (walletaccount) {
+				values['walletused'] = walletaccount.getAddress();
 				
 				if (divcue) {
 					// we display the balance in the div passed
-					var wallet = commonmodule.getAccountObject(walletaddress);
-					
-					this.writebalance(wallet, divcue);
+					this.writebalance(session, walletaccount, divcue);
 				}
 			}
 		}
@@ -85,9 +82,9 @@ var ModuleControllers = class {
 				
 				if (divcue) {
 					// we display the balance in the div passed
-					var wallet = commonmodule.getAccountObject(walletaddress);
+					var wallet = commonmodule.getAccountObject(session, walletaddress);
 					
-					this.writebalance(wallet, divcue);
+					this.writebalance(session, wallet, divcue);
 				}
 			}
 		}
@@ -103,7 +100,7 @@ var ModuleControllers = class {
 		var commonmodule = global.getModuleObject('common');
 
 
-		ethnodemodule.getTransactionList(function(err, transactionarray) {
+		ethnodemodule.getTransactionList(session, function(err, transactionarray) {
 			var transaction = null;
 			
 			if (transactionarray) {
@@ -149,28 +146,27 @@ var ModuleControllers = class {
 			values['gaslimit'] = gaslimit;
 			values['gasprice'] = gasPrice;
 			
-			var walletaddress = null;
+			var walletaccount = null;
 			
 			var isLocalOnly = contract.isLocalOnly();
 			
 			if (ethnodemodule.useWalletAccount()) {
 				// do we pay everything from a single wallet
-				walletaddress = ethnodemodule.getWalletAccountAddress(session);
+				walletaccount = ethnodemodule.getWalletAccountObject(session);
 			}
 			else {
 				// or from the wallet of the owner of the contract
 				walletaddress = contract.getLocalOwner();
+				walletaccount = commonmodule.getAccountObject(session, walletaddress);
 			}
 			
-			if (walletaddress) {
+			if (walletaccount) {
 				
-				values['walletused'] = walletaddress;
+				values['walletused'] = walletaccount.getAddress();
 				
 				if (divcue) {
 					// we display the balance in the div passed
-					var wallet = commonmodule.getAccountObject(walletaddress);
-					
-					this.writebalance(wallet, divcue);
+					this.writebalance(session, walletaccount, divcue);
 				}
 			}
 		}
@@ -183,15 +179,16 @@ var ModuleControllers = class {
 		var ether = this.module.getEtherFromwei(wei);
 		return ether.toFixed(decimal);
 	}
+
 	
-	writebalance(wallet, divbalance) {
+	writebalance(session, wallet, divbalance) {
 		console.log('spawning write of getBalance');
 		var self = this;
 		var ethnodemodule = this.module;
 		
 		divbalance.currentwalletaddress = wallet.getAddress();
 		
-		var res = ethnodemodule.getChainAccountBalance(wallet, function(err, res) {
+		var res = ethnodemodule.getChainAccountBalance(session, wallet, function(err, res) {
 			if (!err) {
 				if (divbalance.currentwalletaddress.toLowerCase()  == wallet.getAddress().toLowerCase()) {
 					// we write the balance, if indeed we are the current wallet selected for the div
@@ -213,6 +210,12 @@ if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.registerModuleClass('ethnode', 'Controllers', ModuleControllers);
 else if (typeof window !== 'undefined') {
 	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethnode', 'Controllers', ModuleControllers);
+}
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
 	
 	_GlobalClass.registerModuleClass('ethnode', 'Controllers', ModuleControllers);
 }

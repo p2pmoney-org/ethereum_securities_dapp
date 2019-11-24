@@ -17,6 +17,15 @@ var DAPPControllers = class {
 		return this.app;
 	}
 	
+	// scope level
+	getSessionObject($scope) {
+		return this.getAngularControllers().getSessionObject($scope);
+	}
+	
+	setSessionObject($scope, session) {
+		this.getAngularControllers().setSessionObject($scope, session);
+	}
+	
 	getAngularControllers() {
 		var mvcmodule = this.global.getModuleObject('mvc');
 		
@@ -284,18 +293,18 @@ var DAPPControllers = class {
 	    var global = this.global;
 	    
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 	    
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (stockledgercontract) {
 			if (confirm('Are you sure you want to remove "' + stockledgercontract.getLocalLedgerDescription() + '"?')) {
-				stockledgercontrollers.removeStockLedgerObject(stockledgercontract);
+				stockledgercontrollers.removeStockLedgerObject(session, stockledgercontract);
 				
-				stockledgercontrollers.saveStockLedgers(function(err, res) {
+				stockledgercontrollers.saveStockLedgers(session, function(err, res) {
 					self.getAngularControllers().gotoStatePage('home.stockledgers');
 				});
 			}
@@ -324,12 +333,12 @@ var DAPPControllers = class {
 	    var global = this.global;
 	    
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 	    
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (stockledgercontract) {
 			var stakeholder = stockledgercontract.getStakeHolderFromKey(stakeholderindex);
@@ -340,7 +349,7 @@ var DAPPControllers = class {
 				    
 					stockledgercontract.removeStakeHolderObject(stakeholder);
 
-					stockledgercontrollers.saveStockLedgerObject(stockledgercontract, function(err, res) {
+					stockledgercontrollers.saveStockLedgerObject(session, stockledgercontract, function(err, res) {
 						var params = {uuid: contractuuid}
 						self.getAngularControllers().gotoStatePage('home.stockledgers.shareholders', params);
 					});
@@ -380,12 +389,12 @@ var DAPPControllers = class {
 	    var global = this.global;
 	    
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 	    
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (stockledgercontract) {
 			var issuance = stockledgercontract.getIssuanceFromKey(issuanceindex);
@@ -396,7 +405,7 @@ var DAPPControllers = class {
 				    
 					stockledgercontract.removeIssuanceObject(issuance);
 
-					stockledgercontrollers.saveStockLedgerObject(stockledgercontract, function(err, res) {
+					stockledgercontrollers.saveStockLedgerObject(session, stockledgercontract, function(err, res) {
 						var params = {uuid: contractuuid}
 						self.getAngularControllers().gotoStatePage('home.stockledgers.issuances', params);
 					});
@@ -437,12 +446,12 @@ var DAPPControllers = class {
 	    var global = this.global;
 	    
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 	    
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (stockledgercontract) {
 			var transaction = stockledgercontract.getTransactionFromKey(transactionindex);
@@ -453,7 +462,7 @@ var DAPPControllers = class {
 				    
 					stockledgercontract.removeTransactionObject(transaction);
 
-					stockledgercontrollers.saveStockLedgerObject(stockledgercontract, function(err, res) {
+					stockledgercontrollers.saveStockLedgerObject(session, stockledgercontract, function(err, res) {
 						var params = {uuid: contractuuid}
 						self.getAngularControllers().gotoStatePage('home.stockledgers.transactions', params);
 					});
@@ -489,6 +498,7 @@ var DAPPControllers = class {
 	
 	_getViewStockLedgerArray($scope, views, contract) {
 		var global = this.global;
+		var session = this.getSessionObject($scope);
 		
 		var stockledger = [];
 		
@@ -530,7 +540,7 @@ var DAPPControllers = class {
 		    		
 		    		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		    		
-		    		stockledgercontrollers.saveStockLedgerObject(contract);
+		    		stockledgercontrollers.saveStockLedgerObject(session, contract);
 		    	}
 				
 				// tell scope a value has changed
@@ -575,7 +585,7 @@ var DAPPControllers = class {
 		var app = this.getAppObject();
 
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var views = this.securitiesviews;
 
@@ -631,14 +641,14 @@ var DAPPControllers = class {
 	    var global = this.global;
 	    
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		var views = this.securitiesviews;
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			$scope.stockledgerindex = contract.getContractIndex();
@@ -961,14 +971,14 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
 	    var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		$scope.stockledgeruuid= (stockledgercontract ? stockledgercontract.getUUID() : null);
 
@@ -1119,14 +1129,14 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
 	    var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		$scope.stockledgeruuid= (stockledgercontract ? stockledgercontract.getUUID() : null);
 
@@ -1221,7 +1231,7 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var views = this.securitiesviews;
 	    
@@ -1229,7 +1239,7 @@ var DAPPControllers = class {
 	    var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		if (contract) {
 			$scope.stockledgeruuid= (contract ? contract.getUUID() : null);
@@ -1399,14 +1409,14 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
 	    var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		$scope.stockledgeruuid= (stockledgercontract ? stockledgercontract.getUUID() : null);
 
@@ -1502,7 +1512,7 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
@@ -1512,7 +1522,7 @@ var DAPPControllers = class {
 		var views = this.securitiesviews;
 
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		if (contract) {
 			$scope.stockledgerindex = contract.getContractIndex();
@@ -1624,10 +1634,10 @@ var DAPPControllers = class {
 	    tx.statusstring = statusstring;
 
 	    var chainfrom = (isOnChain==false ? transaction.getLocalFrom() : transaction.getChainFrom());
-	    var chainfromdisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(chainfrom, transaction, stockledgercontract);
+	    var chainfromdisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(session, chainfrom, transaction, stockledgercontract);
 	    
 	    var chainto = (isOnChain==false ? transaction.getLocalTo() : transaction.getChainTo());
-	    var chaintodisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(chainto, transaction, stockledgercontract);
+	    var chaintodisplay = stockledgermodule.getControllersObject().getTransactionStakeholderDisplayName(session, chainto, transaction, stockledgercontract);
 
 	    tx.from = chainfromdisplay;
 	    tx.to = chaintodisplay;
@@ -1677,14 +1687,14 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
 	    var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		$scope.stockledgeruuid= (stockledgercontract ? stockledgercontract.getUUID() : null);
 
@@ -1785,7 +1795,7 @@ var DAPPControllers = class {
 	    var global = this.global;
 		
 	    var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 	    
 	    // stockledger
@@ -1795,7 +1805,7 @@ var DAPPControllers = class {
 		var views = this.securitiesviews;
 		
 
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			$scope.stockledgerindex = contract.getContractIndex();
@@ -1952,16 +1962,18 @@ var DAPPControllers = class {
 
 		// call module controller
 		var global = this.global;
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
 		// create (local) stockledger for these values
-		var stockledger = stockledgercontrollers.createStockLedgerObject(data);
+		var stockledger = stockledgercontrollers.createStockLedgerObject(session, data);
 		
 		// save stockledger
 		var self = this;
-		stockledgercontrollers.saveStockLedgerObject(stockledger, function(err, res) {
+		stockledgercontrollers.saveStockLedgerObject(session, stockledger, function(err, res) {
 			self.getAngularControllers().gotoStatePage('home.stockledgers');
 		});
 		
@@ -1997,20 +2009,21 @@ var DAPPControllers = class {
 		// call module controller
 		var self = this;
 		var global = this.global;
+		var session = this.getSessionObject($scope);
 		var app = this.getAppObject();
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
 		// create (local) contract for these values
-		var contract = stockledgercontrollers.createStockLedgerObject(data);
+		var contract = stockledgercontrollers.createStockLedgerObject(session, data);
 		
 		// set local description
 		contract.setLocalDescription(data['description']);
 		
 		if (contract) {
 			// save contract
-			stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
+			stockledgercontrollers.saveStockLedgerObject(session, contract, function(err, res) {
 				// start a promise chain, to collect name, symbol,..
 				console.log("starting retrieving chain data");
 
@@ -2041,7 +2054,7 @@ var DAPPControllers = class {
 					app.setMessage("deployed contract completely retrieved");
 					
 					// save stockledger
-					return stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
+					return stockledgercontrollers.saveStockLedgerObject(session, contract, function(err, res) {
 						self.getAngularControllers().gotoStatePage('home.stockledgers');
 					});
 				});
@@ -2064,11 +2077,13 @@ var DAPPControllers = class {
 
 		// call module controller
 		var global = this.global;
+		var session = this.getSessionObject($scope);
+
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -2127,19 +2142,21 @@ var DAPPControllers = class {
 		data['ledgerdescription'] = $scope.ledgerdescription.text;
 		
 		var global = this.global;
+		var session = this.getSessionObject($scope);
+
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
 		// get (local) stockledger 
-		var stockledger = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledger = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
-		stockledger = stockledgercontrollers.modifyStockLedgerObject(stockledger, data);
+		stockledger = stockledgercontrollers.modifyStockLedgerObject(session, stockledger, data);
 		
 		// save stockledger
 		var self = this;
 		
-		stockledgercontrollers.saveStockLedgerObject(stockledger, function(err,res) {
+		stockledgercontrollers.saveStockLedgerObject(session, stockledger, function(err,res) {
 			self.getAngularControllers().gotoStatePage('home.stockledgers');
 		});
 		
@@ -2152,7 +2169,7 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var ethnodemodule = global.getModuleObject('ethnode');
 		var ethnodecontrollers = ethnodemodule.getControllersObject();
@@ -2192,7 +2209,7 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		try {
 			var fromaccount = (session.isValidAddress(accountaddress) ? session.getAccountObject(accountaddress) : null);
@@ -2213,7 +2230,7 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var fromaccount = commoncontrollers.getSessionAccountObjectFromUUID(session, accountuuid)
 
@@ -2285,12 +2302,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 
 		// filling fields
@@ -2388,7 +2405,7 @@ var DAPPControllers = class {
 			var contract = contracts.getContractObjectFromUUID(contractuuid);
 			
 			if ((contract) && (contract.isLocalOnly())) {
-				var session = commonmodule.getSessionObject();
+				var session = this.getSessionObject($scope);
 				
 				var owner = contract.getLocalOwner();
 				var owningaccount = session.getAccountObject(owner);
@@ -2423,7 +2440,7 @@ var DAPPControllers = class {
 							ethnodemodule.lockAccount(payingaccount);
 								
 							// save stockledger
-							stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
+							stockledgercontrollers.saveStockLedgerObject(session, contract, function(err, res) {
 								self.getAngularControllers().gotoStatePage('home.stockledgers');
 							});
 							
@@ -2466,12 +2483,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -2537,11 +2554,11 @@ var DAPPControllers = class {
 		
 		var global = this.global;
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var privkey = session.generatePrivateKey();		
 		
-		var newaccount = commonmodule.createBlankAccountObject();
+		var newaccount = commonmodule.createBlankAccountObject(session);
 		newaccount.setPrivateKey(privkey);
 		
 		var address = newaccount.getAddress();
@@ -2560,7 +2577,7 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 
 		
 		var contractuuid = $scope.stockledger.uuid;
@@ -2595,7 +2612,7 @@ var DAPPControllers = class {
 			
 			var stockledgercontrollers = stockledgermodule.getControllersObject();
 			
-			var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+			var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 			
 			if (contract) {
 				var data = [];
@@ -2624,7 +2641,7 @@ var DAPPControllers = class {
 									console.log('account deployed at position ' + res);
 									
 									// save stockledger
-									stockledgercontrollers.saveStockLedgerObject(contract, function(err, res) {
+									stockledgercontrollers.saveStockLedgerObject(session, contract, function(err, res) {
 										var params = {uuid: contractuuid}
 										self.getAngularControllers().gotoStatePage('home.stockledgers.view', params);
 									});
@@ -2681,12 +2698,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -2717,11 +2734,13 @@ var DAPPControllers = class {
 		var global = this.global;
 		var app = this.getAppObject();
 
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			var data = [];
@@ -2753,11 +2772,13 @@ var DAPPControllers = class {
 
 		// call module controller
 		var global = this.global;
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -2809,11 +2830,13 @@ var DAPPControllers = class {
 		// call module controller
 		var data = [];
 		
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			var shareholder = contract.getStakeHolderFromKey(stakeholderindex);
@@ -2850,12 +2873,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 
 		// filling fields
@@ -2973,7 +2996,7 @@ var DAPPControllers = class {
 			var contract = contracts.getContractObjectFromUUID(contractuuid);
 			
 			if (contract) {
-				var session = commonmodule.getSessionObject();
+				var session = this.getSessionObject($scope);
 				
 				var owner = contract.getLocalOwner();
 				var owningaccount = session.getAccountObject(owner);
@@ -3180,12 +3203,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -3212,11 +3235,13 @@ var DAPPControllers = class {
 		var global = this.global;
 		var app = this.getAppObject();
 
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			// fill data array
@@ -3251,9 +3276,11 @@ var DAPPControllers = class {
 		var global = this.global;
 		var stockledgermodule = global.getModuleObject('securities');
 		
+		var session = this.getSessionObject($scope);
+		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -3311,11 +3338,13 @@ var DAPPControllers = class {
 		// call module controller
 		var data = [];
 		
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			
@@ -3359,12 +3388,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -3487,7 +3516,7 @@ var DAPPControllers = class {
 			var contract = contracts.getContractObjectFromUUID(contractuuid);
 			
 			if (contract) {
-				var session = commonmodule.getSessionObject();
+				var session = this.getSessionObject($scope);
 				
 				var owner = contract.getLocalOwner();
 				var owningaccount = session.getAccountObject(owner);
@@ -3581,12 +3610,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		var fromshldr = stockledgermodule.getStockHolderObjectFromAddress(stockledgercontract, fromaddress);
 
@@ -3607,12 +3636,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		var toshldr = stockledgermodule.getStockHolderObjectFromAddress(stockledgercontract, toaddress);
 
@@ -3630,7 +3659,7 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
@@ -3655,7 +3684,7 @@ var DAPPControllers = class {
 						var localidentifier = stakeholder.getLocalIdentifier();
 						var localidentifierdisplayname = ( localidentifier && (localidentifier.length > 0) ? shortaddress + ' - ' + localidentifier : address);
 						
-						var stakeholderidentifier = stockledgercontrollers.getStakeholderDisplayName(address, contract);
+						var stakeholderidentifier = stockledgercontrollers.getStakeholderDisplayName(session, address, contract);
 						
 						shldr['uuid'] = stakeholder.getUUID();
 						shldr['address'] = address;
@@ -3737,12 +3766,12 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var stockledgercontract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -3777,11 +3806,13 @@ var DAPPControllers = class {
 		var global = this.global;
 		var app = this.getAppObject();
 
+		var session = this.getSessionObject($scope);
+		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 		
 		if (contract) {
 			var data = [];
@@ -3817,12 +3848,14 @@ var DAPPControllers = class {
 	    var contractuuid = $stateParams.uuid;
 	    var transactionindex = $stateParams.index;
 
+		var session = this.getSessionObject($scope);
+		
 		// call module controller
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -3886,12 +3919,14 @@ var DAPPControllers = class {
 		var contractuuid = $scope.stockledger.uuid;
 	    var transactionindex = $scope.transaction.index;
 
+		var session = this.getSessionObject($scope);
+		
 		// call module controller
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		if (contract) {
 			
@@ -3933,13 +3968,13 @@ var DAPPControllers = class {
 		var commonmodule = global.getModuleObject('common');
 		var commoncontrollers = commonmodule.getControllersObject();
 
-		var session = commonmodule.getSessionObject();
+		var session = this.getSessionObject($scope);
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
 		var stockledgercontrollers = stockledgermodule.getControllersObject();
 		
-		var contract = stockledgercontrollers.getStockLedgerFromUUID(contractuuid);
+		var contract = stockledgercontrollers.getStockLedgerFromUUID(session, contractuuid);
 
 		// filling fields
 		var stockledger = [];
@@ -4071,7 +4106,7 @@ var DAPPControllers = class {
 			var contract = contracts.getContractObjectFromUUID(contractuuid);
 			
 			if (contract) {
-				var session = commonmodule.getSessionObject();
+				var session = this.getSessionObject($scope);
 				
 				var owner = contract.getLocalOwner();
 				var owningaccount = session.getAccountObject(owner);

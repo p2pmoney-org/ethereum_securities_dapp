@@ -71,6 +71,10 @@ class StockLedger {
 		this.livestatus = this.Contracts.STATUS_LOCAL;
 	}
 	
+	getSessionObject() {
+		return this.session;
+	}
+	
 	getSecuritiesModuleObject() {
 		var session = this.session;
 		var global = session.getGlobalObject();

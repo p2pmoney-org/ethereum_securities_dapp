@@ -2,7 +2,8 @@
 
 
 var Transaction = class {
-	constructor() {
+	constructor(session) {
+		this.session = session;
 		
 		this.hash= -1;
 		this.sender = null;
@@ -23,6 +24,9 @@ var Transaction = class {
 		this.txIndex = null;
 		this.gasUsed = null;
 		this.type =	"tx";
+		
+		this.input = null;
+		this.decoded_input = null;
 		
 		// original web3 data
 		this.data = null;
@@ -49,6 +53,8 @@ var Transaction = class {
 	    var global = Transaction.getGlobalObject();
 	    var chainreadermodule = global.getModuleObject('ethchainreader');
 	    var Account = chainreadermodule.getAccountClass();
+	    
+	    var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
 
 		// objects
 	    var block = this.block;
@@ -64,10 +70,10 @@ var Transaction = class {
 		
 		this.sender = this.data['from'];
 		this.recipient = this.data['to'];
-		this.accountNonce = this.data['nonce']
+		this.accountNonce = this.data['nonce'];
 		this.price = parseInt(this.data['gasPrice']);
 		this.gasLimit = this.data['gas'];
-		this.amount = 0;
+		this.amount = this.data['value'];
 		this.block_id =  blockid;
 		this.time = this.block.timestamp;
 		this.newContract = (this.recipient ? 0 : 1);
@@ -79,6 +85,8 @@ var Transaction = class {
 		this.parentHash = this.data['hash'];
 		this.txIndex = this.data['transactionIndex'];
 		this.type =	(this.recipient ? "tx" : "create");
+		
+		this.input = this.data['input'];
 		
 		// additional members (needing transactionreceipt)
 		this.receiptdata = null; // we don't make the call now to avoid reading the receipts of all the transaction for a block
@@ -100,7 +108,7 @@ var Transaction = class {
 		var self = this;
 		
 		// block
-		promise = Block.getBlock(blocknumber, function (err, res) {
+		promise = Block.getBlock(this.session, blocknumber, function (err, res) {
 			if (err) {
 				if (callback)
 					callback(err, null);
@@ -118,7 +126,7 @@ var Transaction = class {
 		promises.push(promise);
 		
 		// sender
-		promise = Account.getAccount(sender_address, function (err, res) {
+		promise = Account.getAccount(this.session, sender_address, function (err, res) {
 			if (err) {
 				if (callback)
 					callback(err, null);
@@ -137,7 +145,7 @@ var Transaction = class {
 		
 		// recipient
 		if (!Account.isNullAddress(recipient_address)) {
-			promise = Account.getAccount(recipient_address, function (err, res) {
+			promise = Account.getAccount(this.session, recipient_address, function (err, res) {
 				if (err) {
 					if (callback)
 						callback(err, null);
@@ -180,9 +188,9 @@ var Transaction = class {
 	    var chainreadermodule = global.getModuleObject('ethchainreader');
 	    var Block = chainreadermodule.getBlockClass();
 	    
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
-	    return EthereumNodeAccess.web3_getTransactionReceipt(hash, function(err, res) {
+	    return EthereumNodeAccess.web3_getTransactionReceipt(txhash, function(err, res) {
 			
 			if (err) {
 				if (callback)
@@ -230,8 +238,8 @@ var Transaction = class {
 
 	
 	// static
-	static _createTransactionObject(data, callback) {
-		var transaction = new Transaction();
+	static _createTransactionObject(session, data, callback) {
+		var transaction = new Transaction(session);
 
 		var blocknumber = data['blockNumber']
 		var sender_address = data['from']
@@ -268,15 +276,15 @@ var Transaction = class {
 		
 	}
 	
-	static getTransaction(txahash, callback) {
+	static getTransaction(session, txhash, callback) {
 		var Transaction = this.getClass();
 		
 	    var global = Transaction.getGlobalObject();
 	    var chainreadermodule = global.getModuleObject('ethchainreader');
 	    var Block = chainreadermodule.getBlockClass();
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(session);
 	    
-	    var promise = EthereumNodeAccess.web3_getTransaction(txahash, function(err, res) {
+	    var promise = EthereumNodeAccess.web3_getTransaction(txhash, function(err, res) {
 			if (err) {
 				if (callback)
 					callback(err, null);
@@ -292,7 +300,7 @@ var Transaction = class {
 	    /*var web3 = chainreadermodule.getWeb3Instance();
 	    
 		var promise = new Promise( function(resolve, reject) {
-	    	return web3.eth.getTransaction(txahash, function(err, res) {
+	    	return web3.eth.getTransaction(txhash, function(err, res) {
 				if (err) {
 					if (callback)
 						callback(err, null);
@@ -307,7 +315,7 @@ var Transaction = class {
 		.then(function(res) {
 			var data = res;
 			
-			return Transaction._createTransactionObject(data, function (err, res) {
+			return Transaction._createTransactionObject(session, data, function (err, res) {
 				if (err) {
 					if (callback)
 						callback(err, null);
@@ -339,7 +347,7 @@ var Transaction = class {
 		return promise;
 	}
 	
-	static getTransactionsFromJsonArray(jsonarray, callback) {
+	static getTransactionsFromJsonArray(session, jsonarray, callback) {
 		var Transaction = this.getClass();
 		
 	    var global = Transaction.getGlobalObject();
@@ -355,7 +363,7 @@ var Transaction = class {
 
 		// read json array
 		for(var i = 0; i < jsonarray.length; i++) {
-			promise = Transaction._createTransactionObject(jsonarray[i], function (err, res) {
+			promise = Transaction._createTransactionObject(session, jsonarray[i], function (err, res) {
 				if (err) {
 					if (callback)
 						callback(err, null);
@@ -401,5 +409,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'Transaction', Transaction);
 }
-else
-module.exports = Contract; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Transaction', Transaction);
+}

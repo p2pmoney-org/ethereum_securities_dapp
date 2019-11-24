@@ -36,7 +36,7 @@ class StockLedgerContractInterface {
 		var global = session.getGlobalObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		this.contractinstance = ethnodemodule.getContractInstance(this.address, './contracts/StockLedger.json');
+		this.contractinstance = ethnodemodule.getContractInstance(session, this.address, './contracts/StockLedger.json');
 		
 		return this.contractinstance;
 	}

@@ -6,11 +6,11 @@ var ModuleControllers = class {
 		this.module = module;
 	}
 	
-	getStakeholderDisplayName(address, contract) {
+	getStakeholderDisplayName(session, address, contract) {
 		var securitiesmodule = this.module;
 		var global = securitiesmodule.global;
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		//var session = commonmodule.getSessionObject();
 		
 		var isYou = session.isSessionAccountAddress(address);
 		var displayname = address;
@@ -39,11 +39,11 @@ var ModuleControllers = class {
 	    return displayname;
 	}
 	
-	getTransactionStakeholderDisplayName(address, transaction, contract) {
+	getTransactionStakeholderDisplayName(session, address, transaction, contract) {
 		var securitiesmodule = this.module;
 		var global = securitiesmodule.global;
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		//var session = commonmodule.getSessionObject();
 
 		var isCreator = securitiesmodule.isTransactionCreator(transaction);
 		
@@ -59,11 +59,11 @@ var ModuleControllers = class {
 				displayname = securitiesmodule.decryptCreatorStakeHolderIdentifier(contract, stakeholder);
 			}
 			else {
-				displayname = this.getStakeholderDisplayName(address, contract);
+				displayname = this.getStakeholderDisplayName(session, address, contract);
 			}
 		}
 		else {
-			displayname = this.getStakeholderDisplayName(address, contract);
+			displayname = this.getStakeholderDisplayName(session, address, contract);
 		}
 		
 		return displayname;
@@ -76,7 +76,7 @@ var ModuleControllers = class {
 	//
 	
 	// stock ledgers
-	createStockLedgerObject(data) {
+	createStockLedgerObject(session, data) {
 		console.log("Controllers.createStockLedgerObject called");
 		
 		var address = (data && data['address'] ? data['address'] : null);
@@ -88,10 +88,10 @@ var ModuleControllers = class {
 
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject(session);
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 		
 		
 		var contract = contracts.createBlankContractObject('StockLedger');
@@ -106,7 +106,7 @@ var ModuleControllers = class {
 		return contract;
 	}
 	
-	modifyStockLedgerObject(contract, data) {
+	modifyStockLedgerObject(session, contract, data) {
 		console.log("Controllers.modifyStockLedgerObject called");
 		
 		var address = (data && data['address'] ? data['address'] : null);
@@ -119,7 +119,7 @@ var ModuleControllers = class {
 
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		var contracts = ethnodemodule.getContractsObject();
@@ -135,7 +135,7 @@ var ModuleControllers = class {
 		return contract;
 	}
 	
-	removeStockLedgerObject(contract) {
+	removeStockLedgerObject(session, contract) {
 		if (!contract)
 			return;
 		
@@ -143,24 +143,24 @@ var ModuleControllers = class {
 		var global = module.global;
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		//var session = commonmodule.getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 
 		contracts.removeContractObject(contract);
 	}
 		
 
-	getStockLedgerFromKey(contractindex) {
+	getStockLedgerFromKey(session, contractindex) {
 		console.log("Controllers.getStockLedgerFromKey called with index: " + contractindex);
 
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 		
 		
 		var contract = contracts.getContractObjectFromKey(contractindex);
@@ -168,15 +168,15 @@ var ModuleControllers = class {
 		return contract;
 	}
 	
-	getStockLedgerFromUUID(contractuuid) {
+	getStockLedgerFromUUID(session, contractuuid) {
 		console.log("Controllers.getStockLedgerFromUUID called with uuid: " + contractuuid);
 
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 		
 		
 		var contract = contracts.getContractObjectFromUUID(contractuuid);
@@ -191,12 +191,13 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = contract.getSessionObject();
 		
 		var address = (data && data['address'] ? data['address'] : null);
 		var privatekey = (data && data['privatekey'] ? data['privatekey'] : null);
 
-		var account = session.createBlankAccountObject();
+		var account = session.createBlankAccountObject(session);
 		
 		if (session.isValidPrivateKey(privatekey)) {
 			
@@ -212,7 +213,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = contract.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -236,7 +238,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = shareholder.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -269,7 +272,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = contract.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -299,7 +303,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = issuance.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -337,7 +342,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = contract.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -371,7 +377,8 @@ var ModuleControllers = class {
 		
 		var module = this.module;
 		var global = module.global;
-		var session = global.getModuleObject('common').getSessionObject();
+		//var session = global.getModuleObject('common').getSessionObject();
+		var session = transaction.getSessionObject();
 		
 		var stockledgermodule = global.getModuleObject('securities');
 		
@@ -414,7 +421,7 @@ var ModuleControllers = class {
 	
 	
 	// (note: only function with a callback do a save, others just modify data in memory)
-	saveStockLedgerObject(contract, callback) {
+	saveStockLedgerObject(session, contract, callback) {
 		if (!contract)
 			return;
 		
@@ -424,10 +431,10 @@ var ModuleControllers = class {
 		var global = module.global;
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		//var session = commonmodule.getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 		
 		var contractindex = contract.getContractIndex();
 		var contractuuid = contract.getUUID();
@@ -439,17 +446,17 @@ var ModuleControllers = class {
 		
 	}
 
-	saveStockLedgers(callback) {
+	saveStockLedgers(session, callback) {
 		console.log("Controllers.saveStockLedgers called");
 		
 		var module = this.module;
 		var global = module.global;
 		
 		var commonmodule = global.getModuleObject('common');
-		var session = commonmodule.getSessionObject();
+		//var session = commonmodule.getSessionObject();
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject();
+		var contracts = ethnodemodule.getContractsObject(session);
 
 		ethnodemodule.saveContractObjects(contracts, function(err, res) {
 			console.log('saveStockLedgers returning from save');

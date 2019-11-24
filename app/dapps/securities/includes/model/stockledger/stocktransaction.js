@@ -59,6 +59,10 @@ class StockTransaction {
 
 	}
 	
+	getSessionObject() {
+		return this.session;
+	}
+	
 	getStockLedgerObject() {
 		return this.stockledger;
 	}

@@ -58,6 +58,10 @@ var Module = class {
 	// optional  module functions
 	
 	// objects
+	getClientStorageAccessInstance(session) {
+		return new StorageAccess(session);
+	}
+	
 	getStorageAccessInstance(session) {
 		if (session.storage_access_instance)
 			return session.storage_access_instance;
@@ -99,47 +103,113 @@ var Module = class {
 		return key;
 	}
 	
-	_getLocalStorage() {
+	_getLocalStorage(session) {
+		if (session && session.localStorage)
+			return session.localStorage;
+		
+		// else return default
 		if (this.localStorage)
 			return this.localStorage;
 		
+		// if default not initialized yet
 		if (typeof localStorage !== 'undefined') {
 			// we are in the browser
 			this.localStorage = localStorage;
 		}
 		else {
-			if (window.simplestore.localStorage !== 'undefined') {
+			if ((typeof window !== 'undefined') && (typeof window.simplestore.localStorage !== 'undefined')) {
+				// we are in react native
 				this.localStorage = window.simplestore.localStorage;
+			}
+			else if ((typeof global !== 'undefined') && (typeof global.simplestore.localStorage !== 'undefined')) {
+				// we are in nodejs
+				this.localStorage = global.simplestore.localStorage;
 			}
 		}
 		
 		return this.localStorage;
 	}
 	
-	readClientSideJson(session, keys) {
-		var key = this.keystostring(keys);
-		var localStorage = this._getLocalStorage();
-		var jsonstring = (localStorage ? localStorage.getItem(key.toString()) : '{}');
+	readClientSideJson(session, keys, callback) {
+		var keystring = this.keystostring(keys);
+		var localStorage = this._getLocalStorage(session);
+		var jsonstring;
+		var json;
 		
-		//console.log("client side local storage json for key " + key.toString() + " is " + jsonstring);
+		if (localStorage) {
+			if (localStorage.readClientSideJson) {
+				// supports call with callback
+				jsonstring = localStorage.readClientSideJson(session, keystring, function(err, res) {
+					jsonstring = res;
+					
+					json = (jsonstring ? JSON.parse(jsonstring) : null);
+					
+					if (callback)
+						callback((json ? null : 'no result found'), json);
+				});
+			}
+			else {
+				// browser localstorage
+				jsonstring = localStorage.getItem(keystring);
+				
+				json = (jsonstring ? JSON.parse(jsonstring) : null);
+				
+				if (callback)
+					callback((json ? null : 'no result found'), json);
+			}
+		}
+		else {
+			if (callback)
+				callback('no local storage found', '{}');
+			
+			return {};
+		}
 		
-		var json = JSON.parse(jsonstring);
+		//console.log("client side local storage json for key " + keystring + " is " + jsonstring);
 		
 		return json;
 	}
 	
-	saveClientSideJson(session, keys, json) {
-		var key = this.keystostring(keys);
+	saveClientSideJson(session, keys, json, callback) {
+		var keystring = this.keystostring(keys);
 		var jsonstring = JSON.stringify(json);
 
-		//console.log("saving in client side local storage json " + jsonstring + " for key " + key.toString());
+		//console.log("saving in client side local storage json " + jsonstring + " for key " + keystring());
 		
-		var localStorage = this._getLocalStorage();
+		var localStorage = this._getLocalStorage(session);
 		
-		if (localStorage)
-		localStorage.setItem(key, jsonstring);
+		if (localStorage) {
+			if (localStorage.saveClientSideJson) {
+				localStorage.saveClientSideJson(session, keystring, jsonstring, callback); // nodejs or react-native encapsulation
+			}
+			else
+				localStorage.setItem(keystring, jsonstring); // browser local storage
+			
+				if (callback)
+					callback(null, jsonstring);
+		}
+		else {
+			if (callback)
+				callback('no local storage found', null);
+		}
 	}
 	
+	loadClientSideJsonArtifact(session, jsonfile, callback) {
+		var localStorage = this._getLocalStorage(session);
+		var json = (localStorage ? (localStorage.loadClientSideJsonArtifact ? localStorage.loadClientSideJsonArtifact(session, jsonfile, callback) : {}) : {});
+		
+		if ((localStorage) && (localStorage.loadClientSideJsonArtifact)) {
+			localStorage.loadClientSideJsonArtifact(session, jsonfile, callback);
+		}
+		else {
+			if (callback)
+				callback('no local storage found', {});
+			
+			return {};
+		}
+		
+		return json;
+	}
 
 	
 }
@@ -166,22 +236,22 @@ class StorageAccess {
 	//
 	
 	// client side
-	readClientSideJson(keys) {
+	readClientSideJson(keys, callback) {
 		var session = this.session;
 		var global = session.getGlobalObject();
 		var storagemodule = global.getModuleObject('storage-access');
 		
-		var jsonleaf = storagemodule.readClientSideJson(session, keys);
+		var jsonleaf = storagemodule.readClientSideJson(session, keys, callback);
 		
 		return jsonleaf;
 	}
 	
-	saveClientSideJson(keys, json) {
+	saveClientSideJson(keys, json, callback) {
 		var session = this.session;
 		var global = session.getGlobalObject();
 		var storagemodule = global.getModuleObject('storage-access');
 		
-		storagemodule.saveClientSideJson(session, keys, json);
+		storagemodule.saveClientSideJson(session, keys, json, callback);
 	}
 	
 	// user
@@ -190,12 +260,27 @@ class StorageAccess {
 
 		var promise = new Promise(function (resolve, reject) {
 			// client side storage only for dapp
-			var json = self.readClientSideJson(keys);
+			var json = self.readClientSideJson(keys, function(err, res) {
+				if (err) {
+					console.log('error reading client side json: ' + err);
+					
+					json = null;
+					
+					if (callback)
+						callback(err, null);
+				}
+				else {
+					json = res;
+					
+					if (callback)
+						callback(null, json);
+				}
+				
+				resolve(json);
+			});
 			
-			if (callback)
-				callback(null, json);
 			
-			return resolve(json);
+			return json;
 		});
 		
 		return promise;
@@ -207,7 +292,11 @@ class StorageAccess {
 
 		var promise = new Promise(function (resolve, reject) {
 			// client side storage only for dapp
-			self.saveClientSideJson(keys, json);
+			self.saveClientSideJson(keys, json, function(err, res) {
+				if (err) {
+					console.log('error saving client side json: ' + err);
+				}
+			});
 			
 			if (callback)
 				callback(null, json);
@@ -237,6 +326,13 @@ class StorageAccess {
 					var jsonarray = res;
 					
 					var keysjson = cryptoencryptionmodule.decryptJsonArray(session, jsonarray);
+					
+					// add the origin of the keys
+					var origin = {storage: 'local'};
+					for (var i = 0; i < keysjson.length; i++) {
+						var key = keysjson[i];
+						key.origin = origin;
+					}
 					
 					var json = {keys: keysjson};
 					
@@ -393,13 +489,19 @@ class StorageAccess {
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
 window.simplestore.StorageAccess = StorageAccess;
-else
-module.exports = StorageAccess; // we are in node js
+else if (typeof global !== 'undefined')
+global.simplestore.StorageAccess = StorageAccess; // we are in node js
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
 else if (typeof window !== 'undefined') {
 	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
 	
 	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
 }

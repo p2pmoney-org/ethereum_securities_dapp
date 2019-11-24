@@ -71,7 +71,9 @@ var Module = class {
 		
 		var global = this.global;
 		
-		global.registerHook('postFinalizeGlobalScopeInit_hook', 'securities', this.postFinalizeGlobalScopeInit_hook);
+		global.registerHook('postFinalizeGlobalScopeInit_hook', this.name, this.postFinalizeGlobalScopeInit_hook);
+		
+		global.registerHook('creatingSession_hook', this.name, this.creatingSession_hook);
 	}
 	
 	//
@@ -82,7 +84,7 @@ var Module = class {
 		
 		var global = this.global;
 
-		var commonmodule = this.global.getModuleObject('common');
+		/*var commonmodule = this.global.getModuleObject('common');
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
 		var contracts = ethnodemodule.getContractsObject();
@@ -91,10 +93,31 @@ var Module = class {
 		contracts.registerContractClass('StockLedger', this.StockLedger);
 		
 		// force refresh of list
-		ethnodemodule.getContractsObject(true);
+		ethnodemodule.getContractsObject(session, true);*/
 		
 
-		result.push({module: 'securities', handled: true});
+		result.push({module: this.name, handled: true});
+		
+		return true;
+	}
+
+	creatingSession_hook(result, params) {
+		console.log('creatingSession_hook called for ' + this.name);
+		
+		var global = this.global;
+		var session = params[0];
+		
+		var ethnodemodule = global.getModuleObject('ethnode');
+		
+		var contracts = ethnodemodule.getContractsObject(session);
+		
+		// register PublicNoticeBook in the contracts global object
+		contracts.registerContractClass('StockLedger', this.StockLedger);
+		
+		// force refresh of list
+		ethnodemodule.getContractsObject(session, true);
+		
+		result.push({module: this.name, handled: true});
 		
 		return true;
 	}
@@ -129,7 +152,7 @@ var Module = class {
 	// model
 	//
 	
-	_getSessionObject() {
+	/*_getSessionObject() {
 		if (this.session)
 			return this.session;
 		
@@ -137,7 +160,7 @@ var Module = class {
 		this.session = commonmodule.getSessionObject();
 		
 		return this.session;
-	}
+	}*/
 	
 	// stock ledgers
 	_filterLocalContracts(contracts) {
@@ -183,7 +206,7 @@ var Module = class {
 		var commonmodule = global.getModuleObject('common');
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(session, bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterContracts(contracts);
 				
@@ -203,7 +226,7 @@ var Module = class {
 		var commonmodule = global.getModuleObject('common');
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(session, bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterLocalContracts(contracts);
 				
@@ -221,7 +244,7 @@ var Module = class {
 		var commonmodule = global.getModuleObject('common');
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject(bForceRefresh);
+		var contracts = ethnodemodule.getContractsObject(session, bForceRefresh);
 		
 		var array = [];
 		
@@ -275,7 +298,7 @@ var Module = class {
 		var commonmodule = global.getModuleObject('common');
 		var ethnodemodule = global.getModuleObject('ethnode');
 		
-		var contracts = ethnodemodule.getContractsObject(bForceRefresh, function(err, contracts) {
+		var contracts = ethnodemodule.getContractsObject(session, bForceRefresh, function(err, contracts) {
 			if (callback) {
 				var array = self._filterContracts(contracts);
 				
@@ -339,7 +362,8 @@ var Module = class {
 	
 	// contract part 
 	ownsContract(contract) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		if (session.isAnonymous())
 			return false;
@@ -355,7 +379,8 @@ var Module = class {
 	}
 	
 	isTransactionCreator(transaction) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = transaction.getSessionObject();
 
 		var creatoraddress = transaction.getChainCreatorAddress();
 		
@@ -365,7 +390,8 @@ var Module = class {
 	
 	// decryption (asymmetric)
 	decryptContractStakeHolderIdentifier(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
@@ -427,7 +453,8 @@ var Module = class {
 	}
 	
 	decryptContractStakeHolderPrivateKey(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
 		var stakeholdercreatoraddress = stakeholder.getChainCreatorAddress();
@@ -466,7 +493,8 @@ var Module = class {
 	
 	// creator part decryption (symmetric)
 	decryptCreatorStakeHolderDescription(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
 		
@@ -501,7 +529,8 @@ var Module = class {
 	}
 	
 	decryptCreatorStakeHolderIdentifier(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
 		
@@ -537,7 +566,8 @@ var Module = class {
 	
 	// stakeholder part decryption (asymmetric)
 	decryptStakeHolderStakeHolderDescription(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
 		
@@ -584,7 +614,8 @@ var Module = class {
 	}
 	
 	decryptStakeHolderStakeHolderIdentifier(contract, stakeholder) {
-		var session = this._getSessionObject();
+		//var session = this._getSessionObject();
+		var session = contract.getSessionObject();
 		
 		//var sessionaccountaddress = session.getSessionAccountAddress();
 		

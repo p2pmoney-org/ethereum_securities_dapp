@@ -112,5 +112,7 @@ class Config {
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
 window.simplestore.Config = Config;
-else
-module.exports = Config; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	global.simplestore.Config = Config;
+}

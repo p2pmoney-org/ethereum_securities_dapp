@@ -30,6 +30,8 @@ var Session = class {
 		this.user = null;
 		this.identifyingaccountaddress = null; // obsolete
 		
+		this.vaultmap = Object.create(null);
+		
 		// utility
 		this.getClass = function() { return this.constructor.getClass()};
 	}
@@ -137,6 +139,22 @@ var Session = class {
 		return this.localstorage;
 	}
 
+	getLocalStorageAccessInstance() {
+		var global = this.global;
+		var storagemodule = global.getModuleObject('storage-access');
+		var storageaccess = storagemodule.getStorageAccessInstance(this);
+
+		return storageaccess;
+	}
+
+	getClientStorageAccessInstance() {
+		var global = this.global;
+		var storagemodule = global.getModuleObject('storage-access');
+		var storageaccess = storagemodule.getClientStorageAccessInstance(this);
+
+		return storageaccess;
+	}
+
 	// rest connection
 	createRestConnection(rest_server_url, rest_server_api_path) {
 		var global = this.global;
@@ -196,6 +214,38 @@ var Session = class {
 		return new Session.CryptoKey(this, null);
 	}
 	
+	_readSessionIdentitiesCryptoKeyObjects(callback) {
+		var global = this.getGlobalObject();
+		var commonmodule = global.getModuleObject('common');
+		
+		var cryptokeys = [];
+
+		// user crypto-keys
+		var sessionuser = this.getSessionUserObject();
+		var crkeys = (sessionuser ? sessionuser.getCryptoKeyObjects() : []);
+
+		for (var i = 0; i < crkeys.length; i++) {
+			var cryptokey = crkeys[i];
+			
+			this.addCryptoKeyObject(cryptokey);
+			cryptokeys.push(cryptokey);
+		}
+		
+		// vaults
+		var vaults = this.getVaultObjects();
+		
+		for (var i = 0; i < (vaults ? vaults.length : 0); i++) {
+			var vault = vaults[i];
+			var cryptokey = vault.getCryptoKeyObject();
+			
+			this.addCryptoKeyObject(cryptokey);
+			cryptokeys.push(cryptokey);
+		}
+		
+		if (callback)
+			callback(null, cryptokeys);
+	}
+	
 	getSessionCryptoKeyObjects(bForceRefresh, callback) {
 		var cryptokeys = this.cryptokeymap.getCryptoKeyArray();
 		
@@ -218,10 +268,14 @@ var Session = class {
 		params.push(this);
 		
 		result.get = function(err, keyarray) {
+			
+			// read vaults' keys
+			self.cryptokeymap.empty();
+			self._readSessionIdentitiesCryptoKeyObjects();
 
 			if (!err) {
 				if (keyarray && keyarray.length) {
-					self.cryptokeymap.empty();
+					//self.cryptokeymap.empty();
 					
 					for (var i = 0; i < keyarray.length; i++) {
 						var key = keyarray[i];
@@ -283,6 +337,8 @@ var Session = class {
 			var Session = this.getClass();
 			account = new Session.Account(this, address);
 			
+			account.setOrigin({storage: 'api'});
+			
 			// put in map
 			this.accountmap.pushAccount(account);
 		}
@@ -322,6 +378,43 @@ var Session = class {
 		return new Session.Account(this, null);
 	}
 	
+	_readSessionIdentitiesAccountObjects(callback) {
+		var session = this;
+		var global = this.getGlobalObject();
+		var commonmodule = global.getModuleObject('common');
+		
+		var accounts = [];
+
+		// user accounts
+		var sessionuser = this.getSessionUserObject();
+		var accnts = (sessionuser ? sessionuser.getAccountObjects() : []);
+
+		for (var i = 0; i < accnts.length; i++) {
+			var account = accnts[i];
+			
+			session.addAccountObject(account);
+			accounts.push(account);
+		}
+		
+		// local accounts corresponding to vaults or user crypto keys
+		var storagemodule = global.getModuleObject('storage-access');
+		var storageaccess = storagemodule.getStorageAccessInstance(session);
+		
+		storageaccess.account_session_keys( (err, res) => {
+			
+			if (res && res['keys']) {
+				var keys = res['keys'];
+				
+				session.readSessionAccountFromKeys(keys);
+			}
+	
+			if (callback)
+				callback(null, session.accountmap.getAccountArray());
+		});
+	}
+	
+
+	
 	getAccountObjects(bForceRefresh, callback) {
 		var accounts = this.accountmap.getAccountArray();
 		
@@ -344,24 +437,28 @@ var Session = class {
 		params.push(this);
 		
 		result.get = function(err, accountarray) {
-			if (!err) {
-				if (accountarray && accountarray.length) {
-					self.accountmap.empty();
-					
-					for (var i = 0; i < accountarray.length; i++) {
-						var account = accountarray[i];
+			self.accountmap.empty();
+			self._readSessionIdentitiesAccountObjects(function() {
+				if (!err) {
+					if (accountarray && accountarray.length) {
+						//self.accountmap.empty();
 						
-						self.accountmap.pushAccount(account);
+						for (var i = 0; i < accountarray.length; i++) {
+							var account = accountarray[i];
+							
+							self.accountmap.pushAccount(account);
+						}
 					}
+					
+					if (callback)
+						callback(null, self.accountmap.getAccountArray());
 				}
-				
-				if (callback)
-					callback(null, self.accountmap.getAccountArray());
-			}
-			else {
-				if (callback)
-					callback(err, self.accountmap.getAccountArray());
-			}
+				else {
+					if (callback)
+						callback(err, self.accountmap.getAccountArray());
+				}
+			});
+			
 		};
 
 		var ret = global.invokeHooks('getAccountObjects_hook', result, params);
@@ -405,6 +502,9 @@ var Session = class {
 
 		this.user = null;
 		
+		// clean vaults
+		this.vaultmap = Object.create(null);
+		
 		// we clean the cryptokey map
 		this.cryptokeymap.empty();
 		
@@ -422,6 +522,21 @@ var Session = class {
 	getSessionUserIdentifier() {
 		if (this.user)
 			return this.user.getUserName();
+	}
+	
+	// vaults
+	getVaultObjects() {
+		var vaultmap = this.vaultmap;
+		
+		var array = [];
+		
+		for (var key in vaultmap) {
+		    if (!vaultmap[key]) continue;
+		    
+		    array.push(vaultmap[key]);
+		}
+		
+		return array;
 	}
 	
 	// session identification
@@ -489,7 +604,7 @@ var Session = class {
 			var global = this.getGlobalObject();
 			var commonmodule = global.getModuleObject('common');
 
-			this.user = commonmodule.createBlankUserObject();
+			this.user = commonmodule.createBlankUserObject(this);
 			
 			this.user.setUserName(address);
 			this.user.setUserUUID(address);
@@ -599,11 +714,16 @@ var Session = class {
 			var rsapublickey = key['rsa_public_key'];
 			var description = key['description'];
 			
-			var account = commonmodule.createBlankAccountObject();
+			var origin = (key['origin'] ? key['origin'] : {storage: 'unknown'});
+
+			
+			var account = commonmodule.createBlankAccountObject(this);
 			
 			account.setAccountUUID(keyuuid);
 			account.setDescription(description);
-			
+
+			account.setOrigin(origin);
+
 			
 			if (privatekey) {
 				try {
@@ -737,5 +857,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('common', 'Session', Session);
 }
-else
-module.exports = Session; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'Session', Session);
+}

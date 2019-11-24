@@ -3,6 +3,7 @@
 var Module = class {
 	constructor() {
 		this.name = 'common';
+		this.current_version = "0.12.2.2019.11.23";
 		
 		this.global = null; // put by global on registration
 		this.isready = false;
@@ -12,7 +13,7 @@ var Module = class {
 		this.controllers = null;
 		
 		// model
-		this.session = null; // current session
+		//this.session = null; // current session
 		
 		this.session_array = [];
 	}
@@ -56,6 +57,7 @@ var Module = class {
 		modulescriptloader.push_script( moduleroot + '/control/controllers.js');
 
 		modulescriptloader.push_script( moduleroot + '/model/localstorage.js');
+		modulescriptloader.push_script( moduleroot + '/model/localvault.js');
 		modulescriptloader.push_script( moduleroot + '/model/restconnection.js');
 		modulescriptloader.push_script( moduleroot + '/model/cryptokey.js');
 		modulescriptloader.push_script( moduleroot + '/model/account.js');
@@ -119,7 +121,7 @@ var Module = class {
 		
 		var _keys = commonkeys.concat(keys);
 		
-		var localstorage = this.session.getLocalStorageObject();
+		var localstorage = session.getLocalStorageObject();
 		return localstorage.getLocalJsonLeaf(_keys, uuid, uuidfieldname);
 	}
 	
@@ -128,7 +130,7 @@ var Module = class {
 		
 		var _keys = commonkeys.concat(keys);
 
-		var localstorage = this.session.getLocalStorageObject();
+		var localstorage = session.getLocalStorageObject();
 		return localstorage.updateLocalJsonLeaf(_keys, uuid, json, uuidfieldname);
 	}
 	
@@ -137,7 +139,7 @@ var Module = class {
 		
 		var _keys = commonkeys.concat(keys);
 
-		var localstorage = this.session.getLocalStorageObject();
+		var localstorage = session.getLocalStorageObject();
 		return localstorage.insertLocalJsonLeaf(_keys, parentuuid, collectionname, json, uuidfieldname);
 	}
 	
@@ -155,33 +157,25 @@ var Module = class {
 	
 	// session
 	createBlankSessionObject() {
-		return new this.Session(this.global);
-	}
-	
-	getSessionObject() {
-		if (this.session)
-			return this.session;
-		
 		console.log('Creating Session Object')
 		
+		// making sure class properties are ok
 		this.Session.Config = this.global.globalscope.simplestore.Config;
 		
 		// libs
 		this.Session.AccountEncryption = this.global.globalscope.simplestore.AccountEncryption;
 		
 		// model classes
-		//this.Session.Contracts = this.Contracts;
-		//this.Session.ContractInstance = this.ContractInstance;
-		
 		this.Session.CryptoKey = this.CryptoKey;
 		this.Session.CryptoKeyMap = this.CryptoKeyMap;
 		
 		this.Session.Account = this.Account;
 		this.Session.AccountMap = this.AccountMap;
 		
-		//this.Session.Transaction = this.Transaction;
-		
-		this.session = new this.Session(this.global);
+
+		// creating object
+		var session = new this.Session(this.global);
+		var sessionuuid = session.getSessionUUID();
 		
 		
 		// calling creatingSession_hook
@@ -190,7 +184,7 @@ var Module = class {
 		var result = []; 
 		var inputparams = [];
 		
-		inputparams.push(this.session);
+		inputparams.push(session);
 		
 		var ret = global.invokeHooks('creatingSession_hook', result, inputparams);
 		
@@ -199,20 +193,26 @@ var Module = class {
 		}
 		
 		// put session in multi-session array
-		this.session_array.push(this.session);
+		this.session_array.push(session);
 
+		return session;
+	}
+	
+	/*getSessionObject() {
+		if (this.session)
+			return this.session;
+		
+		if (this.session_array.length) {
+			this.session = this.session_array[0];
+			
+			return this.session;
+		}
+
+		this.session = this.createBlankSessionObject();
+		
 		return this.session;
 	}
 	
-	resetSessionObject() {
-		if (this.session) {
-			// re-read config
-			this.session.setWalletAccountAddress(this.getWalletAccountAddress());
-			this.session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
-		}
-	}
-	
-	// multi session management
 	setCurrentSessionObject(session) {
 		var newsessionuuid = session.getSessionUUID();
 		
@@ -224,10 +224,24 @@ var Module = class {
 		}
 		
 		this.session = session;
-	}
+	}*/
 	
+	
+	// multi session management
 	getSessionObjects() {
 		return this.session_array;
+	}
+	
+	resetSessionObjects() {
+		for (var i = 0; i < this.session_array.length;i ++) {
+			var session = this.session_array[i];
+			
+			if (session) {
+				// re-read config
+				session.setWalletAccountAddress(this.getWalletAccountAddress());
+				session.setNeedToUnlockAccounts(this.needToUnlockAccounts());
+			}
+		}
 	}
 	
 	findSessionObjectFromUUID(sessionuuid) {
@@ -240,43 +254,111 @@ var Module = class {
 	}
 	
 	// user
-	createBlankUserObject() {
-		var session = this.getSessionObject();
+	createBlankUserObject(session) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		return new this.User(session);
 	}
 	
 	// contracts
-	/*getContractsObject(bForceRefresh, callback) {
-		var session = this.getSessionObject();
-		
-		return session.getContractsObject(bForceRefresh, callback);
-	}*/
 	
 	// crypto keys
-	getCryptoKeyObject(address) {
-		var session = this.getSessionObject();
+	getCryptoKeyObject(session, address) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		return session.getCryptoKeyObject(address);
 	}
 	
-	createBlankCryptoKeyObject() {
-		var session = this.getSessionObject();
+	createBlankCryptoKeyObject(session) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		return session.createBlankCryptoKeyObject();
 	}
 	
 	// accounts
-	getAccountObject(address) {
-		var session = this.getSessionObject();
+	getAccountObject(session, address) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		return session.getAccountObject(address);
 	}
 	
-	createBlankAccountObject() {
-		var session = this.getSessionObject();
+	createBlankAccountObject(session) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		return session.createBlankAccountObject();
+	}
+	
+	// vaults
+	openVault(session, vaultname, passphrase, type, callback) {
+		var LocalVault = this.LocalVault;
+		
+		LocalVault.openVault(session, vaultname, passphrase, type, callback);
+	}
+	
+	createVault(session, vaultname, passphrase, type, callback) {
+		var LocalVault = this.LocalVault;
+		
+		LocalVault.createVault(session, vaultname, passphrase, type, callback);
+	}
+	
+	getVaultObjects(session) {
+		var LocalVault = this.LocalVault;
+
+		return LocalVault.getVaultObjects(session);
+	}
+	
+	getFromVault(session, vaultname, vaulttype, key) {
+		var LocalVault = this.LocalVault;
+		
+		var vault = LocalVault.getVaultObject(session, vaultname, vaulttype);
+		
+		if (vault) {
+			return vault.getValue(key);
+		}
+	}
+
+	putInVault(session, vaultname, vaulttype, key, value, callback) {
+		var LocalVault = this.LocalVault;
+		
+		var vault = LocalVault.getVaultObject(session, vaultname, vaulttype);
+		
+		if (vault) {
+			vault.putValue(key, value, callback);
+		}
+		else {
+			if (callback)
+				callback('no vault with this name: ' + vaultname, null);
+		}
 	}
 	
 }
@@ -285,6 +367,12 @@ if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
 else if (typeof window !== 'undefined') {
 	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
 	
 	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
 }

@@ -131,25 +131,34 @@ var Module = class {
 		return this.web3instance;
 	}*/
 	
-	getSessionObject() {
+	/*getSessionObject() {
 		var commonmodule = this.global.getModuleObject('common');
 
 		return commonmodule.getSessionObject();
+	}*/
+	
+	getEthereumNodeAccess(session) {
+		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
+		
+		var ethereumnodeaccessmodule = global.getModuleObject('ethereum-node-access');
+		
+		return ethereumnodeaccessmodule.getEthereumNodeAccessInstance(session);
 	}
 	
-	getEthereumNodeAccess() {
+	getChainReaderInterface(session) {
 		var global = this.global;
-		var session = this.getSessionObject();
 		
-		var ethnodemodule = global.getModuleObject('ethnode');
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
 		
-		return ethnodemodule.getEthereumNodeAccessInstance();
-		/*if (session)
-			return session.getEthereumNodeAccessInstance();*/
-	}
-	
-	getChainReaderInterface() {
-		var global = this.global;
+		var global = session.getGlobalObject();
 		
 		var chainreaderinterface = null;
 
@@ -164,14 +173,20 @@ var Module = class {
 			chainreaderinterface = result[0];
 		}
 		else {
-			chainreaderinterface = new this.ChainReaderInterface(this);
+			chainreaderinterface = new this.ChainReaderInterface(session, this);
 		}
 		
 		return chainreaderinterface;
 	}
 	
-	getEthereumNodeObject() {
+	getEthereumNodeObject(session) {
 		var global = this.global;
+		
+		var SessionClass = (typeof Session !== 'undefined' ? Session : global.getModuleObject('common').Session);
+		if (session instanceof SessionClass !== true)
+			throw 'must pass a session object as first parameter!';
+		
+		var global = session.getGlobalObject();
 		
 		var ethereumnodeobject = null;
 
@@ -179,6 +194,7 @@ var Module = class {
 		var inputparams = [];
 		
 		inputparams.push(this);
+		inputparams.push(session);
 		
 		var ret = global.invokeHooks('getEthereumNodeObject_hook', result, inputparams);
 		
@@ -186,7 +202,7 @@ var Module = class {
 			ethereumnodeobject = result[0];
 		}
 		else {
-			ethereumnodeobject = new this.EthereumNode(this);
+			ethereumnodeobject = new this.EthereumNode(session, this);
 		}
 		
 		return ethereumnodeobject;
@@ -196,20 +212,28 @@ var Module = class {
 	
 }
 
-if ( typeof GlobalClass !== 'undefined' && GlobalClass )
-GlobalClass.getGlobalObject().registerModuleObject(new Module());
+if ( typeof GlobalClass !== 'undefined' && GlobalClass ) {
+	GlobalClass.getGlobalObject().registerModuleObject(new Module());
+	
+	// dependencies
+	GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
+}
 else if (typeof window !== 'undefined') {
 	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
 	
 	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
-}
-
-
-// dependencies
-if ( typeof GlobalClass !== 'undefined' && GlobalClass )
-GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
-else if (typeof window !== 'undefined') {
-	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
 	
+	// dependencies
 	_GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
 }
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+	
+	// dependencies
+	_GlobalClass.getGlobalObject().registerModuleDepency('ethchainreader', 'common');
+}
+
+

@@ -21,8 +21,12 @@ class XtraConfigModule {
 		var self = this;
 		
 		// load and register additional modules
-		var ScriptLoader = window.simplestore.ScriptLoader;
-		var Config = window.simplestore.Config;
+		var _globalscope = (typeof window !== 'undefined' && window  ? window : (typeof global !== 'undefined' && global ? global : console.log('WARNING: could not find global scope!')));
+		//var _global = this.global;
+		//this.global is still null
+		
+		var ScriptLoader = _globalscope.simplestore.ScriptLoader;
+		var Config = _globalscope.simplestore.Config;
 		
 		var modulescriptloader = ScriptLoader.findScriptLoader('moduleloader')
 		var xtramodulescriptloader = modulescriptloader.getChildLoader('xtramoduleloader')
@@ -123,6 +127,12 @@ if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new XtraConfigModule());
 else if (typeof window !== 'undefined') {
 	let _GlobalClass = ( window && window.simplestore && window.simplestore.Global ? window.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new XtraConfigModule());
+}
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
 	
 	_GlobalClass.getGlobalObject().registerModuleObject(new XtraConfigModule());
 }

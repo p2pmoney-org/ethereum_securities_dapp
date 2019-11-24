@@ -52,6 +52,10 @@ class StockIssuance{
 		this.issuanceindex = null;
 	}
 	
+	getSessionObject() {
+		return this.session;
+	}
+	
 	getStockLedgerObject() {
 		return this.stockledger;
 	}

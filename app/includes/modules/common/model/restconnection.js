@@ -9,6 +9,44 @@ var RestConnection = class {
 		
 		this.rest_server_url = rest_server_url;
 		this.rest_server_api_path = rest_server_api_path;
+		
+		this.header = Object.create(null);
+	}
+	
+	getRestCallUrl() {
+	    var rest_server_url = this.rest_server_url;
+	    var rest_server_api_path = this.rest_server_api_path;
+		
+	    return rest_server_url + rest_server_api_path ;
+	}
+	
+	addToHeader(keyvalue) {
+		this.header[keyvalue.key] = keyvalue.value;
+	}
+	
+	_setRequestHeader(xhttp) {
+	    xhttp.setRequestHeader("Content-type", "application/json");
+	    xhttp.setRequestHeader("sessiontoken", this.session.getSessionUUID());
+		
+	    for (var key in this.header) {
+		    xhttp.setRequestHeader(key, this.header[key]);
+	    }
+	}
+	
+	_createXMLHttpRequest(method, resource) {
+		var xhttp = new XMLHttpRequest();
+		
+	    var rest_call_url = this.getRestCallUrl();
+	    var resource_url = rest_call_url + resource;
+	    
+		// allow Set-Cookie for CORS calls
+		//xhttp.withCredentials = true;
+		
+	    xhttp.open(method, resource_url, true);
+
+		this._setRequestHeader(xhttp);
+	    
+	    return xhttp;
 	}
 	
 	rest_get(resource, callback) {
@@ -16,17 +54,8 @@ var RestConnection = class {
 		
 		var session = this.session;
 	    
-		var xhttp = new XMLHttpRequest();
-	    
-	    var rest_server_url = this.rest_server_url;
-	    var rest_server_api_path = this.rest_server_api_path;
-	    var resource_url = rest_server_url + rest_server_api_path + resource;
-	    
-	    xhttp.open("GET", resource_url, true);
-	    
-	    xhttp.setRequestHeader("Content-type", "application/json");
-	    xhttp.setRequestHeader("sessiontoken", session.getSessionUUID());
-	    
+		var xhttp = this._createXMLHttpRequest("GET", resource);
+		
 	    xhttp.send();
 	    
 	    xhttp.onload = function(e) {
@@ -66,17 +95,8 @@ var RestConnection = class {
 		
 		var session = this.session;
 	    
-		var xhttp = new XMLHttpRequest();
-	    
-	    var rest_server_url = this.rest_server_url;
-	    var rest_server_api_path = this.rest_server_api_path;
-	    var resource_url = rest_server_url + rest_server_api_path + resource;
-	    
-	    xhttp.open("POST", resource_url, true);
-	    
-	    xhttp.setRequestHeader("Content-type", "application/json");
-	    xhttp.setRequestHeader("sessiontoken", session.getSessionUUID());
-	    
+		var xhttp = this._createXMLHttpRequest("POST", resource);
+		
 	    xhttp.send(JSON.stringify(postdata));
 	    
 	    xhttp.onload = function(e) {
@@ -116,17 +136,8 @@ var RestConnection = class {
 		
 		var session = this.session;
 	    
-		var xhttp = new XMLHttpRequest();
-	    
-	    var rest_server_url = this.rest_server_url;
-	    var rest_server_api_path = this.rest_server_api_path;
-	    var resource_url = rest_server_url + rest_server_api_path + resource;
-	    
-	    xhttp.open("PUT", resource_url, true);
-	    
-	    xhttp.setRequestHeader("Content-type", "application/json");
-	    xhttp.setRequestHeader("sessiontoken", session.getSessionUUID());
-	    
+		var xhttp = this._createXMLHttpRequest("PUT", resource);
+		
 	    xhttp.send(JSON.stringify(postdata));
 	    
 	    xhttp.onload = function(e) {
@@ -165,17 +176,8 @@ var RestConnection = class {
 		
 		var session = this.session;
 	    
-		var xhttp = new XMLHttpRequest();
-	    
-	    var rest_server_url = this.rest_server_url;
-	    var rest_server_api_path = this.rest_server_api_path;
-	    var resource_url = rest_server_url + rest_server_api_path + resource;
-	    
-	    xhttp.open("DELETE", resource_url, true);
-	    
-	    xhttp.setRequestHeader("Content-type", "application/json");
-	    xhttp.setRequestHeader("sessiontoken", session.getSessionUUID());
-	    
+		var xhttp = this._createXMLHttpRequest("DELETE", resource);
+		
 	    xhttp.send();
 	    
 	    xhttp.onload = function(e) {
@@ -217,5 +219,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('common', 'RestConnection', RestConnection);
 }
-else
-	module.exports = RestConnection; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'RestConnection', RestConnection);
+}

@@ -29,13 +29,15 @@ var CryptoKeyMap = class {
 	}
 	
 	pushCryptoKey(cryptokey) {
+		if (!cryptokey || !cryptokey.address)
+			return;
+		
 		var entry = cryptokey.address.toString().trim().toLowerCase();
 
-		// TODO: we could check if we have already this cryptokey
-		// and check that we do not replace an object with a private key
-		// with an object that does not have one
+		// we only add proper crypto keys
 		if (!cryptokey.getPrivateKey()) {
 			console.log('pushing cryptokey ' + cryptokey + ' with no private key');
+			return;
 		}
 
 		// simple replace
@@ -67,6 +69,10 @@ var CryptoKey = class {
 		
 		this.keyuuid = null;
 		
+		this.origin = null;
+		
+		this.owner = null;
+		
 		// encryption
 		this.private_key = null;
 		this.public_key = null; // ECE public key
@@ -83,12 +89,50 @@ var CryptoKey = class {
 		this.keyuuid = uuid;
 	}
 	
+	getOrigin() {
+		return this.origin;
+	}
+	
+	setOrigin(origin) {
+		if (!origin || !origin.storage)
+			return;
+		
+		this.origin = origin;
+	}
+	
+	getOwner() {
+		return this.owner;
+	}
+	
+	setOwner(user) {
+		this.owner = user;
+	}
+	
 	getAddress() {
 		return this.address;
 	}
 	
+	setAddress(address) {
+		if (!this.areAddressesEqual(this.address, address)) {
+			this.address = (address ? address.trim().toLowerCase() : address);
+			
+			this.private_key = null;
+			this.public_key = null; // ECE public key
+			this.rsa_public_key = null; // asymmetric
+		}
+	}
+	
 	getPublicKey() {
 		return this.public_key;
+	}
+	
+	setPublicKey(pubkey) {
+		this.public_key = (pubkey ? pubkey.trim().toLowerCase() : pubkey);
+		
+		if (!pubkey)
+			return;
+		
+		this.cryptoencryption.setPublicKey(this.public_key);
 	}
 	
 	getPrivateKey() {
@@ -149,6 +193,10 @@ var CryptoKey = class {
 		return this.rsa_public_key;
 	}
 	
+	setRsaPublicKey(pubkey) {
+		this.rsa_public_key = pubkey;
+	}
+	
 	rsaEncryptString(plaintext, recipientaccount) {
 		return this.cryptoencryption.rsaEncryptString(plaintext, recipientaccount);
 	}
@@ -165,6 +213,16 @@ var CryptoKey = class {
 	validateStringSignature(text, signature) {
 		return this.cryptoencryption.validateStringSignature(text, signature);
 	}
+	
+	// utils
+	areAddressesEqual(address1, address2) {
+		if ((!address1) || (!address2))
+			return false;
+		
+		return (address1.trim().toLowerCase() == address2.trim().toLowerCase());
+	}
+	
+
 }
 
 
@@ -178,7 +236,10 @@ else if (typeof window !== 'undefined') {
 	_GlobalClass.registerModuleClass('common', 'CryptoKey', CryptoKey);
 	_GlobalClass.registerModuleClass('common', 'CryptoKeyMap', CryptoKeyMap);
 }
-else {
-	module.exports = CryptoKey; // we are in node js
-	CryptoKey.CryptoKeyMap = CryptoKeyMap; 
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('common', 'CryptoKey', CryptoKey);
+	_GlobalClass.registerModuleClass('common', 'CryptoKeyMap', CryptoKeyMap);
 }

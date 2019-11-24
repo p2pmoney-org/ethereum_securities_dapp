@@ -2,7 +2,8 @@
 
 
 var Account = class {
-	constructor(address) {
+	constructor(session, address) {
+		this.session = session;
 		this.address = address;
 		
 		this.balance = null;
@@ -87,7 +88,7 @@ var Account = class {
 	    
 	    var accountaddr = this.address;
 	    
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
 	    return EthereumNodeAccess.web3_getBalance(accountaddr, function(err, res) {
 			if (err) {
@@ -137,7 +138,7 @@ var Account = class {
 	    
 	    var accountaddr = this.address;
 	    
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
 	    return EthereumNodeAccess.web3_getCode(accountaddr, function(err, res) {
 			if (err) {
@@ -178,12 +179,12 @@ var Account = class {
 	}
 	
 	// static
-	static getAccount(accountaddr, callback) {
+	static getAccount(session, accountaddr, callback) {
 		var Account = this.getClass();
 
-		var account = new Account(accountaddr);
+		var account = new Account(session, accountaddr);
 		
-		return account._readAccount(function (err, res) {
+		return account._readAccount( function (err, res) {
 			if (err) {
 				if (callback)
 					callback(err, null);
@@ -218,5 +219,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'Account', Account);
 }
-else
-module.exports = Account; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Account', Account);
+}

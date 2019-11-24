@@ -35,7 +35,8 @@
 var BASE_ABI = [{"constant":true,"inputs":[],"name":"contract_version","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"contract_name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"}];
 
 var Contract = class {
-	constructor(address) {
+	constructor(session, address) {
+		this.session = session;
 		this.address = address;
 		this.abi = null;
 		
@@ -89,7 +90,7 @@ var Contract = class {
 		    var global = Contract.getGlobalObject();
 		    var chainreadermodule = global.getModuleObject('ethchainreader');
 			
-		    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+		    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 		    
 		    return EthereumNodeAccess._web3_contract_dynamicMethodCall(instance, abidef, params, function (err, res) {
 				if (!res) {
@@ -214,7 +215,7 @@ var Contract = class {
 	    var global = Contract.getGlobalObject();
 	    var chainreadermodule = global.getModuleObject('ethchainreader');
 	    
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
 	    var promise = EthereumNodeAccess.web3_abi_load_at(abi, address, function(err, res)	 {
 			var instance = res;
@@ -227,13 +228,13 @@ var Contract = class {
 	}
 
 	// static
-	static getContract(address) {
-		return new Contract(address);
+	static getContract(session, address) {
+		return new Contract(session, address);
 	}
 	
-	static getContractName(address, callback) {
+	static getContractName(session, address, callback) {
 		
-		var contract = new Contract(address);
+		var contract = new Contract(session, address);
 		
 		contract.setAbi(BASE_ABI);
 		
@@ -245,9 +246,9 @@ var Contract = class {
 		});
 	}
 	
-	static getContractVersion(address, callback) {
+	static getContractVersion(session, address, callback) {
 		
-		var contract = new Contract(address);
+		var contract = new Contract(session, address);
 		
 		contract.setAbi(BASE_ABI);
 		
@@ -268,5 +269,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'Contract', Contract);
 }
-else
-module.exports = Contract; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Contract', Contract);
+}

@@ -1,6 +1,6 @@
 'use strict';
 
-var rootscriptloader = ScriptLoader.getRootScriptLoader();
+var rootscriptloader = (typeof ScriptLoader !== 'undefined' ? ScriptLoader.getRootScriptLoader() :(typeof window !== 'undefined' ? window.simplestore.ScriptLoader.getRootScriptLoader() : (typeof global !== 'undefined' ? global.simplestore.ScriptLoader.getRootScriptLoader() : null)));
 var corescriptloader = rootscriptloader.getChildLoader('coreloader');
 
 corescriptloader.push_script('./includes/interface/cryptokey-encryption.js');

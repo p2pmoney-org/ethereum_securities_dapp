@@ -2,7 +2,8 @@
 
 
 var Block = class {
-	constructor(blocknumber) {
+	constructor(session, blocknumber) {
+		this.session = session;
 		this.blocknumber = blocknumber;
 		
 		this.difficulty = null;
@@ -76,7 +77,7 @@ var Block = class {
 	    
 	    var self = this;
 	    
-	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess();
+	    var EthereumNodeAccess = chainreadermodule.getEthereumNodeAccess(this.session);
 	    
 	    return EthereumNodeAccess.web3_getBlock(self.blocknumber, bWithTransactions, function (err, res) {
 			if (err) {
@@ -138,7 +139,7 @@ var Block = class {
 		})
 		.then( function(res) {
 			if (self.transactions) {
-				return Transaction.getTransactionsFromJsonArray(self.transactions, function (err, res) {
+				return Transaction.getTransactionsFromJsonArray(this.session, self.transactions, function (err, res) {
 					if (err) {
 						if (callback)
 							callback(err, null);
@@ -169,10 +170,10 @@ var Block = class {
 	}
 	
 	// static
-	static getBlock(blocknumber, callback) {
+	static getBlock(session, blocknumber, callback) {
 		var Block = this.getClass();
 
-		var block = new Block(blocknumber);
+		var block = new Block(session, blocknumber);
 		
 		var promise = block._readBlock(false, function (err, res) {
 			if (err) {
@@ -192,13 +193,13 @@ var Block = class {
 		
 	}
 	
-	static getCurrentBlockNumber(callback) {
+	static getCurrentBlockNumber(session, callback) {
 		var Block = this.getClass();
 
 	    var global = Block.getGlobalObject();
 	    var chainreadermodule = global.getModuleObject('ethchainreader');
 		
-		var ethnode = chainreadermodule.getEthereumNodeObject();
+		var ethnode = chainreadermodule.getEthereumNodeObject(session);
 		var promise = ethnode.getHighestBlockNumber(function (err, res) {
 			if (err) {
 				if (callback)
@@ -218,16 +219,16 @@ var Block = class {
 		return promise;
 	}
 	
-	static getLastBlockNumber(callback) {
+	static getLastBlockNumber(session, callback) {
 		var Block = this.getClass();
 
-		return Block.getCurrentBlockNumber(callback);
+		return Block.getCurrentBlockNumber(session, callback);
 	}
 	
-	static getLatestBlock(callback) {
+	static getLatestBlock(session, callback) {
 		var Block = this.getClass();
 		
-		var blocknumber = this.getLastBlockNumber(function (err, res) {
+		var blocknumber = this.getLastBlockNumber(session, function (err, res) {
 			
 			if (err) {
 				if (callback)
@@ -236,7 +237,7 @@ var Block = class {
 				return null;
 			}
 
-			return Block.getBlock(res, callback);
+			return Block.getBlock(session, res, callback);
 		});
 	}
 
@@ -249,5 +250,9 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.registerModuleClass('ethchainreader', 'Block', Block);
 }
-else
-module.exports = Block; // we are in node js
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.registerModuleClass('ethchainreader', 'Block', Block);
+}

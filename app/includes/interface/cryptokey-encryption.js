@@ -164,8 +164,24 @@ var Module = class {
 		
 		console.log('jsonarray length is ' + (jsonarray ? jsonarray.length : 0));
 		
+		// list of available owners (user and vaults)
+		var owneruuidarray = [];
+		
 		var user = session.getSessionUserObject();
 		var useruuid = (user ? user.getUserUUID() : null);
+		
+		owneruuidarray.push(useruuid);
+		
+		// crypto-keys
+		var cryptokeyarray = session.getSessionCryptoKeyObjects();
+		
+		for (var i = 0; i < (cryptokeyarray ? cryptokeyarray.length : 0); i++) {
+			var cryptokey = cryptokeyarray[i];
+			var origin = cryptokey.getOrigin();
+			if ( origin && (origin.storage == 'vault')) {
+				owneruuidarray.push(cryptokey.getKeyUUID());
+			}
+		}
 		
 		var keysjson = [];
 
@@ -174,7 +190,7 @@ var Module = class {
 			var owneruuid = (jsonarray[i]['owner_uuid'] ? jsonarray[i]['owner_uuid'] : null);
 			
 			// we keep only our entries, based on owneruuid
-			if (owneruuid == useruuid) {
+			if (owneruuidarray.indexOf(owneruuid) != -1) {
 				var keyuuid = (jsonarray[i]['key_uuid'] ? jsonarray[i]['key_uuid'] : (jsonarray[i]['uuid'] ? jsonarray[i]['uuid'] : null));
 				var address = (jsonarray[i]['address'] ? jsonarray[i]['address'] : null);
 				var encryptedprivatekey = (jsonarray[i]['private_key'] ? jsonarray[i]['private_key'] : null);
@@ -226,27 +242,30 @@ class CryptoKeyEncryption {
 	
 	// encryption
 	getKeythereumClass() {
-		if ( typeof window !== 'undefined' && window ) {
-			if (window.keythereum !== 'undefined')
+		if (typeof window !== 'undefined' && window ) {
+			if (typeof window.keythereum !== 'undefined')
 			return window.keythereum;
-			else if (window.simplestore.keythereum !== 'undefined')
+			else if (typeof window.simplestore.keythereum !== 'undefined')
 					return window.simplestore.keythereum;
 		}
-		else {
-			throw 'nodejs not implemented';
+		else if (typeof global !== 'undefined') {
+			return global.simplestore.keythereum;
 			//return require('keythereum');
+		}
+		else {
+			throw 'not implemented';
 		}
 	}
 	
 	getEthereumJsClass() {
 		if ( typeof window !== 'undefined' && window ) {
-			if (window.ethereumjs !== 'undefined')
+			if (typeof window.ethereumjs !== 'undefined')
 			return window.ethereumjs;
-			else if (window.simplestore.ethereumjs !== 'undefined')
+			else if (typeof window.simplestore.ethereumjs !== 'undefined')
 				return window.simplestore.ethereumjs;
 		}
-		else {
-			throw 'nodejs not implemented';
+		else if (typeof global !== 'undefined') {
+			return global.simplestore.ethereumjs;
 			/*var ethereumjs;
 			
 			ethereumjs = require('ethereum.js');
@@ -254,6 +273,9 @@ class CryptoKeyEncryption {
 			ethereumjs.Wallet = require('ethereumjs-wallet');
 
 			return ethereumjs;*/
+		}
+		else {
+			throw 'not implemented';
 		}
 	}
 	
@@ -319,6 +341,87 @@ class CryptoKeyEncryption {
 			
 		}
 	}
+	
+	getPrivateKeyStoreFileName() {
+		var ethereumjs = this.getEthereumJsClass();
+		
+		var cryptokey = this.cryptokey;
+		var _privatekey = cryptokey.private_key;
+
+		const wallet = ethereumjs.Wallet.fromPrivateKey(ethereumjs.Util.toBuffer(_privatekey));
+		
+		return wallet.getV3Filename();
+	}
+	
+	getPrivateKeyStoreString(passphrase) {
+		var keythereum = this.getKeythereumClass();
+		var ethereumjs = this.getEthereumJsClass();
+
+		var cryptokey = this.cryptokey;
+		var _privatekey = cryptokey.private_key;
+		
+		/*
+		
+		 const wallet = ethereumjs.Wallet.fromPrivateKey(ethereumjs.Util.toBuffer(_privatekey));
+		
+		const address = wallet.getAddressString();
+		const keystoreFilename = wallet.getV3Filename();
+		const keystore = wallet.toV3(passphrase);
+		const keystorestring = wallet.toV3String(passphrase);*/
+		
+		// store key creation
+		
+		// optional private key and initialization vector sizes in bytes
+		// (if params is not passed to create, keythereum.constants is used by default)
+		var params = { keyBytes: 32, ivBytes: 16 };
+
+		// synchronous
+		var dk = keythereum.create(params);
+		
+		dk.privateKey = ethereumjs.Util.toBuffer(_privatekey);
+		
+		// key export
+		var kdf = "pbkdf2"; // or "scrypt" to use the scrypt kdf
+		
+		// Note: if options is unspecified, the values in keythereum.constants are used.
+		var options = {
+		  kdf: "pbkdf2",
+		  cipher: "aes-128-ctr",
+		  kdfparams: {
+		    c: 262144,
+		    dklen: 32,
+		    prf: "hmac-sha256"
+		  }
+		};
+		
+		var keyObject = keythereum.dump(passphrase, dk.privateKey, dk.salt, dk.iv, options);
+		
+		var keystorestring = JSON.stringify(keyObject);
+		
+		return keystorestring;		
+	}
+	
+	readPrivateKeyFromStoreString(keystorestring, passphrase) {
+		if (!keystorestring)
+			return;
+		
+		var _privatekey;
+		
+		var keythereum = this.getKeythereumClass();
+
+		var keyObject = JSON.parse(keystorestring);
+		var key = keythereum.recover(passphrase, keyObject);
+		
+		_privatekey = '0x' + key.toString('hex');
+		
+		// fill cryptokey
+		var cryptokey = this.cryptokey;
+		cryptokey.setPrivateKey(_privatekey);
+		
+		return cryptokey.getPrivateKey();
+	}
+	
+
 	
 	setPublicKey(pubkey) {
 		var cryptokey = this.cryptokey;
@@ -448,9 +551,12 @@ class CryptoKeyEncryption {
 				return window.simplestore.bitcore;
 			}
 		}
-		else {
-			throw 'nodejs not implemented';
+		else if (typeof global !== 'undefined') {
+			return global.simplestore.bitcore;
 			//return require('bitcore');
+		}
+		else {
+			throw 'not implemented';
 		}
 	}
 	
@@ -470,9 +576,12 @@ class CryptoKeyEncryption {
 				return window.simplestore.bitcore_ecies;
 			}
 		}
-		else {
-			throw 'nodejs not implemented';
+		else if (typeof global !== 'undefined') {
+			return global.simplestore.bitcore_ecies;
 			//return require('bitcore-ecies');
+		}
+		else {
+			throw 'not implemented';
 		}
 	}
 	
@@ -717,14 +826,32 @@ class CryptoKeyEncryption {
 		var key = ethereumjs.Wallet.generate(cryptokeyPassword);
 		return '0x' + key._privKey.toString('hex');		
 	}
+	
+	hash_hmac(hashforce, datastring, keystring) {
+		var keythereum = this.getKeythereumClass();
+		var ethereumjs = this.getEthereumJsClass();
+	    var bitcore = this.getBitcoreClass();
+	    var ECIES = this.getBitcoreEcies();
+
+	    
+	    var Hash = bitcore.crypto.Hash;
+		
+		var hashf = (hashforce == 'sha512' ? Hash.sha512 : Hash.sha256);
+		var data = Buffer.from(datastring);
+		var key = Buffer.from(keystring);
+		
+		var hashbuff = Hash.hmac(hashf, data, key);
+		
+		return hashbuff;
+	}
 
 	
 }
 
 if ( typeof window !== 'undefined' && window ) // if we are in browser and not node js (e.g. truffle)
 window.simplestore.CryptoKeyEncryption = CryptoKeyEncryption;
-else
-module.exports = CryptoKeyEncryption; // we are in node js
+else if (typeof global !== 'undefined')
+global.simplestore.CryptoKeyEncryption = CryptoKeyEncryption; // we are in node js
 
 if ( typeof GlobalClass !== 'undefined' && GlobalClass )
 GlobalClass.getGlobalObject().registerModuleObject(new Module());
@@ -733,3 +860,10 @@ else if (typeof window !== 'undefined') {
 	
 	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
 }
+else if (typeof global !== 'undefined') {
+	// we are in node js
+	let _GlobalClass = ( global && global.simplestore && global.simplestore.Global ? global.simplestore.Global : null);
+	
+	_GlobalClass.getGlobalObject().registerModuleObject(new Module());
+}
+

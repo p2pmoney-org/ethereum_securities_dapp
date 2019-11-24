@@ -1,4 +1,5 @@
 'use strict';
+console.log('loading bootstrap');
 
 class Bootstrap {
 	constructor() {
@@ -13,8 +14,11 @@ class Bootstrap {
 				this.javascript_env = 'react-native';
 			}
 		}
-		else {
+		else if (typeof global !== 'undefined') {
 			this.javascript_env = 'nodejs';
+		}
+		else {
+			this.javascript_env = 'unknown';
 		}
 		
 		// capture console.log
@@ -149,7 +153,23 @@ class ScriptLoader {
 		this.loadstarted = false;
 		this.loadfinished = false;
 		
+		this.script_root_dir = null;
+		
 		this.eventlisteners = Object.create(null);; // map events to arrays of listeners
+	}
+	
+	getScriptRootDir() {
+		if (this.script_root_dir)
+			return this.script_root_dir;
+		else
+			return ScriptLoader.dapp_dir;
+	}
+	
+	setScriptRootDir(script_root_dir) {
+		this.script_root_dir = script_root_dir;
+		
+		if ( script_root_dir && (!script_root_dir.endsWith('/')))
+			this.script_root_dir += '/';
 	}
 	
 	// scripts loading
@@ -257,15 +277,24 @@ class ScriptLoader {
 			throw this.loadername + ' has started loading scripts. It is no longer possible to add scripts to this loader.';
 			
 		var entry = [];
+		var filepath = file;
 		
-		entry['file'] = file;
+		if ((this.script_root_dir) && (file.startsWith('./'))) {
+			filepath = this.script_root_dir;
+			
+			filepath += file;
+		}
+		
+		entry['file'] = filepath;
 		entry['posttreatment'] = posttreatment;
 		
 		this.scripts.push(entry);
 	}
 	
 	getChildLoader(loadername) {
-		return ScriptLoader.getScriptLoader(loadername, this);
+		var childloader = ScriptLoader.getScriptLoader(loadername, this);
+		
+		return childloader;
 	}
 	
 	getChildrenLoaders() {
@@ -449,6 +478,10 @@ class ScriptLoader {
 				break;
 		}
 	}
+	
+	static _performScriptLoad(source, posttreatment) {
+		console.log('overload ScriptLoader._performScriptLoad to perform actual load of script: ' + source);
+	}
 
 	static createScriptLoadPromise(file, posttreatment) {
 		//var self = ScriptLoader;
@@ -489,13 +522,16 @@ class ScriptLoader {
 					var source;
 					
 					if (file.startsWith('/')) {
-						source = ScriptLoader.dapp_dir + '.' + file;
+						// '/' means absolute (relative to server)
+						//source = ScriptLoader.dapp_dir + '.' + file;
+						source = file;
 					}
 					else if (file.startsWith('./')) {
 						// './' means relative to dapp dir (not html page)
 						source = ScriptLoader.dapp_dir + file;
 					}
 					else {
+						// probably a full uri (e.g. http://)
 						source = file;
 					}
 					
@@ -519,13 +555,32 @@ class ScriptLoader {
 				return promise;
 
 			case 'react-native':
-				console.log('asking to load script: ' + file);
+				console.log('asking (react-native) to load script: ' + file);
 				
 				if (!ScriptLoader.dapp_dir) {
 					ScriptLoader.dapp_dir = "";
 				}
 				
-				return Promise.resolve(true);
+				var promise = new Promise(function(resolve, reject) {
+					ScriptLoader._performScriptLoad(file, posttreatment);
+					resolve(true);
+				});
+				
+				return promise;
+				
+			case 'nodejs':
+				console.log('asking (nodejs) to load script: ' + file);
+				
+				if (!ScriptLoader.dapp_dir) {
+					ScriptLoader.dapp_dir = "";
+				}
+				
+				var promise = new Promise(function(resolve, reject) {
+					ScriptLoader._performScriptLoad(file, posttreatment);
+					resolve(true);
+				});
+				
+				return promise;
 				
 			default:
 				return Promise.resolve(false);
@@ -567,6 +622,9 @@ class ScriptLoader {
 		scriptloader.loadername = loadername;
 		scriptloader.parentloader = parentloader;
 		
+		if ( parentloader && (parentloader.script_root_dir))
+			scriptloader.setScriptRootDir(parentloader.script_root_dir);
+		
 		// put in the map
 		scriptloadermap[loadername] = scriptloader;
 		
@@ -576,6 +634,27 @@ class ScriptLoader {
 	static findScriptLoader(loadername) {
 		if (scriptloadermap[loadername])
 			return scriptloadermap[loadername];
+	}
+	
+	static reclaimScriptLoaderName(loadername) {
+		if (!loadername)
+			return;
+		
+		// change name of script loader witb same name
+		// to be able re-using it
+		var scriptloader = ScriptLoader.findScriptLoader(loadername);
+		if (scriptloader) {
+			var n = 1;
+			var newname = loadername + '-' + n;
+			
+			while (ScriptLoader.findScriptLoader(newname)) {
+				n++;
+				newname = loadername + '-' + n;
+			}
+			
+			scriptloadermap[newname] = scriptloader;
+			scriptloadermap[loadername] = null;
+		}
 	}
 	
 	static getScriptLoaders() {
@@ -595,11 +674,14 @@ class ScriptLoader {
 }
 
 if ( typeof window !== 'undefined' && window ) { // if we are in browser and not node js (e.g. truffle)
-	if (typeof window.simplestore !== 'undefined')
-		throw 'Hard conflict on use of window.simplestore!!!'
+	if (typeof window.simplestore !== 'undefined') {
+		if (window.simplestore.nocreation === 'undefined')
+			throw 'Hard conflict on use of window.simplestore, set window.simplestore.nocreation to avoid this!!!'
+	}
+	else {
+		window.simplestore = {}; // files should store their classes in window.simplestore for environments like react native
+	}
 	
-	window.simplestore = {}; // files should store their classes in window.simplestore for environments like react native
-
 	window.simplestore.Bootstrap = Bootstrap;
 	window.simplestore.ScriptLoader = ScriptLoader;
 	
@@ -636,8 +718,15 @@ if ( typeof window !== 'undefined' && window ) { // if we are in browser and not
 	}
 	
 }
-else
-module.exports = ScriptLoader; // we are in node js
+else if (typeof global !== 'undefined') {
+	if (typeof global.simplestore === 'undefined') {
+		console.log('creating global.simplestore in bootstrap');
+		global.simplestore = {};
+	}
+	
+	global.simplestore.Bootstrap = Bootstrap;
+	global.simplestore.ScriptLoader = ScriptLoader;
+}
 
 
 

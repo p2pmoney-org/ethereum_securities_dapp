@@ -57,6 +57,10 @@ class StakeHolder{
 
 	}
 	
+	getSessionObject() {
+		return this.session;
+	}
+	
 	getAddress() {
 		return this.address;
 	}
