@@ -146,15 +146,6 @@ var Module = class {
 	}
 	
 
-	// session
-	/*getSessionObject() {
-		var global = this.global;
-		var commonmodule = global.getModuleObject('common');
-		
-		return commonmodule.getSessionObject();
-	}*/
-	
-
 	//
 	// control
 	//

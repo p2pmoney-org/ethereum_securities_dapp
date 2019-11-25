@@ -105,38 +105,6 @@ var Module = class {
 	
 	
 	// objects
-	/*getWeb3Provider() {
-		var commonmodule = this.global.getModuleObject('common');
-		var ethnodemodule = this.global.getModuleObject('ethnode');
-		
-		var Web3 = this.getWeb3Class();
-
-		var web3providerurl = ethnodemodule.getWeb3ProviderUrl();
-		var web3Provider = new Web3.providers.HttpProvider(web3providerurl);
-
-		return web3Provider;
-	}
-	
-	getWeb3Instance() {
-		if (this.web3instance)
-			return this.web3instance;
-		
-		var Web3 = this.getWeb3Class();
-		var web3Provider = this.getWeb3Provider();
-		  
-		this.web3instance = new Web3(web3Provider);		
-		
-		console.log("web3 instance created for ethchainreader");
-		
-		return this.web3instance;
-	}*/
-	
-	/*getSessionObject() {
-		var commonmodule = this.global.getModuleObject('common');
-
-		return commonmodule.getSessionObject();
-	}*/
-	
 	getEthereumNodeAccess(session) {
 		var global = this.global;
 		

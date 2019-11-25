@@ -145,6 +145,14 @@ var CryptoKey = class {
 		this.cryptoencryption.setPrivateKey(this.private_key);
 	}
 	
+	isPrivateKeyValid() {
+		if (!this.private_key)
+			return false;
+
+		return this.cryptoencryption.isValidPrivateKey(this.private_key);
+	}
+
+	
 	getDescription() {
 		return this.description;
 	}
